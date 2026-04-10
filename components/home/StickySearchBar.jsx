@@ -26,46 +26,50 @@ export default function StickySearchBar() {
   return (
     <section className="section-tight sticky-search-section" aria-label="Search and filters">
       <div className="container">
-        <div className={cn("sticky-search-dock", isDocked && "is-docked")}>
-          <form className="sticky-search-card" action="/discover">
-            <label className="sticky-search-field">
-              <span className="sticky-search-label">Location</span>
-              <select name="city" defaultValue="">
-                <option value="">Choose city</option>
-                {CITIES.map((city) => (
-                  <option key={city} value={city}>
-                    {city}
-                  </option>
-                ))}
-              </select>
-            </label>
+        <div className="home-section-shell home-search-shell">
+          <div className="home-section-panel home-search-panel">
+            <div className={cn("sticky-search-dock", isDocked && "is-docked")}>
+              <form className="sticky-search-card" action="/discover">
+                <label className="sticky-search-field">
+                  <span className="sticky-search-label">Location</span>
+                  <select name="city" defaultValue="">
+                    <option value="">Choose city</option>
+                    {CITIES.map((city) => (
+                      <option key={city} value={city}>
+                        {city}
+                      </option>
+                    ))}
+                  </select>
+                </label>
 
-            <label className="sticky-search-field">
-              <span className="sticky-search-label">Service type</span>
-              <select name="query" defaultValue="">
-                <option value="">Select service</option>
-                {SERVICES.map((service) => (
-                  <option key={service} value={service}>
-                    {service}
-                  </option>
-                ))}
-              </select>
-            </label>
+                <label className="sticky-search-field">
+                  <span className="sticky-search-label">Service type</span>
+                  <select name="query" defaultValue="">
+                    <option value="">Select service</option>
+                    {SERVICES.map((service) => (
+                      <option key={service} value={service}>
+                        {service}
+                      </option>
+                    ))}
+                  </select>
+                </label>
 
-            <label className="sticky-search-field">
-              <span className="sticky-search-label">Date</span>
-              <input
-                name="date"
-                type="date"
-                value={selectedDate}
-                onChange={(event) => setSelectedDate(event.target.value)}
-              />
-            </label>
+                <label className="sticky-search-field">
+                  <span className="sticky-search-label">Date</span>
+                  <input
+                    name="date"
+                    type="date"
+                    value={selectedDate}
+                    onChange={(event) => setSelectedDate(event.target.value)}
+                  />
+                </label>
 
-            <button className="button button-primary sticky-search-button" type="submit">
-              Search
-            </button>
-          </form>
+                <button className="button button-primary sticky-search-button" type="submit">
+                  Search
+                </button>
+              </form>
+            </div>
+          </div>
         </div>
       </div>
     </section>

@@ -350,6 +350,14 @@ function TestimonialCard({ testimonial }) {
   );
 }
 
+function HomeSectionShell({ children, className = "", panelClassName = "" }) {
+  return (
+    <div className={`home-section-shell ${className}`.trim()}>
+      <div className={`home-section-panel ${panelClassName}`.trim()}>{children}</div>
+    </div>
+  );
+}
+
 export default async function HomeLanding() {
   const featuredStylists = await getFeaturedStylists();
 
@@ -367,292 +375,310 @@ export default async function HomeLanding() {
 
       <section className="section">
         <div className="container">
-          <SectionHeading
-            eyebrow="Categories"
-            title="Beauty services, organized for faster booking"
-            description="Browse the most-booked service types in a polished glass grid designed to get clients from interest to appointment quickly."
-            center
-          />
-          <div className="category-grid">
-            {homeServiceCategories.map((category, index) => (
-              <CategoryCard key={category.label} category={category} index={index} />
-            ))}
-          </div>
+          <HomeSectionShell>
+            <SectionHeading
+              eyebrow="Categories"
+              title="Beauty services, organized for faster booking"
+              description="Browse the most-booked service types in a polished glass grid designed to get clients from interest to appointment quickly."
+              center
+            />
+            <div className="category-grid">
+              {homeServiceCategories.map((category, index) => (
+                <CategoryCard key={category.label} category={category} index={index} />
+              ))}
+            </div>
+          </HomeSectionShell>
         </div>
       </section>
 
       <section className="section" id="stylists">
         <div className="container">
-          <SectionHeading
-            eyebrow="Featured Stylists"
-            title="Curated profiles with depth, trust, and clear pricing"
-            description="Every listing surfaces rating, specialty, price point, and an immediate path to book, so the experience feels premium on every screen."
-          />
-          <div className="featured-stylist-grid">
-            {featuredStylists.map((stylist, index) => (
-              <StylistCard key={stylist.slug} stylist={stylist} index={index} />
-            ))}
-          </div>
+          <HomeSectionShell>
+            <SectionHeading
+              eyebrow="Featured Stylists"
+              title="Curated profiles with depth, trust, and clear pricing"
+              description="Every listing surfaces rating, specialty, price point, and an immediate path to book, so the experience feels premium on every screen."
+            />
+            <div className="featured-stylist-grid">
+              {featuredStylists.map((stylist, index) => (
+                <StylistCard key={stylist.slug} stylist={stylist} index={index} />
+              ))}
+            </div>
+          </HomeSectionShell>
         </div>
       </section>
 
       <section className="section">
         <div className="container">
-          <SectionHeading
-            eyebrow="How It Works"
-            title="A simple flow refined into a premium booking journey"
-            description="Hair Force keeps discovery lightweight for clients while still giving stylists the trust signals and control they need to convert."
-            center
-          />
-          <div className="process-grid">
-            {howItWorks.map((step, index) => (
-              <ProcessCard key={step.step} step={step} index={index} />
-            ))}
-          </div>
+          <HomeSectionShell>
+            <SectionHeading
+              eyebrow="How It Works"
+              title="A simple flow refined into a premium booking journey"
+              description="Hair Force keeps discovery lightweight for clients while still giving stylists the trust signals and control they need to convert."
+              center
+            />
+            <div className="process-grid">
+              {howItWorks.map((step, index) => (
+                <ProcessCard key={step.step} step={step} index={index} />
+              ))}
+            </div>
+          </HomeSectionShell>
         </div>
       </section>
 
       <section className="section">
         <div className="container platform-grid">
-          <div>
+          <HomeSectionShell className="home-section-shell-wide" panelClassName="home-section-panel-wide">
+            <div className="platform-grid">
+              <div>
+                <SectionHeading
+                  eyebrow="Platform Features"
+                  title="A marketplace stack built for beauty businesses"
+                  description="The platform brings together scheduling, payments, notifications, reviews, and vendor operations in one clean multi-vendor foundation."
+                />
+                <div className="platform-feature-grid">
+                  {platformFeatures.map((feature, index) => (
+                    <PlatformFeatureCard key={feature.title} feature={feature} index={index} />
+                  ))}
+                </div>
+              </div>
+
+              <Reveal className="platform-spotlight" delay={0.16}>
+                <span className="eyebrow">Business intelligence</span>
+                <h3>One workspace for discovery, conversion, and repeat bookings</h3>
+                <div className="platform-spotlight-panel">
+                  <div className="platform-spotlight-metric">
+                    <strong>92%</strong>
+                    <span>Profile strength</span>
+                  </div>
+                  <div className="platform-spotlight-metric">
+                    <strong>31%</strong>
+                    <span>Weekly rebook rate</span>
+                  </div>
+                  <div className="platform-spotlight-metric">
+                    <strong>PKR 486k</strong>
+                    <span>Revenue preview</span>
+                  </div>
+                </div>
+                <div className="platform-spotlight-list">
+                  <div className="platform-spotlight-item">
+                    <span>Today</span>
+                    <strong>8 bookings scheduled</strong>
+                  </div>
+                  <div className="platform-spotlight-item">
+                    <span>Automation</span>
+                    <strong>Smart reminders queued</strong>
+                  </div>
+                  <div className="platform-spotlight-item">
+                    <span>Trust signal</span>
+                    <strong>126 verified reviews visible</strong>
+                  </div>
+                </div>
+              </Reveal>
+            </div>
+          </HomeSectionShell>
+        </div>
+      </section>
+
+      <section className="section">
+        <div className="container">
+          <HomeSectionShell>
             <SectionHeading
-              eyebrow="Platform Features"
-              title="A marketplace stack built for beauty businesses"
-              description="The platform brings together scheduling, payments, notifications, reviews, and vendor operations in one clean multi-vendor foundation."
+              eyebrow="App Preview"
+              title="Booking flow, stylist profile, and vendor dashboard in one polished ecosystem"
+              description="The homepage previews the full journey: clients browse on mobile, inspect profile details, and vendors manage their business from a premium dashboard."
+              center
             />
-            <div className="platform-feature-grid">
-              {platformFeatures.map((feature, index) => (
-                <PlatformFeatureCard key={feature.title} feature={feature} index={index} />
+
+            <div className="preview-showcase">
+              <Reveal className="preview-side-card preview-side-card-left">
+                <span className="preview-label">Booking flow</span>
+                <h3>Choose, confirm, and secure a slot</h3>
+                <div className="preview-stack">
+                  <div className="preview-stack-item">
+                    <span className="preview-stack-step">01</span>
+                    <div>
+                      <strong>Select service</strong>
+                      <p>Pick haircut, styling, color, beard, or facial based on real service menus.</p>
+                    </div>
+                  </div>
+                  <div className="preview-stack-item">
+                    <span className="preview-stack-step">02</span>
+                    <div>
+                      <strong>Choose time</strong>
+                      <p>Live slots update from recurring availability and blocked dates.</p>
+                    </div>
+                  </div>
+                  <div className="preview-stack-item">
+                    <span className="preview-stack-step">03</span>
+                    <div>
+                      <strong>Pay deposit</strong>
+                      <p>Secure premium appointment time with a clean checkout experience.</p>
+                    </div>
+                  </div>
+                </div>
+              </Reveal>
+
+              <Reveal className="preview-device-wrap" delay={0.12}>
+                <PhoneFrame className="preview-phone">
+                  <div className="preview-phone-screen">
+                    <div className="preview-phone-header">
+                      <span className="badge badge-accent">Hair Force</span>
+                      <strong>Saturday booking</strong>
+                    </div>
+                    <div className="preview-phone-hero">
+                      <span>Noor Atelier</span>
+                      <h3>Signature Haircut + Blowout</h3>
+                      <p>75 min - Deposit required - DHA Phase 6, Karachi</p>
+                    </div>
+                    <div className="preview-phone-slots">
+                      {["11:00 AM", "1:30 PM", "4:00 PM"].map((slot) => (
+                        <span key={slot} className="preview-slot-chip">
+                          {slot}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="preview-phone-summary">
+                      <div>
+                        <span>Total</span>
+                        <strong>{formatCurrency(4500)}</strong>
+                      </div>
+                      <div>
+                        <span>Deposit</span>
+                        <strong>{formatCurrency(900)}</strong>
+                      </div>
+                    </div>
+                    <button className="button button-primary device-button" type="button">
+                      Continue to Checkout
+                    </button>
+                  </div>
+                </PhoneFrame>
+              </Reveal>
+
+              <Reveal className="preview-side-card preview-side-card-right" delay={0.18}>
+                <span className="preview-label">Stylist profile</span>
+                <h3>Trust-heavy pages that help clients commit</h3>
+                <div className="profile-preview-card">
+                  <div className="profile-preview-banner" />
+                  <div className="profile-preview-body">
+                    <div className="row-between">
+                      <strong>Noor Atelier</strong>
+                      <span className="featured-stylist-rating">4.9</span>
+                    </div>
+                    <p>Luxury color, bridal prep, signature blowouts, and a calm premium studio experience.</p>
+                    <div className="chip-row">
+                      <span className="chip">Balayage</span>
+                      <span className="chip">Bridal hair</span>
+                      <span className="chip">Luxury blowouts</span>
+                    </div>
+                  </div>
+                </div>
+              </Reveal>
+
+              <Reveal className="preview-dashboard-panel" delay={0.24}>
+                <div className="preview-dashboard-head">
+                  <div>
+                    <span className="preview-label">Stylist dashboard</span>
+                    <h3>Track bookings, service performance, and profile strength</h3>
+                  </div>
+                  <Link href="/dashboard" className="button button-secondary">
+                    View dashboard
+                  </Link>
+                </div>
+
+                <div className="preview-dashboard-metrics">
+                  <div className="preview-dashboard-metric">
+                    <strong>PKR 486k</strong>
+                    <span>Monthly revenue</span>
+                  </div>
+                  <div className="preview-dashboard-metric">
+                    <strong>18</strong>
+                    <span>New bookings</span>
+                  </div>
+                  <div className="preview-dashboard-metric">
+                    <strong>92%</strong>
+                    <span>Profile strength</span>
+                  </div>
+                </div>
+
+                <div className="preview-dashboard-list">
+                  <div className="preview-dashboard-item">
+                    <span>11:00 AM</span>
+                    <strong>Sana Tahir - Signature Haircut + Blowout</strong>
+                  </div>
+                  <div className="preview-dashboard-item">
+                    <span>1:30 PM</span>
+                    <strong>Maryam Raza - Balayage Refresh</strong>
+                  </div>
+                  <div className="preview-dashboard-item">
+                    <span>4:00 PM</span>
+                    <strong>Areeba Hasan - Bridal Hair Trial</strong>
+                  </div>
+                </div>
+              </Reveal>
+            </div>
+          </HomeSectionShell>
+        </div>
+      </section>
+
+      <section className="section">
+        <div className="container">
+          <HomeSectionShell>
+            <SectionHeading
+              eyebrow="Testimonials"
+              title="What clients and stylists love about the experience"
+              description="The visual system feels premium, but the real value is how clearly it connects discovery, trust, and booking for both sides of the marketplace."
+            />
+            <div className="testimonial-rail">
+              {testimonials.map((testimonial) => (
+                <TestimonialCard key={testimonial.name} testimonial={testimonial} />
               ))}
             </div>
-          </div>
-
-          <Reveal className="platform-spotlight" delay={0.16}>
-            <span className="eyebrow">Business intelligence</span>
-            <h3>One workspace for discovery, conversion, and repeat bookings</h3>
-            <div className="platform-spotlight-panel">
-              <div className="platform-spotlight-metric">
-                <strong>92%</strong>
-                <span>Profile strength</span>
-              </div>
-              <div className="platform-spotlight-metric">
-                <strong>31%</strong>
-                <span>Weekly rebook rate</span>
-              </div>
-              <div className="platform-spotlight-metric">
-                <strong>PKR 486k</strong>
-                <span>Revenue preview</span>
-              </div>
-            </div>
-            <div className="platform-spotlight-list">
-              <div className="platform-spotlight-item">
-                <span>Today</span>
-                <strong>8 bookings scheduled</strong>
-              </div>
-              <div className="platform-spotlight-item">
-                <span>Automation</span>
-                <strong>Smart reminders queued</strong>
-              </div>
-              <div className="platform-spotlight-item">
-                <span>Trust signal</span>
-                <strong>126 verified reviews visible</strong>
-              </div>
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
-      <section className="section">
-        <div className="container">
-          <SectionHeading
-            eyebrow="App Preview"
-            title="Booking flow, stylist profile, and vendor dashboard in one polished ecosystem"
-            description="The homepage previews the full journey: clients browse on mobile, inspect profile details, and vendors manage their business from a premium dashboard."
-            center
-          />
-
-          <div className="preview-showcase">
-            <Reveal className="preview-side-card preview-side-card-left">
-              <span className="preview-label">Booking flow</span>
-              <h3>Choose, confirm, and secure a slot</h3>
-              <div className="preview-stack">
-                <div className="preview-stack-item">
-                  <span className="preview-stack-step">01</span>
-                  <div>
-                    <strong>Select service</strong>
-                    <p>Pick haircut, styling, color, beard, or facial based on real service menus.</p>
-                  </div>
-                </div>
-                <div className="preview-stack-item">
-                  <span className="preview-stack-step">02</span>
-                  <div>
-                    <strong>Choose time</strong>
-                    <p>Live slots update from recurring availability and blocked dates.</p>
-                  </div>
-                </div>
-                <div className="preview-stack-item">
-                  <span className="preview-stack-step">03</span>
-                  <div>
-                    <strong>Pay deposit</strong>
-                    <p>Secure premium appointment time with a clean checkout experience.</p>
-                  </div>
-                </div>
-              </div>
-            </Reveal>
-
-            <Reveal className="preview-device-wrap" delay={0.12}>
-              <PhoneFrame className="preview-phone">
-                <div className="preview-phone-screen">
-                  <div className="preview-phone-header">
-                    <span className="badge badge-accent">Hair Force</span>
-                    <strong>Saturday booking</strong>
-                  </div>
-                  <div className="preview-phone-hero">
-                    <span>Noor Atelier</span>
-                    <h3>Signature Haircut + Blowout</h3>
-                    <p>75 min - Deposit required - DHA Phase 6, Karachi</p>
-                  </div>
-                  <div className="preview-phone-slots">
-                    {["11:00 AM", "1:30 PM", "4:00 PM"].map((slot) => (
-                      <span key={slot} className="preview-slot-chip">
-                        {slot}
-                      </span>
-                    ))}
-                  </div>
-                  <div className="preview-phone-summary">
-                    <div>
-                      <span>Total</span>
-                      <strong>{formatCurrency(4500)}</strong>
-                    </div>
-                    <div>
-                      <span>Deposit</span>
-                      <strong>{formatCurrency(900)}</strong>
-                    </div>
-                  </div>
-                  <button className="button button-primary device-button" type="button">
-                    Continue to Checkout
-                  </button>
-                </div>
-              </PhoneFrame>
-            </Reveal>
-
-            <Reveal className="preview-side-card preview-side-card-right" delay={0.18}>
-              <span className="preview-label">Stylist profile</span>
-              <h3>Trust-heavy pages that help clients commit</h3>
-              <div className="profile-preview-card">
-                <div className="profile-preview-banner" />
-                <div className="profile-preview-body">
-                  <div className="row-between">
-                    <strong>Noor Atelier</strong>
-                    <span className="featured-stylist-rating">4.9</span>
-                  </div>
-                  <p>Luxury color, bridal prep, signature blowouts, and a calm premium studio experience.</p>
-                  <div className="chip-row">
-                    <span className="chip">Balayage</span>
-                    <span className="chip">Bridal hair</span>
-                    <span className="chip">Luxury blowouts</span>
-                  </div>
-                </div>
-              </div>
-            </Reveal>
-
-            <Reveal className="preview-dashboard-panel" delay={0.24}>
-              <div className="preview-dashboard-head">
-                <div>
-                  <span className="preview-label">Stylist dashboard</span>
-                  <h3>Track bookings, service performance, and profile strength</h3>
-                </div>
-                <Link href="/dashboard" className="button button-secondary">
-                  View dashboard
-                </Link>
-              </div>
-
-              <div className="preview-dashboard-metrics">
-                <div className="preview-dashboard-metric">
-                  <strong>PKR 486k</strong>
-                  <span>Monthly revenue</span>
-                </div>
-                <div className="preview-dashboard-metric">
-                  <strong>18</strong>
-                  <span>New bookings</span>
-                </div>
-                <div className="preview-dashboard-metric">
-                  <strong>92%</strong>
-                  <span>Profile strength</span>
-                </div>
-              </div>
-
-              <div className="preview-dashboard-list">
-                <div className="preview-dashboard-item">
-                  <span>11:00 AM</span>
-                  <strong>Sana Tahir - Signature Haircut + Blowout</strong>
-                </div>
-                <div className="preview-dashboard-item">
-                  <span>1:30 PM</span>
-                  <strong>Maryam Raza - Balayage Refresh</strong>
-                </div>
-                <div className="preview-dashboard-item">
-                  <span>4:00 PM</span>
-                  <strong>Areeba Hasan - Bridal Hair Trial</strong>
-                </div>
-              </div>
-            </Reveal>
-          </div>
-        </div>
-      </section>
-
-      <section className="section">
-        <div className="container">
-          <SectionHeading
-            eyebrow="Testimonials"
-            title="What clients and stylists love about the experience"
-            description="The visual system feels premium, but the real value is how clearly it connects discovery, trust, and booking for both sides of the marketplace."
-          />
-          <div className="testimonial-rail">
-            {testimonials.map((testimonial) => (
-              <TestimonialCard key={testimonial.name} testimonial={testimonial} />
-            ))}
-          </div>
+          </HomeSectionShell>
         </div>
       </section>
 
       <section className="section" id="faqs">
         <div className="container">
-          <SectionHeading
-            eyebrow="FAQs"
-            title="Answers for clients and growth-focused vendors"
-            description="A few quick answers for the most common marketplace questions before launch."
-            center
-          />
-          <div className="home-faq-grid">
-            {faqs.map((item, index) => (
-              <Reveal key={item.q} className="faq-card home-faq-card" delay={index * 0.06}>
-                <h3>{item.q}</h3>
-                <p>{item.a}</p>
-              </Reveal>
-            ))}
-          </div>
+          <HomeSectionShell>
+            <SectionHeading
+              eyebrow="FAQs"
+              title="Answers for clients and growth-focused vendors"
+              description="A few quick answers for the most common marketplace questions before launch."
+              center
+            />
+            <div className="home-faq-grid">
+              {faqs.map((item, index) => (
+                <Reveal key={item.q} className="faq-card home-faq-card" delay={index * 0.06}>
+                  <h3>{item.q}</h3>
+                  <p>{item.a}</p>
+                </Reveal>
+              ))}
+            </div>
+          </HomeSectionShell>
         </div>
       </section>
 
       <section className="section">
         <div className="container">
-          <Reveal className="cta-banner">
-            <span className="eyebrow">Become a stylist</span>
-            <h2>Grow Your Business with Hair Force</h2>
-            <p>
-              Create a premium profile, publish services, manage availability, and connect with more clients
-              through a high-conversion beauty marketplace.
-            </p>
-            <div className="hero-actions">
-              <Link href="/join" className="button button-primary">
-                Get Started
-              </Link>
-              <Link href="/discover" className="button button-secondary">
-                Browse Stylists
-              </Link>
-            </div>
-          </Reveal>
+          <HomeSectionShell panelClassName="home-section-panel-cta">
+            <Reveal className="cta-banner">
+              <span className="eyebrow">Become a stylist</span>
+              <h2>Grow Your Business with Hair Force</h2>
+              <p>
+                Create a premium profile, publish services, manage availability, and connect with more clients
+                through a high-conversion beauty marketplace.
+              </p>
+              <div className="hero-actions">
+                <Link href="/join" className="button button-primary">
+                  Get Started
+                </Link>
+                <Link href="/discover" className="button button-secondary">
+                  Browse Stylists
+                </Link>
+              </div>
+            </Reveal>
+          </HomeSectionShell>
         </div>
       </section>
     </main>
