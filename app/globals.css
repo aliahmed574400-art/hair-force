@@ -1388,7 +1388,7 @@ textarea {
   display: flex;
   flex-direction: column;
   width: 100%;
-  min-height: 428px;
+  min-height: 404px;
   height: 100%;
   padding: 0;
   border: 0;
@@ -1461,15 +1461,15 @@ textarea {
   display: grid;
   grid-template-rows: 1fr auto;
   align-content: start;
-  gap: 14px;
+  gap: 10px;
   flex: 1;
-  padding: 22px 22px 24px;
+  padding: 20px 22px 20px;
 }
 
 .category-card-copy {
   display: grid;
   align-content: start;
-  gap: 14px;
+  gap: 10px;
 }
 
 .category-card-copy p {
@@ -2450,7 +2450,7 @@ textarea {
   }
 
   .category-card {
-    min-height: 408px;
+    min-height: 388px;
   }
 
   .category-card-media {
