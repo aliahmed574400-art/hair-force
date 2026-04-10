@@ -11,7 +11,7 @@ import {
   testimonials,
   vendorBenefits
 } from "@/lib/data";
-import { getFeaturedStylists } from "@/lib/repositories";
+import { getFeaturedStylists } from "@/lib/postgres-repositories";
 import { formatCurrency } from "@/lib/utils";
 
 function StylistCard({ stylist }) {

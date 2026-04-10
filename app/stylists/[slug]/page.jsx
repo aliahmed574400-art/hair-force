@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import Reveal from "@/components/animated/Reveal";
-import { getStylistBySlug } from "@/lib/repositories";
+import { getStylistBySlug } from "@/lib/postgres-repositories";
 import { calculateDeposit, formatCurrency } from "@/lib/utils";
 
 export default async function StylistProfilePage({ params }) {

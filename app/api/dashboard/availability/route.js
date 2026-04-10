@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { updateVendorAvailability } from "@/lib/repositories";
+import { updateVendorAvailability } from "@/lib/postgres-repositories";
 import { getSessionFromRequest } from "@/lib/session";
 
 export async function PUT(request) {

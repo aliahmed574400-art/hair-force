@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getStylistBySlug } from "@/lib/repositories";
+import { getStylistBySlug } from "@/lib/postgres-repositories";
 
 export async function GET(_request, { params }) {
   const stylist = await getStylistBySlug(params.slug);

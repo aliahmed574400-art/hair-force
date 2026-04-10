@@ -734,7 +734,178 @@ textarea {
 }
 
 .home-hero-section {
-  padding-top: 52px;
+  padding-top: 44px;
+}
+
+.hero-banner-shell {
+  position: relative;
+  padding: 14px;
+  border-radius: 38px;
+  background:
+    linear-gradient(135deg, rgba(244, 248, 255, 0.84), rgba(197, 214, 255, 0.18)),
+    rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow:
+    0 36px 110px rgba(13, 29, 73, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.hero-banner-panel {
+  position: relative;
+  min-height: 560px;
+  overflow: hidden;
+  border-radius: 28px;
+  padding: 38px 40px 42px;
+  background:
+    radial-gradient(circle at 72% 18%, rgba(216, 229, 255, 0.5), transparent 13%),
+    radial-gradient(circle at 82% 10%, rgba(116, 165, 255, 0.32), transparent 26%),
+    linear-gradient(102deg, rgba(6, 11, 28, 0.98) 0%, rgba(17, 27, 69, 0.96) 42%, rgba(52, 84, 197, 0.84) 72%, rgba(99, 146, 255, 0.74) 100%);
+  border: 1px solid rgba(171, 203, 255, 0.16);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.hero-particles-canvas,
+.hero-banner-aurora,
+.hero-banner-city,
+.hero-banner-trails,
+.hero-banner-spark {
+  position: absolute;
+  inset: 0;
+}
+
+.hero-particles-canvas {
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.hero-banner-aurora {
+  z-index: 0;
+  inset: -8% -4% 0 34%;
+  background:
+    radial-gradient(circle at 56% 18%, rgba(255, 255, 255, 0.48), transparent 12%),
+    radial-gradient(circle at 64% 22%, rgba(158, 200, 255, 0.56), transparent 22%),
+    radial-gradient(circle at 74% 34%, rgba(94, 145, 255, 0.34), transparent 34%),
+    radial-gradient(circle at 62% 54%, rgba(122, 170, 255, 0.2), transparent 36%);
+  filter: blur(18px);
+  pointer-events: none;
+}
+
+.hero-banner-city {
+  z-index: 0;
+  inset: auto 56px 34px auto;
+  width: 46%;
+  height: 38%;
+  border-radius: 160px 160px 28px 28px;
+  background:
+    radial-gradient(circle at 16% 34%, rgba(255, 255, 255, 0.74), transparent 5%),
+    radial-gradient(circle at 28% 46%, rgba(200, 219, 255, 0.52), transparent 5%),
+    radial-gradient(circle at 40% 30%, rgba(232, 240, 255, 0.7), transparent 4%),
+    radial-gradient(circle at 54% 44%, rgba(197, 215, 255, 0.58), transparent 4.6%),
+    radial-gradient(circle at 66% 38%, rgba(255, 255, 255, 0.74), transparent 4.8%),
+    radial-gradient(circle at 78% 28%, rgba(206, 225, 255, 0.62), transparent 4.8%),
+    radial-gradient(circle at 84% 54%, rgba(164, 200, 255, 0.6), transparent 5%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(132, 171, 255, 0.04));
+  opacity: 0.72;
+  filter: blur(16px);
+  pointer-events: none;
+}
+
+.hero-banner-trails {
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.hero-banner-trails path {
+  fill: none;
+  stroke: rgba(178, 218, 255, 0.42);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 10px rgba(157, 209, 255, 0.42));
+}
+
+.hero-banner-spark {
+  inset: auto 24px 18px auto;
+  z-index: 2;
+  width: 50px;
+  height: 50px;
+  opacity: 0.8;
+  filter: drop-shadow(0 0 14px rgba(255, 255, 255, 0.42));
+  pointer-events: none;
+}
+
+.hero-banner-copy {
+  position: relative;
+  z-index: 3;
+  max-width: 580px;
+}
+
+.hero-banner-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  color: rgba(255, 255, 255, 0.96);
+  font-family: var(--font-body), sans-serif;
+  font-size: clamp(2rem, 3vw, 2.85rem);
+  font-weight: 500;
+  letter-spacing: -0.04em;
+}
+
+.hero-banner-brand svg {
+  flex: none;
+  filter: drop-shadow(0 16px 28px rgba(46, 105, 255, 0.36));
+}
+
+.hero-banner-copy h1 {
+  margin: 56px 0 26px;
+  max-width: 8.5ch;
+  color: rgba(255, 255, 255, 0.97);
+  font-family: var(--font-body), sans-serif;
+  font-size: clamp(3.5rem, 7vw, 5.9rem);
+  font-weight: 300;
+  line-height: 1.05;
+  letter-spacing: -0.055em;
+  text-wrap: balance;
+}
+
+.hero-banner-copy p {
+  margin: 0;
+  max-width: 26ch;
+  color: rgba(235, 241, 255, 0.9);
+  font-size: clamp(1.05rem, 2vw, 1.42rem);
+  line-height: 1.72;
+}
+
+.hero-banner-actions {
+  margin-top: 34px;
+}
+
+.hero-banner-actions .button {
+  min-height: 60px;
+  padding: 0 30px;
+  font-size: clamp(1rem, 1.6vw, 1.2rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.hero-banner-actions .button-primary {
+  background: linear-gradient(90deg, #2856f8 0%, #54b6ff 100%);
+  border: 1px solid rgba(164, 211, 255, 0.36);
+  box-shadow:
+    0 18px 40px rgba(55, 124, 255, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24);
+}
+
+.hero-banner-actions .button-secondary {
+  background: linear-gradient(180deg, rgba(64, 76, 151, 0.5), rgba(49, 58, 124, 0.34));
+  border: 1px solid rgba(156, 175, 255, 0.2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.hero-banner-actions .button:hover {
+  transform: translateY(-2px) scale(1.01);
 }
 
 .home-hero-grid {
@@ -1708,6 +1879,25 @@ textarea {
     display: none;
   }
 
+  .hero-banner-panel {
+    min-height: 520px;
+    padding: 30px 28px 34px;
+  }
+
+  .hero-banner-copy h1 {
+    margin-top: 42px;
+    max-width: 9ch;
+    font-size: clamp(3rem, 10vw, 4.6rem);
+  }
+
+  .hero-banner-city {
+    width: 58%;
+    height: 34%;
+    right: 24px;
+    bottom: 24px;
+    opacity: 0.6;
+  }
+
   .search-shell,
   .two-grid,
   .three-grid,
@@ -1798,11 +1988,75 @@ textarea {
     width: min(100vw - 20px, 100%);
   }
 
+  .hero-banner-shell {
+    padding: 10px;
+    border-radius: 26px;
+  }
+
+  .hero-banner-panel {
+    min-height: 470px;
+    padding: 24px 20px 28px;
+    border-radius: 22px;
+  }
+
+  .hero-banner-brand {
+    gap: 10px;
+    font-size: 1.7rem;
+  }
+
+  .hero-banner-brand svg {
+    width: 46px;
+    height: 34px;
+  }
+
+  .hero-banner-copy h1 {
+    margin: 34px 0 18px;
+    max-width: 9.4ch;
+    font-size: clamp(2.6rem, 12vw, 3.8rem);
+    line-height: 1.08;
+  }
+
+  .hero-banner-copy p {
+    max-width: 18ch;
+    font-size: 1rem;
+    line-height: 1.65;
+  }
+
+  .hero-banner-actions {
+    gap: 12px;
+  }
+
+  .hero-banner-actions .button {
+    min-height: 52px;
+    padding: 0 20px;
+    font-size: 0.98rem;
+  }
+
+  .hero-banner-city {
+    width: 72%;
+    height: 28%;
+    right: 12px;
+    bottom: 16px;
+  }
+
+  .hero-banner-spark {
+    right: 14px;
+    bottom: 12px;
+    width: 36px;
+    height: 36px;
+  }
+
   .topbar-row,
   .hero-actions,
   .footer-row {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .hero-banner-actions.hero-actions {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
   }
 
   .nav-actions {

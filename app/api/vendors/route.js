@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createVendorAccount } from "@/lib/repositories";
+import { createVendorAccount } from "@/lib/postgres-repositories";
 import { applySessionCookie } from "@/lib/session";
 
 export async function GET() {

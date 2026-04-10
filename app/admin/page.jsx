@@ -1,6 +1,6 @@
 import Link from "next/link";
 import AdminVendorManager from "@/components/admin/AdminVendorManager";
-import { getAdminDataForUser } from "@/lib/repositories";
+import { getAdminDataForUser } from "@/lib/postgres-repositories";
 import { getSessionFromServer } from "@/lib/session";
 
 export default async function AdminPage() {

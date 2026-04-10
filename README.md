@@ -1,6 +1,6 @@
 # Hair Force
 
-Hair Force is a StyleSeat-inspired multi-vendor beauty marketplace built with Next.js, React, Framer Motion, GSAP, and a Mongo-ready data layer using Mongoose.
+Hair Force is a StyleSeat-inspired multi-vendor beauty marketplace built with Next.js, React, Framer Motion, GSAP, and a PostgreSQL-ready data layer for marketplace-grade bookings and vendor operations.
 
 ## Included in this MVP
 
@@ -15,8 +15,8 @@ Hair Force is a StyleSeat-inspired multi-vendor beauty marketplace built with Ne
 - Admin moderation queue for approving or rejecting vendor listings
 - Deposit-ready booking flow with Stripe Elements support and a Stripe-capable checkout fallback
 - Local image upload API that stores assets in `public/uploads`, with optional Cloudinary delivery
-- Mongoose models for users, vendor profiles, services, and bookings
-- Demo fallback data when `MONGODB_URI` is not configured
+- PostgreSQL-backed repositories for users, vendor profiles, services, and bookings
+- Demo fallback data when `DATABASE_URL` is not configured
 
 ## Tech stack
 
@@ -24,7 +24,7 @@ Hair Force is a StyleSeat-inspired multi-vendor beauty marketplace built with Ne
 - React
 - Framer Motion
 - GSAP
-- MongoDB + Mongoose
+- PostgreSQL
 - bcryptjs
 - Stripe Node SDK
 - Stripe Elements
@@ -44,9 +44,9 @@ npm install
 npm run dev
 ```
 
-3. Optional: connect MongoDB, payments, and cloud media by copying `.env.example` to `.env.local` and setting:
+3. Optional: connect PostgreSQL, payments, and cloud media by copying `.env.example` to `.env.local` and setting:
 
-- `MONGODB_URI`
+- `DATABASE_URL`
 - `SESSION_SECRET`
 - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` and `STRIPE_SECRET_KEY` if you want Stripe Elements and real PaymentIntent creation
 - `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET` if you want uploads stored in Cloudinary instead of `public/uploads`
@@ -89,6 +89,7 @@ npm run dev
 - New vendors start in `pending` status until approved from `/admin`
 - Vendor availability is driven by recurring weekly rules plus optional blackout dates
 - If Stripe keys are missing, the booking flow falls back to a mock deposit flow for local development
+- If `DATABASE_URL` is present, the app auto-creates the PostgreSQL schema and seeds the initial demo marketplace data on first boot
 - If Cloudinary keys are missing, uploads are stored locally in `public/uploads`
 
 ## Demo accounts

@@ -2,7 +2,7 @@ import Link from "next/link";
 import Reveal from "@/components/animated/Reveal";
 import SearchBar from "@/components/ui/SearchBar";
 import { categories, cities } from "@/lib/data";
-import { getStylists } from "@/lib/repositories";
+import { getStylists } from "@/lib/postgres-repositories";
 import { formatCurrency } from "@/lib/utils";
 
 function ActiveFilters({ query, city, category }) {

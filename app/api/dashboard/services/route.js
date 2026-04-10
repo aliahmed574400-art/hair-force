@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createVendorService, getDashboardDataForUser } from "@/lib/repositories";
+import { createVendorService, getDashboardDataForUser } from "@/lib/postgres-repositories";
 import { getSessionFromRequest } from "@/lib/session";
 
 export async function GET(request) {

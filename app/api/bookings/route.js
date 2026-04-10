@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createBooking } from "@/lib/repositories";
+import { createBooking } from "@/lib/postgres-repositories";
 import { getSessionFromRequest } from "@/lib/session";
 
 export async function POST(request) {

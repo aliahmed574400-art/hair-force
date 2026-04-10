@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getStylists } from "@/lib/repositories";
+import { getStylists } from "@/lib/postgres-repositories";
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);

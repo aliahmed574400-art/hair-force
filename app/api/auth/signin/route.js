@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { signinUser } from "@/lib/repositories";
+import { signinUser } from "@/lib/postgres-repositories";
 import { applySessionCookie } from "@/lib/session";
 
 export async function POST(request) {

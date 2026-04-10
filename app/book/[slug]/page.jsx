@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import BookingForm from "@/components/ui/BookingForm";
-import { getStylistBySlug } from "@/lib/repositories";
+import { getStylistBySlug } from "@/lib/postgres-repositories";
 import { calculateDeposit, formatCurrency } from "@/lib/utils";
 
 export default async function BookingPage({ params }) {

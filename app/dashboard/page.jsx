@@ -1,7 +1,7 @@
 import Link from "next/link";
 import ClientDashboard from "@/components/dashboard/ClientDashboard";
 import VendorDashboardManager from "@/components/dashboard/VendorDashboardManager";
-import { getDashboardDataForUser } from "@/lib/repositories";
+import { getDashboardDataForUser } from "@/lib/postgres-repositories";
 import { getSessionFromServer } from "@/lib/session";
 
 export default async function DashboardPage() {

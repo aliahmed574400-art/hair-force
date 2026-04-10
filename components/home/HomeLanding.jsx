@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Reveal from "@/components/animated/Reveal";
-import HeroVisual from "@/components/home/HeroVisual";
+import HeroBanner from "@/components/home/HeroBanner";
 import PhoneFrame from "@/components/home/PhoneFrame";
 import StickySearchBar from "@/components/home/StickySearchBar";
 import {
@@ -8,10 +8,9 @@ import {
   homeServiceCategories,
   howItWorks,
   platformFeatures,
-  siteStats,
   testimonials
 } from "@/lib/data";
-import { getFeaturedStylists } from "@/lib/repositories";
+import { getFeaturedStylists } from "@/lib/postgres-repositories";
 import { formatCurrency } from "@/lib/utils";
 
 function HomeIcon({ name }) {
@@ -357,43 +356,9 @@ export default async function HomeLanding() {
   return (
     <main className="home-page">
       <section className="section page-intro home-hero-section">
-        <div className="container home-hero-grid">
-          <Reveal className="home-hero-copy" y={36}>
-            <span className="eyebrow">Hair Force marketplace</span>
-            <h1>Book the Best Stylists in Your City</h1>
-            <p className="home-hero-text">
-              A dark, premium booking experience for salons, beauty parlors, spas, barbers, nail artists,
-              and independent stylists. Discover trusted pros, compare profiles, and book instantly from a
-              polished marketplace designed to convert.
-            </p>
-
-            <div className="home-hero-actions hero-actions">
-              <Link href="/discover" className="button button-primary">
-                Find a Stylist
-              </Link>
-              <Link href="/join" className="button button-secondary">
-                Join as Stylist
-              </Link>
-            </div>
-
-            <div className="home-hero-tags">
-              <span className="hero-inline-chip">Glassmorphism UI</span>
-              <span className="hero-inline-chip">Live booking flow</span>
-              <span className="hero-inline-chip">Vendor growth tools</span>
-            </div>
-
-            <div className="home-stat-grid">
-              {siteStats.map((stat) => (
-                <div key={stat.label} className="home-stat-card">
-                  <strong>{stat.value}</strong>
-                  <span>{stat.label}</span>
-                </div>
-              ))}
-            </div>
-          </Reveal>
-
-          <Reveal delay={0.15} y={28}>
-            <HeroVisual />
+        <div className="container">
+          <Reveal y={26}>
+            <HeroBanner />
           </Reveal>
         </div>
       </section>
