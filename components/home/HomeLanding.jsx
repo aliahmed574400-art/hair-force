@@ -365,7 +365,7 @@ export default async function HomeLanding() {
     <main className="home-page">
       <section className="section page-intro home-hero-section">
         <div className="container">
-          <Reveal y={26}>
+          <Reveal className="hero-banner-reveal" y={26}>
             <HeroBanner />
           </Reveal>
         </div>
