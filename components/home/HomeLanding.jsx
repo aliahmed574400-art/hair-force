@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Reveal from "@/components/animated/Reveal";
+import CategoryCarousel from "@/components/home/CategoryCarousel";
 import HeroBanner from "@/components/home/HeroBanner";
 import PhoneFrame from "@/components/home/PhoneFrame";
 import StickySearchBar from "@/components/home/StickySearchBar";
@@ -240,20 +241,6 @@ function StarRating({ rating = 5 }) {
   );
 }
 
-function CategoryCard({ category, index }) {
-  return (
-    <Reveal className="category-card" delay={index * 0.06}>
-      <div className="category-card-media">
-        <img src={category.image} alt={category.label} loading="lazy" />
-      </div>
-      <div className="category-card-body">
-        <h3>{category.label}</h3>
-        <p>{category.description}</p>
-      </div>
-    </Reveal>
-  );
-}
-
 function StylistCard({ stylist, index }) {
   const specialty = stylist.specialties?.[0] || stylist.category;
   const initials = stylist.name
@@ -384,11 +371,7 @@ export default async function HomeLanding() {
               description="Browse the most-booked service types in a polished glass grid designed to get clients from interest to appointment quickly."
               center
             />
-            <div className="category-grid">
-              {homeServiceCategories.map((category, index) => (
-                <CategoryCard key={category.label} category={category} index={index} />
-              ))}
-            </div>
+            <CategoryCarousel categories={homeServiceCategories} />
           </HomeSectionShell>
         </div>
       </section>
