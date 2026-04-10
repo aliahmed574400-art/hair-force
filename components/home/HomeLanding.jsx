@@ -243,11 +243,13 @@ function StarRating({ rating = 5 }) {
 function CategoryCard({ category, index }) {
   return (
     <Reveal className="category-card" delay={index * 0.06}>
-      <div className="icon-bubble">
-        <HomeIcon name={category.icon} />
+      <div className="category-card-media">
+        <img src={category.image} alt={category.label} loading="lazy" />
       </div>
-      <h3>{category.label}</h3>
-      <p>{category.description}</p>
+      <div className="category-card-body">
+        <h3>{category.label}</h3>
+        <p>{category.description}</p>
+      </div>
     </Reveal>
   );
 }
@@ -375,7 +377,7 @@ export default async function HomeLanding() {
 
       <section className="section">
         <div className="container">
-          <HomeSectionShell>
+          <HomeSectionShell className="category-section-shell" panelClassName="category-section-panel">
             <SectionHeading
               eyebrow="Categories"
               title="Beauty services, organized for faster booking"
