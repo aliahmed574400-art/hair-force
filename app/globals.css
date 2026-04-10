@@ -922,15 +922,11 @@ textarea {
   width: 100%;
   height: 100%;
   min-height: 100%;
-  padding: 14px;
-  border-radius: 38px;
-  background:
-    linear-gradient(135deg, rgba(244, 248, 255, 0.84), rgba(197, 214, 255, 0.18)),
-    rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow:
-    0 36px 110px rgba(13, 29, 73, 0.22),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  padding: 0;
+  border-radius: 32px;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
 }
 
 .hero-banner-panel {
@@ -941,14 +937,14 @@ textarea {
   height: 100%;
   min-height: 100%;
   overflow: hidden;
-  border-radius: 28px;
+  border-radius: 32px;
   padding: 30px 34px 34px;
   background:
     radial-gradient(circle at 72% 18%, rgba(216, 229, 255, 0.5), transparent 13%),
     radial-gradient(circle at 82% 10%, rgba(116, 165, 255, 0.32), transparent 26%),
     linear-gradient(102deg, rgba(6, 11, 28, 0.98) 0%, rgba(17, 27, 69, 0.96) 42%, rgba(52, 84, 197, 0.84) 72%, rgba(99, 146, 255, 0.74) 100%);
-  border: 1px solid rgba(171, 203, 255, 0.16);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  border: 0;
+  box-shadow: 0 28px 80px rgba(8, 19, 52, 0.22);
 }
 
 .hero-particles-canvas,
@@ -1040,8 +1036,8 @@ textarea {
   gap: 14px;
   color: rgba(255, 255, 255, 0.96);
   font-family: var(--font-body), sans-serif;
-  font-size: clamp(1.8rem, 2.5vw, 2.4rem);
-  font-weight: 500;
+  font-size: clamp(1.65rem, 2.2vw, 2.15rem);
+  font-weight: 600;
   letter-spacing: -0.04em;
 }
 
@@ -1052,22 +1048,22 @@ textarea {
 
 .hero-banner-copy h1 {
   margin: clamp(18px, 3vh, 28px) 0 16px;
-  max-width: 10.4ch;
+  max-width: 11ch;
   color: rgba(255, 255, 255, 0.97);
   font-family: var(--font-body), sans-serif;
-  font-size: clamp(2.9rem, 5.6vw, 4.85rem);
-  font-weight: 300;
-  line-height: 1.02;
+  font-size: clamp(2.35rem, 4.7vw, 4rem);
+  font-weight: 700;
+  line-height: 1.04;
   letter-spacing: -0.055em;
   text-wrap: balance;
 }
 
 .hero-banner-copy p {
   margin: 0;
-  max-width: 26ch;
+  max-width: 28ch;
   color: rgba(235, 241, 255, 0.9);
-  font-size: clamp(0.98rem, 1.5vw, 1.24rem);
-  line-height: 1.65;
+  font-size: clamp(0.92rem, 1.18vw, 1.08rem);
+  line-height: 1.56;
 }
 
 .hero-banner-actions {
@@ -1202,13 +1198,13 @@ textarea {
 
 .sticky-search-section {
   position: relative;
-  z-index: 25;
+  z-index: 2;
   padding-top: 0;
 }
 
 .sticky-search-dock {
   position: relative;
-  min-height: 112px;
+  min-height: 0;
 }
 
 .sticky-search-card {
@@ -1224,16 +1220,6 @@ textarea {
   border: 1px solid rgba(171, 203, 255, 0.16);
   box-shadow: 0 24px 60px rgba(8, 19, 52, 0.24);
   backdrop-filter: blur(24px);
-}
-
-.sticky-search-dock.is-docked .sticky-search-card {
-  position: fixed;
-  top: 86px;
-  left: 50%;
-  z-index: 40;
-  width: min(1180px, calc(100vw - 32px));
-  transform: translateX(-50%);
-  box-shadow: 0 28px 80px rgba(2, 8, 23, 0.48);
 }
 
 .sticky-search-field {
@@ -2155,13 +2141,13 @@ textarea {
   }
 
   .hero-banner-brand {
-    font-size: clamp(1.6rem, 3vw, 2rem);
+    font-size: clamp(1.45rem, 2.6vw, 1.8rem);
   }
 
   .hero-banner-copy h1 {
     margin-top: 14px;
     max-width: 10ch;
-    font-size: clamp(2.6rem, 7vw, 3.9rem);
+    font-size: clamp(2.1rem, 5.8vw, 3.2rem);
   }
 
   .hero-banner-city {
@@ -2208,10 +2194,6 @@ textarea {
   .preview-phone-summary,
   .preview-dashboard-metrics {
     grid-template-columns: 1fr;
-  }
-
-  .sticky-search-dock.is-docked .sticky-search-card {
-    width: calc(100vw - 24px);
   }
 
   .platform-spotlight-panel {
@@ -2280,8 +2262,7 @@ textarea {
   }
 
   .hero-banner-shell {
-    padding: 10px;
-    border-radius: 26px;
+    border-radius: 22px;
   }
 
   .home-section-shell {
@@ -2308,7 +2289,7 @@ textarea {
 
   .hero-banner-brand {
     gap: 10px;
-    font-size: 1.45rem;
+    font-size: 1.2rem;
   }
 
   .hero-banner-brand svg {
@@ -2319,14 +2300,14 @@ textarea {
   .hero-banner-copy h1 {
     margin: 12px 0 12px;
     max-width: 10.2ch;
-    font-size: clamp(2.2rem, 9.6vw, 3.2rem);
+    font-size: clamp(1.85rem, 7.8vw, 2.7rem);
     line-height: 1.08;
   }
 
   .hero-banner-copy p {
     max-width: 22ch;
-    font-size: 0.95rem;
-    line-height: 1.58;
+    font-size: 0.88rem;
+    line-height: 1.52;
   }
 
   .hero-banner-actions {
@@ -2409,12 +2390,7 @@ textarea {
   }
 
   .sticky-search-dock {
-    min-height: 296px;
-  }
-
-  .sticky-search-dock.is-docked .sticky-search-card {
-    top: 76px;
-    width: calc(100vw - 20px);
+    min-height: 0;
   }
 
   .footer-bottom,

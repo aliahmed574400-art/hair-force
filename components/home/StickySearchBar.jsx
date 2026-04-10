@@ -1,34 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { cn } from "@/lib/utils";
+import { useMemo, useState } from "react";
 
 const CITIES = ["Karachi", "Lahore", "Islamabad", "Rawalpindi"];
 const SERVICES = ["Haircut", "Beard", "Styling", "Coloring", "Facial"];
 
 export default function StickySearchBar() {
-  const [isDocked, setIsDocked] = useState(false);
   const [selectedDate, setSelectedDate] = useState("");
-
-  useEffect(() => {
-    function handleScroll() {
-      setIsDocked(window.scrollY > 260);
-    }
-
-    const today = new Date();
-    setSelectedDate(today.toISOString().slice(0, 10));
-    handleScroll();
-    window.addEventListener("scroll", handleScroll, { passive: true });
-
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  const fallbackDate = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
   return (
     <section className="section-tight sticky-search-section" aria-label="Search and filters">
       <div className="container">
         <div className="home-section-shell home-search-shell">
           <div className="home-section-panel home-search-panel">
-            <div className={cn("sticky-search-dock", isDocked && "is-docked")}>
+            <div className="sticky-search-dock">
               <form className="sticky-search-card" action="/discover">
                 <label className="sticky-search-field">
                   <span className="sticky-search-label">Location</span>
@@ -59,7 +45,7 @@ export default function StickySearchBar() {
                   <input
                     name="date"
                     type="date"
-                    value={selectedDate}
+                    value={selectedDate || fallbackDate}
                     onChange={(event) => setSelectedDate(event.target.value)}
                   />
                 </label>
