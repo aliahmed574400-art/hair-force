@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 const GAP = 18;
@@ -17,8 +18,13 @@ function CategoryCarouselCard({ category }) {
         <img src={category.image} alt={category.label} loading="lazy" />
       </div>
       <div className="category-card-body">
-        <h3>{category.label}</h3>
-        <p>{category.description}</p>
+        <div className="category-card-copy">
+          <h3>{category.label}</h3>
+          <p>{category.description}</p>
+        </div>
+        <Link href={`/discover?category=${encodeURIComponent(category.label)}`} className="button button-primary category-card-action">
+          Explore now
+        </Link>
       </div>
     </article>
   );
