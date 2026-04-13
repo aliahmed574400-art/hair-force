@@ -2,8 +2,8 @@
 
 import { useEffect, useRef } from "react";
 
-const MOBILE_PARTICLES = 70;
-const DESKTOP_PARTICLES = 130;
+const MOBILE_PARTICLES = 150;
+const DESKTOP_PARTICLES = 260;
 const INTERACTION_RADIUS = 120;
 
 function clamp(value, min, max) {
@@ -14,17 +14,23 @@ function createParticle(width, height, large = false) {
   return {
     x: Math.random() * width,
     y: Math.random() * height,
-    vx: (Math.random() - 0.5) * (large ? 0.08 : 0.18),
-    vy: (Math.random() - 0.5) * (large ? 0.06 : 0.16),
+    vx: (Math.random() - 0.5) * (large ? 0.24 : 0.4),
+    vy: (Math.random() - 0.5) * (large ? 0.18 : 0.34),
     radius: large ? Math.random() * 3.8 + 2.8 : Math.random() * 1.8 + 0.4,
     alpha: large ? Math.random() * 0.18 + 0.08 : Math.random() * 0.55 + 0.18,
     blur: large ? 18 : 8,
     tint: Math.random(),
-    sway: Math.random() * Math.PI * 2
+    sway: Math.random() * Math.PI * 2,
+    orbitX: large ? Math.random() * 8 + 6 : Math.random() * 4 + 2,
+    orbitY: large ? Math.random() * 6 + 4 : Math.random() * 3 + 1.5
   };
 }
 
-export default function HeroParticles() {
+export default function HeroParticles({
+  className = "hero-particles-canvas",
+  mobileCount = MOBILE_PARTICLES,
+  desktopCount = DESKTOP_PARTICLES
+}) {
   const canvasRef = useRef(null);
 
   useEffect(() => {
@@ -58,7 +64,7 @@ export default function HeroParticles() {
       canvas.style.height = `${height}px`;
       context.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      const count = width < 760 ? MOBILE_PARTICLES : DESKTOP_PARTICLES;
+      const count = width < 760 ? mobileCount : desktopCount;
       particles = Array.from({ length: count }, (_, index) =>
         createParticle(width, height, index < count * 0.18)
       );
@@ -75,8 +81,8 @@ export default function HeroParticles() {
           ? `rgba(126, 184, 255, ${particle.alpha})`
           : `rgba(255, 255, 255, ${particle.alpha})`;
       context.arc(
-        particle.x + Math.sin(time * 0.00055 + particle.sway) * (particle.radius > 2 ? 5 : 2),
-        particle.y + Math.cos(time * 0.00035 + particle.sway) * (particle.radius > 2 ? 4 : 1.2),
+        particle.x + Math.sin(time * 0.0008 + particle.sway) * particle.orbitX,
+        particle.y + Math.cos(time * 0.00052 + particle.sway) * particle.orbitY,
         particle.radius,
         0,
         Math.PI * 2
@@ -101,18 +107,18 @@ export default function HeroParticles() {
 
         particle.x += particle.vx;
         particle.y += particle.vy;
-        particle.vx *= 0.985;
-        particle.vy *= 0.985;
+        particle.vx *= 0.996;
+        particle.vy *= 0.996;
 
         if (particle.x < -20) particle.x = width + 20;
         if (particle.x > width + 20) particle.x = -20;
         if (particle.y < -20) particle.y = height + 20;
         if (particle.y > height + 20) particle.y = -20;
 
-        particle.vx += (Math.random() - 0.5) * 0.004;
-        particle.vy += (Math.random() - 0.5) * 0.003;
-        particle.vx = clamp(particle.vx, -0.24, 0.24);
-        particle.vy = clamp(particle.vy, -0.18, 0.18);
+        particle.vx += (Math.random() - 0.5) * 0.012;
+        particle.vy += (Math.random() - 0.5) * 0.01;
+        particle.vx = clamp(particle.vx, -0.58, 0.58);
+        particle.vy = clamp(particle.vy, -0.46, 0.46);
 
         drawParticle(particle, time);
       }
@@ -149,5 +155,5 @@ export default function HeroParticles() {
     };
   }, []);
 
-  return <canvas ref={canvasRef} className="hero-particles-canvas" aria-hidden="true" />;
+  return <canvas ref={canvasRef} className={className} aria-hidden="true" />;
 }

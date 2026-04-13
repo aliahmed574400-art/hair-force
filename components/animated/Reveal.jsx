@@ -2,9 +2,11 @@
 
 import { motion } from "framer-motion";
 
-export default function Reveal({ children, className, delay = 0, y = 26, style }) {
+export default function Reveal({ children, className, delay = 0, y = 26, style, as = "div" }) {
+  const MotionComponent = motion[as] ?? motion.div;
+
   return (
-    <motion.div
+    <MotionComponent
       className={className}
       style={style}
       initial={{ opacity: 0, y }}
@@ -13,6 +15,6 @@ export default function Reveal({ children, className, delay = 0, y = 26, style }
       transition={{ duration: 0.6, delay, ease: "easeOut" }}
     >
       {children}
-    </motion.div>
+    </MotionComponent>
   );
 }
