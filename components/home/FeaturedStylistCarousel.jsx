@@ -9,11 +9,11 @@ const GAP = 28;
 
 const FEATURED_SHOWCASE_STYLISTS = [
   {
-    slug: "brusko-barbers",
-    name: "Brusko Barbers",
+    slug: "cristan",
+    name: "Cristan",
     rating: 5.0,
     reviewCount: 289,
-    location: "Jumeirah Lakes Towers, Dubai",
+    location: "USA",
     category: "Hair Salon",
     image: "/featured-stylists/fresha-01.jpg"
   },

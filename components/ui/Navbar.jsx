@@ -3,9 +3,8 @@ import NavbarClient from "@/components/ui/NavbarClient";
 
 const links = [
   { href: "/discover", label: "Browse Stylists" },
-  { href: "/join", label: "Become a Stylist" },
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/signin", label: "Sign In" }
+  { href: "/about", label: "About Us" },
+  { href: "/ai", label: "Hairforce AI" }
 ];
 
 export default function Navbar() {

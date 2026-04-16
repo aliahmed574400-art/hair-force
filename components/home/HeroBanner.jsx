@@ -4,7 +4,7 @@ import HeroParticles from "@/components/home/HeroParticles";
 function HeroLogo() {
   return (
     <div className="hero-banner-brand" aria-label="Hair Force">
-      <span>Hair Force</span>
+
     </div>
   );
 }

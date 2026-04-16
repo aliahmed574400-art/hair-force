@@ -73,9 +73,6 @@ export default function NavbarClient({ sessionUser, links }) {
         </nav>
 
         <div className="nav-actions">
-          <Link href="/discover" className="button button-secondary">
-            Find a stylist
-          </Link>
           {sessionUser ? (
             <>
               <Link href={dashboardHref} className="button button-secondary">
@@ -122,9 +119,6 @@ export default function NavbarClient({ sessionUser, links }) {
           <div className="mobile-nav-divider" />
 
           <div className="mobile-nav-actions">
-            <Link href="/discover" className="button button-secondary">
-              Find a stylist
-            </Link>
             {sessionUser ? (
               <>
                 <Link href={dashboardHref} className="button button-secondary">
