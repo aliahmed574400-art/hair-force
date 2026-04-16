@@ -77,29 +77,23 @@ textarea {
   overflow-x: clip;
   overflow-y: visible;
   background:
-    radial-gradient(
-      circle at 84% 16%,
+    radial-gradient(circle at 84% 16%,
       rgba(255, 255, 255, 0.96) 0%,
       rgba(255, 255, 255, 0.82) 12%,
       rgba(241, 245, 254, 0.62) 26%,
       rgba(241, 245, 254, 0.22) 42%,
-      transparent 58%
-    ),
-    radial-gradient(
-      circle at 18% 82%,
+      transparent 58%),
+    radial-gradient(circle at 18% 82%,
       rgba(255, 255, 255, 0.22) 0%,
       rgba(241, 245, 254, 0.16) 18%,
-      transparent 40%
-    ),
-    linear-gradient(
-      118deg,
+      transparent 40%),
+    linear-gradient(118deg,
       var(--site-gradient-start) 0%,
       var(--site-gradient-soft) 26%,
       var(--site-gradient-mid) 54%,
       var(--site-gradient-end) 76%,
       var(--site-gradient-soft) 90%,
-      var(--site-gradient-white) 100%
-    );
+      var(--site-gradient-white) 100%);
   background-size: 100% 100%, 100% 100%, 100% 100%;
 }
 
@@ -127,15 +121,13 @@ textarea {
   width: 680px;
   height: 680px;
   background:
-    radial-gradient(
-      circle,
+    radial-gradient(circle,
       rgba(255, 255, 255, 0.88) 0%,
       rgba(255, 255, 255, 0.72) 12%,
       rgba(241, 245, 254, 0.58) 24%,
       rgba(207, 222, 253, 0.34) 42%,
       rgba(96, 165, 250, 0.14) 56%,
-      transparent 76%
-    );
+      transparent 76%);
 }
 
 .site-noise {
@@ -1042,7 +1034,7 @@ textarea {
     radial-gradient(circle at 78% 12%, rgba(59, 130, 246, 0.1), transparent 24%);
 }
 
-.home-page > * {
+.home-page>* {
   position: relative;
   z-index: 1;
 }
@@ -1072,11 +1064,11 @@ textarea {
   min-height: 100%;
 }
 
-.hero-banner-reveal > * {
+.hero-banner-reveal>* {
   flex: 1;
 }
 
-.home-page > .section:not(.home-hero-section) {
+.home-page>.section:not(.home-hero-section) {
   padding: 18px 0 0;
 }
 
@@ -1121,7 +1113,7 @@ textarea {
   pointer-events: none;
 }
 
-.home-section-panel > * {
+.home-section-panel>* {
   position: relative;
   z-index: 1;
 }
@@ -1521,7 +1513,7 @@ textarea {
   pointer-events: none;
 }
 
-.home-hero-copy > * {
+.home-hero-copy>* {
   position: relative;
   z-index: 1;
 }
@@ -2599,7 +2591,7 @@ textarea {
 }
 
 .how-it-works-icon-wrap:hover .how-it-works-hover-card,
-.how-it-works-icon-trigger:focus-visible + .how-it-works-hover-card {
+.how-it-works-icon-trigger:focus-visible+.how-it-works-hover-card {
   opacity: 1;
   visibility: visible;
   transform: translateY(-50%) translateX(0);
@@ -2618,7 +2610,7 @@ textarea {
 }
 
 .how-it-works-item:last-child .how-it-works-icon-wrap:hover .how-it-works-hover-card,
-.how-it-works-item:last-child .how-it-works-icon-trigger:focus-visible + .how-it-works-hover-card {
+.how-it-works-item:last-child .how-it-works-icon-trigger:focus-visible+.how-it-works-hover-card {
   transform: translateY(-50%) translateX(0);
 }
 
@@ -2640,6 +2632,7 @@ textarea {
 }
 
 @keyframes how-it-works-icon-halo {
+
   0%,
   100% {
     transform: scale(0.92);
@@ -2692,6 +2685,7 @@ textarea {
 }
 
 @keyframes how-story-background-shift {
+
   0%,
   100% {
     transform: translate3d(0, 0, 0) scale(1);
@@ -2783,7 +2777,7 @@ textarea {
 }
 
 .how-story-copy p,
-.how-story-mobile > p {
+.how-story-mobile>p {
   margin: 0;
   max-width: 25ch;
   color: rgba(39, 56, 94, 0.74);
@@ -3222,11 +3216,9 @@ textarea {
   inset: 50% 10px auto;
   height: 2px;
   border-radius: 999px;
-  background: repeating-linear-gradient(
-    90deg,
-    rgba(202, 209, 224, 0.92) 0 10px,
-    transparent 10px 18px
-  );
+  background: repeating-linear-gradient(90deg,
+      rgba(202, 209, 224, 0.92) 0 10px,
+      transparent 10px 18px);
   transform: translateY(-50%);
 }
 
@@ -3510,10 +3502,13 @@ textarea {
   width: 46px;
   height: 46px;
   border-radius: 18px;
-  background:
-    radial-gradient(circle at 50% 22%, rgba(255, 255, 255, 0.58), transparent 22%),
-    radial-gradient(circle at 50% 70%, rgba(255, 255, 255, 0.16), transparent 28%),
-    linear-gradient(180deg, rgba(103, 150, 255, 0.86), rgba(27, 55, 133, 0.88));
+
+}
+
+.how-story-mini-card-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .how-story-mini-card strong,
@@ -4532,6 +4527,7 @@ textarea {
 }
 
 @keyframes app-preview-float {
+
   0%,
   100% {
     transform: translateY(0);
@@ -5020,7 +5016,7 @@ textarea {
   pointer-events: none;
 }
 
-.footer-shell > * {
+.footer-shell>* {
   position: relative;
   z-index: 1;
 }
@@ -5196,7 +5192,7 @@ textarea {
   padding: 0 18px;
 }
 
-.footer-link-row-centered a + a::before {
+.footer-link-row-centered a+a::before {
   content: "";
   position: absolute;
   left: 0;
@@ -5314,7 +5310,7 @@ textarea {
     letter-spacing: 0.14em;
   }
 
-  .how-story-mobile > p {
+  .how-story-mobile>p {
     max-width: 26ch;
     font-size: 0.96rem;
   }
@@ -5418,6 +5414,7 @@ textarea {
 }
 
 @media (max-width: 1100px) {
+
   .hero-grid,
   .listing-grid,
   .profile-hero,
@@ -5569,7 +5566,7 @@ textarea {
     display: none;
   }
 
-   .nav-actions {
+  .nav-actions {
     display: none;
   }
 
@@ -5789,16 +5786,16 @@ textarea {
   }
 
   .how-it-works-icon-wrap:hover .how-it-works-hover-card,
-  .how-it-works-icon-trigger:focus-visible + .how-it-works-hover-card,
+  .how-it-works-icon-trigger:focus-visible+.how-it-works-hover-card,
   .how-it-works-item.is-top .how-it-works-icon-wrap:hover .how-it-works-hover-card,
-  .how-it-works-item.is-top .how-it-works-icon-trigger:focus-visible + .how-it-works-hover-card,
+  .how-it-works-item.is-top .how-it-works-icon-trigger:focus-visible+.how-it-works-hover-card,
   .how-it-works-item.is-bottom .how-it-works-icon-wrap:hover .how-it-works-hover-card,
-  .how-it-works-item.is-bottom .how-it-works-icon-trigger:focus-visible + .how-it-works-hover-card {
+  .how-it-works-item.is-bottom .how-it-works-icon-trigger:focus-visible+.how-it-works-hover-card {
     transform: translateY(50%) translateX(0);
   }
 
   .how-it-works-item:last-child .how-it-works-icon-wrap:hover .how-it-works-hover-card,
-  .how-it-works-item:last-child .how-it-works-icon-trigger:focus-visible + .how-it-works-hover-card {
+  .how-it-works-item:last-child .how-it-works-icon-trigger:focus-visible+.how-it-works-hover-card {
     transform: translateY(50%) translateX(0);
   }
 
@@ -5838,8 +5835,7 @@ textarea {
     gap: 20px;
   }
 
-  .testimonial-showcase-copy h2 {
-  }
+  .testimonial-showcase-copy h2 {}
 }
 
 @media (max-width: 640px) {
