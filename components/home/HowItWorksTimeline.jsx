@@ -80,13 +80,13 @@ function SearchScene({ active }) {
             animate={
               active
                 ? {
-                    y: [0, -8, 0],
-                    scale: marker.featured ? [1, 1.08, 1] : [0.96, 1.04, 0.96]
-                  }
+                  y: [0, -8, 0],
+                  scale: marker.featured ? [1, 1.08, 1] : [0.96, 1.04, 0.96]
+                }
                 : {
-                    y: 0,
-                    scale: 1
-                  }
+                  y: 0,
+                  scale: 1
+                }
             }
             transition={{
               duration: marker.featured ? 1.7 : 2.1,
@@ -141,17 +141,17 @@ function ChooseScene({ active }) {
           animate={
             active
               ? {
-                  x: [28 + index * 10, 0],
-                  y: [0, -8, 0],
-                  opacity: [0, 1],
-                  rotate: [index % 2 === 0 ? -2 : 2, 0]
-                }
+                x: [28 + index * 10, 0],
+                y: [0, -8, 0],
+                opacity: [0, 1],
+                rotate: [index % 2 === 0 ? -2 : 2, 0]
+              }
               : {
-                  x: index * 6,
-                  y: index * 6,
-                  opacity: 0.7,
-                  rotate: 0
-                }
+                x: index * 6,
+                y: index * 6,
+                opacity: 0.7,
+                rotate: 0
+              }
           }
           transition={{
             duration: 0.72,
@@ -161,6 +161,7 @@ function ChooseScene({ active }) {
           whileHover={{ y: -10, scale: 1.04, boxShadow: "0 28px 48px rgba(59, 130, 246, 0.18)" }}
         >
           <div className="how-story-mini-card-avatar" />
+          <img src="/app-preview/trendy-studio.webp" alt="Trendy Studio preview" className="app-preview-phone-image app-preview-phone-image-primary" />
           <div>
             <strong>{card.title}</strong>
             <span>{card.meta}</span>
@@ -197,13 +198,13 @@ function BookScene({ active }) {
                 animate={
                   active && isSelected
                     ? {
-                        scale: [1, 1.08, 1],
-                        boxShadow: [
-                          "0 0 0 rgba(96, 165, 250, 0)",
-                          "0 0 26px rgba(96, 165, 250, 0.28)",
-                          "0 0 0 rgba(96, 165, 250, 0)"
-                        ]
-                      }
+                      scale: [1, 1.08, 1],
+                      boxShadow: [
+                        "0 0 0 rgba(96, 165, 250, 0)",
+                        "0 0 26px rgba(96, 165, 250, 0.28)",
+                        "0 0 0 rgba(96, 165, 250, 0)"
+                      ]
+                    }
                     : { scale: 1 }
                 }
                 transition={{
@@ -331,10 +332,10 @@ function DesktopCard({ step, index, activeIndex, rawCardProgress }) {
               animate={
                 isActive
                   ? {
-                      y: step.icon === "search" ? [0, -4, 0] : [0, -3, 0],
-                      rotate: step.icon === "sparkle" ? [0, 10, -10, 0] : [0, 3, -3, 0],
-                      scale: [1, 1.04, 1]
-                    }
+                    y: step.icon === "search" ? [0, -4, 0] : [0, -3, 0],
+                    rotate: step.icon === "sparkle" ? [0, 10, -10, 0] : [0, 3, -3, 0],
+                    scale: [1, 1.04, 1]
+                  }
                   : { y: 0, rotate: 0, scale: 1 }
               }
               transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
@@ -470,9 +471,8 @@ export default function HowItWorksTimeline({ steps }) {
                 {steps.map((step, index) => (
                   <div
                     key={`progress-${step.step}`}
-                    className={`how-story-progress-item ${
-                      index === activeIndex ? "is-active" : index < activeIndex ? "is-complete" : ""
-                    }`}
+                    className={`how-story-progress-item ${index === activeIndex ? "is-active" : index < activeIndex ? "is-complete" : ""
+                      }`}
                   >
                     <span className="how-story-progress-number">{step.step}</span>
                     <div>

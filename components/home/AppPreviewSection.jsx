@@ -29,11 +29,11 @@ export default function AppPreviewSection() {
           <div className="app-preview-media-grid">
             <div className="app-preview-phone app-preview-phone-primary">
               <div className="app-preview-phone-screen-media">
-                <img
+                {/* <img
                   src="/app-preview/trendy-studio.webp"
                   alt="Trendy Studio preview"
                   className="app-preview-phone-image app-preview-phone-image-primary"
-                />
+                /> */}
               </div>
             </div>
 

@@ -8,7 +8,7 @@ export default function BusinessPromoSection() {
   return (
     <Reveal style={{ padding: 34 }}>
       <div className="two-grid" style={{ alignItems: "center", gap: "64px" }}>
-        
+
         <div className="section-heading" style={{ marginBottom: 0 }}>
           <span className="eyebrow">Hair Force for business</span>
           <h2 style={{ fontSize: "2.8rem" }}>Supercharge your salon</h2>
@@ -36,7 +36,7 @@ export default function BusinessPromoSection() {
           </div>
         </div>
 
-        <div style={{ position: "relative", width: "100%", overflow: "hidden", borderRadius: 24, boxShadow: "0 24px 64px rgba(0,0,0,0.12)" }}>
+        <div style={{ position: "relative", width: "100%", overflow: "hidden" }}>
           <Image
             src="/business-promo/hairforce-business-promo.png"
             alt="Hair Force business dashboard and mobile booking preview"
