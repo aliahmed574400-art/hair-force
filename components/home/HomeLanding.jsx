@@ -4,6 +4,7 @@ import AppPreviewSection from "@/components/home/AppPreviewSection";
 import CategoryCarousel from "@/components/home/CategoryCarousel";
 import FaqAccordion from "@/components/home/FaqAccordion";
 import FeaturedStylistCarousel from "@/components/home/FeaturedStylistCarousel";
+import BusinessPromoSection from "@/components/home/BusinessPromoSection";
 import HeroBanner from "@/components/home/HeroBanner";
 import HowItWorksTimeline from "@/components/home/HowItWorksTimeline";
 import StickySearchBar from "@/components/home/StickySearchBar";
@@ -16,7 +17,6 @@ import {
   testimonials,
   whyHairForceCards
 } from "@/lib/data";
-import { getFeaturedStylists } from "@/lib/postgres-repositories";
 
 function HomeIcon({ name }) {
   switch (name) {
@@ -264,8 +264,6 @@ function HomeSectionShell({ children, className = "", panelClassName = "" }) {
 }
 
 export default async function HomeLanding() {
-  const featuredStylists = await getFeaturedStylists();
-
   return (
     <main className="home-page">
       <section className="section page-intro home-hero-section">
@@ -281,12 +279,6 @@ export default async function HomeLanding() {
       <section className="section category-home-section">
         <div className="container">
           <HomeSectionShell className="category-section-shell" panelClassName="category-section-panel">
-            <SectionHeading
-              eyebrow="Categories"
-              title="Explore Services"
-              description="Everything you need, from quick trims to full transformations"
-              center
-            />
             <CategoryCarousel categories={homeServiceCategories} />
           </HomeSectionShell>
         </div>
@@ -301,7 +293,7 @@ export default async function HomeLanding() {
               description="Browse professionals, compare styles, and book with confidence"
               center
             />
-            <FeaturedStylistCarousel stylists={featuredStylists} />
+            <FeaturedStylistCarousel />
           </HomeSectionShell>
         </div>
       </section>
@@ -309,11 +301,6 @@ export default async function HomeLanding() {
       <section className="section">
         <div className="container">
           <HomeSectionShell className="process-section-shell">
-            <SectionHeading
-              eyebrow="How It Works"
-              title="How Hair Force Works"
-              center
-            />
             <HowItWorksTimeline steps={howItWorks} />
           </HomeSectionShell>
         </div>
@@ -355,6 +342,12 @@ export default async function HomeLanding() {
           >
             <TestimonialCarousel testimonials={testimonials} />
           </HomeSectionShell>
+        </div>
+      </section>
+
+      <section className="section">
+        <div className="container">
+          <BusinessPromoSection />
         </div>
       </section>
 

@@ -1,72 +1,146 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Reveal from "@/components/animated/Reveal";
 
-const GAP = 18;
+import Image from "next/image";
 
-const FEATURED_STYLIST_IMAGES = {
-  "noor-atelier":
-    "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80",
-  "rayan-fade-club":
-    "https://images.unsplash.com/photo-1517832606299-7ae9b720a186?auto=format&fit=crop&w=900&q=80",
-  "safa-skin-spa":
-    "https://images.unsplash.com/photo-1515377905703-c4788e51af15?auto=format&fit=crop&w=900&q=80",
-  "zoya-bridal-room":
-    "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=900&q=80"
-};
+const GAP = 28;
+
+const FEATURED_SHOWCASE_STYLISTS = [
+  {
+    slug: "brusko-barbers",
+    name: "Brusko Barbers",
+    rating: 5.0,
+    reviewCount: 289,
+    location: "Jumeirah Lakes Towers, Dubai",
+    category: "Hair Salon",
+    image: "/featured-stylists/fresha-01.jpg"
+  },
+  {
+    slug: "ace-hair-and-nail-salon",
+    name: "Ace Hair and Nail Salon",
+    rating: 4.8,
+    reviewCount: 4958,
+    location: "Al Bustan, Al Khobar",
+    category: "Beauty Salon",
+    image: "/featured-stylists/fresha-02.jpg"
+  },
+  {
+    slug: "eugenie-salon",
+    name: "Eugenie Salon",
+    rating: 4.8,
+    reviewCount: 608,
+    location: "Al Olaya, Riyadh",
+    category: "Beauty Salon",
+    image: "/featured-stylists/fresha-03.jpg"
+  },
+  {
+    slug: "yin-salon-and-spa",
+    name: "Yin Salon and Spa",
+    rating: 4.9,
+    reviewCount: 498,
+    location: "Al Masiaf, Riyadh",
+    category: "Hair Salon",
+    image: "/featured-stylists/fresha-04.jpg"
+  },
+  {
+    slug: "top-one-salon-spa",
+    name: "Top One Salon Spa",
+    rating: 4.9,
+    reviewCount: 533,
+    location: "Muscat Governorate, Muscat",
+    category: "Spa",
+    image: "/featured-stylists/fresha-05.jpg"
+  },
+  {
+    slug: "farzaneh-beauty-salon",
+    name: "Farzaneh Beauty Salon",
+    rating: 4.8,
+    reviewCount: 412,
+    location: "Bowsher, Muscat",
+    category: "Beauty Salon",
+    image: "/featured-stylists/fresha-06.jpg"
+  },
+  {
+    slug: "goat-barber",
+    name: "GOAT Barber",
+    rating: 4.9,
+    reviewCount: 441,
+    location: "Muscat Governorate, Muscat",
+    category: "Barbershop",
+    image: "/featured-stylists/fresha-07.jpg"
+  },
+  {
+    slug: "alchemic-beauty-studio",
+    name: "Alchemic Beauty Studio",
+    rating: 4.8,
+    reviewCount: 267,
+    location: "Mulund East, Mumbai",
+    category: "Beauty Studio",
+    image: "/featured-stylists/fresha-08.jpg"
+  },
+  {
+    slug: "the-lair-man",
+    name: "The Lair Man",
+    rating: 4.9,
+    reviewCount: 384,
+    location: "Khar West, Mumbai",
+    category: "Barbershop",
+    image: "/featured-stylists/fresha-09.jpg"
+  }
+];
 
 function getCardsPerView(width) {
-  if (width <= 760) return 1;
-  if (width <= 1180) return 2;
+  if (width <= 640) return 1;
+  if (width <= 860) return 2;
+  if (width <= 1100) return 3;
   return 4;
 }
 
-function getStylistImage(stylist) {
-  if (stylist.coverImage) return stylist.coverImage;
-  if (Array.isArray(stylist.galleryImages) && stylist.galleryImages[0]) return stylist.galleryImages[0];
-  return FEATURED_STYLIST_IMAGES[stylist.slug] || FEATURED_STYLIST_IMAGES["rayan-fade-club"];
+function formatReviewCount(value) {
+  return new Intl.NumberFormat("en-US").format(value);
 }
 
-function StarRating({ rating = 5 }) {
+function RatingBadge({ rating, reviewCount }) {
   return (
-    <div className="rating-row featured-card-rating-row" aria-label={`${rating} star rating`}>
-      {Array.from({ length: 5 }).map((_, index) => (
-        <span key={index} className={`rating-star ${index < Math.round(rating) ? "is-active" : ""}`}>
-          &#9733;
-        </span>
-      ))}
-      <span className="featured-card-rating-value">{rating.toFixed(1)}</span>
+    <div className="featured-salon-rating">
+      <span className="featured-salon-star" aria-hidden="true">
+        ★
+      </span>
+      <span className="featured-salon-score">{rating.toFixed(1)}</span>
+      <span className="featured-salon-review-count">({formatReviewCount(reviewCount)})</span>
     </div>
   );
 }
 
-function FeaturedStylistCard({ stylist, index }) {
-  const image = getStylistImage(stylist);
-
+function FeaturedSalonCard({ stylist, index }) {
   return (
-    <Reveal className="featured-stylist-card featured-stylist-card-portrait" delay={index * 0.06}>
-      <div className="featured-stylist-image-wrap">
-        <img src={image} alt={stylist.name} loading="lazy" className="featured-stylist-image" />
+    <Reveal className="featured-salon-card" delay={index * 0.05}>
+      <div className="featured-salon-image-shell">
+        <Image
+          src={stylist.image}
+          alt={stylist.name}
+          fill
+          sizes="(max-width: 760px) 100vw, (max-width: 1080px) 50vw, (max-width: 1400px) 33vw, 25vw"
+          className="featured-salon-image"
+          style={{ objectFit: "cover" }}
+        />
       </div>
 
-      <div className="featured-stylist-body featured-stylist-body-portrait">
-        <div className="featured-stylist-name-row">
+      <div className="featured-salon-body">
+        <div className="featured-salon-title-row">
           <h3>{stylist.name}</h3>
+          <RatingBadge rating={stylist.rating} reviewCount={stylist.reviewCount} />
         </div>
-
-        <StarRating rating={stylist.rating} />
-
-        <Link href={`/book/${stylist.slug}`} className="button button-primary featured-stylist-book">
-          Book Now
-        </Link>
+        <p className="featured-salon-location">{stylist.location}</p>
+        <p className="featured-salon-category">{stylist.category}</p>
       </div>
     </Reveal>
   );
 }
 
-export default function FeaturedStylistCarousel({ stylists }) {
+export default function FeaturedStylistCarousel() {
   const viewportRef = useRef(null);
   const [cardsPerView, setCardsPerView] = useState(4);
   const [viewportWidth, setViewportWidth] = useState(0);
@@ -85,7 +159,7 @@ export default function FeaturedStylistCarousel({ stylists }) {
     return () => window.removeEventListener("resize", updateLayout);
   }, []);
 
-  const maxIndex = Math.max(stylists.length - cardsPerView, 0);
+  const maxIndex = Math.max(FEATURED_SHOWCASE_STYLISTS.length - cardsPerView, 0);
 
   useEffect(() => {
     setActiveIndex((current) => Math.min(current, maxIndex));
@@ -101,41 +175,41 @@ export default function FeaturedStylistCarousel({ stylists }) {
   };
 
   return (
-    <div className="featured-stylist-carousel">
-      <div className="featured-stylist-carousel-toolbar">
+    <div className="featured-stylist-carousel featured-salon-carousel">
+      <div className="featured-stylist-carousel-toolbar featured-salon-carousel-toolbar">
         <div className="featured-stylist-carousel-controls" aria-label="Featured stylist carousel controls">
           <button
             type="button"
-            className="featured-stylist-carousel-button"
+            className="featured-stylist-carousel-button featured-salon-carousel-button"
             onClick={() => setActiveIndex((current) => Math.max(current - 1, 0))}
             disabled={activeIndex === 0}
             aria-label="Previous featured stylists"
           >
-            <span aria-hidden="true">&#8592;</span>
+            <span aria-hidden="true">←</span>
           </button>
           <button
             type="button"
-            className="featured-stylist-carousel-button"
+            className="featured-stylist-carousel-button featured-salon-carousel-button"
             onClick={() => setActiveIndex((current) => Math.min(current + 1, maxIndex))}
             disabled={activeIndex === maxIndex}
             aria-label="Next featured stylists"
           >
-            <span aria-hidden="true">&#8594;</span>
+            <span aria-hidden="true">→</span>
           </button>
         </div>
       </div>
 
-      <div ref={viewportRef} className="featured-stylist-carousel-viewport">
-        <div className="featured-stylist-carousel-track" style={trackStyle}>
-          {stylists.map((stylist, index) => (
+      <div ref={viewportRef} className="featured-stylist-carousel-viewport featured-salon-carousel-viewport">
+        <div className="featured-stylist-carousel-track featured-salon-carousel-track" style={trackStyle}>
+          {FEATURED_SHOWCASE_STYLISTS.map((stylist, index) => (
             <div
               key={stylist.slug}
-              className="featured-stylist-carousel-slide"
+              className="featured-stylist-carousel-slide featured-salon-carousel-slide"
               style={{
                 width: cardWidth ? `${cardWidth}px` : `calc((100% - ${(cardsPerView - 1) * GAP}px) / ${cardsPerView})`
               }}
             >
-              <FeaturedStylistCard stylist={stylist} index={index} />
+              <FeaturedSalonCard stylist={stylist} index={index} />
             </div>
           ))}
         </div>

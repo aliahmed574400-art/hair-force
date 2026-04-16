@@ -2,9 +2,10 @@
 
 import { useEffect, useRef } from "react";
 
-const MOBILE_PARTICLES = 150;
-const DESKTOP_PARTICLES = 260;
-const INTERACTION_RADIUS = 120;
+const MOBILE_PARTICLES = 460;
+const DESKTOP_PARTICLES = 840;
+const INTERACTION_RADIUS = 190;
+const INTERACTION_FORCE = 0.82;
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
@@ -66,7 +67,7 @@ export default function HeroParticles({
 
       const count = width < 760 ? mobileCount : desktopCount;
       particles = Array.from({ length: count }, (_, index) =>
-        createParticle(width, height, index < count * 0.18)
+        createParticle(width, height, index < count * 0.22)
       );
     }
 
@@ -100,15 +101,15 @@ export default function HeroParticles({
         const distance = Math.hypot(dx, dy) || 1;
 
         if (pointer.active && distance < INTERACTION_RADIUS) {
-          const force = (1 - distance / INTERACTION_RADIUS) * 0.45;
+          const force = (1 - distance / INTERACTION_RADIUS) * INTERACTION_FORCE;
           particle.vx -= (dx / distance) * force;
           particle.vy -= (dy / distance) * force;
         }
 
         particle.x += particle.vx;
         particle.y += particle.vy;
-        particle.vx *= 0.996;
-        particle.vy *= 0.996;
+        particle.vx *= 0.994;
+        particle.vy *= 0.994;
 
         if (particle.x < -20) particle.x = width + 20;
         if (particle.x > width + 20) particle.x = -20;
@@ -117,8 +118,8 @@ export default function HeroParticles({
 
         particle.vx += (Math.random() - 0.5) * 0.012;
         particle.vy += (Math.random() - 0.5) * 0.01;
-        particle.vx = clamp(particle.vx, -0.58, 0.58);
-        particle.vy = clamp(particle.vy, -0.46, 0.46);
+        particle.vx = clamp(particle.vx, -0.84, 0.84);
+        particle.vy = clamp(particle.vy, -0.72, 0.72);
 
         drawParticle(particle, time);
       }

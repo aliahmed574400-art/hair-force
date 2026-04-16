@@ -1,30 +1,5 @@
 import Link from "next/link";
-import { CalendarDays, Clock3 } from "lucide-react";
 import Reveal from "@/components/animated/Reveal";
-import PhoneFrame from "@/components/home/PhoneFrame";
-
-const calendarLabels = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
-const calendarDays = [
-  { label: "11" },
-  { label: "12" },
-  { label: "13" },
-  { label: "14" },
-  { label: "15" },
-  { label: "16", active: true },
-  { label: "17" },
-  { label: "18" },
-  { label: "19" },
-  { label: "20" },
-  { label: "21" },
-  { label: "22", muted: true },
-  { label: "23" },
-  { label: "24" }
-];
-
-const appointmentSlots = [
-  { time: "10:30 AM", service: "Signature Blowout", status: "Confirmed" },
-  { time: "1:00 PM", service: "Color Refresh", status: "Deposit paid" }
-];
 
 export default function AppPreviewSection() {
   return (
@@ -51,77 +26,31 @@ export default function AppPreviewSection() {
         <div className="app-preview-shadow" aria-hidden="true" />
 
         <div className="app-preview-floating">
-          <PhoneFrame className="app-preview-phone">
-            <div className="app-preview-phone-screen">
-              <div className="app-preview-topbar">
-                <span className="badge badge-accent">Hair Force</span>
-                <span className="app-preview-status">Live sync</span>
+          <div className="app-preview-media-grid">
+            <div className="app-preview-phone app-preview-phone-primary">
+              <div className="app-preview-phone-screen-media">
+                <img
+                  src="/app-preview/trendy-studio.webp"
+                  alt="Trendy Studio preview"
+                  className="app-preview-phone-image app-preview-phone-image-primary"
+                />
               </div>
-
-              <div className="app-preview-tab-row">
-                <span className="app-preview-tab is-active">Booking</span>
-                <span className="app-preview-tab">Calendar</span>
-                <span className="app-preview-tab">Profile</span>
-              </div>
-
-              <div className="app-preview-widget">
-                <div className="app-preview-widget-head">
-                  <div className="app-preview-widget-icon">
-                    <Clock3 strokeWidth={1.8} aria-hidden="true" />
-                  </div>
-                  <div>
-                    <span>Booking screen</span>
-                    <strong>Appointments at a glance</strong>
-                  </div>
-                </div>
-
-                <div className="app-preview-booking-list">
-                  {appointmentSlots.map((slot) => (
-                    <div key={slot.time} className="app-preview-booking-item">
-                      <div>
-                        <strong>{slot.time}</strong>
-                        <p>{slot.service}</p>
-                      </div>
-                      <span>{slot.status}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="app-preview-widget">
-                <div className="app-preview-widget-head">
-                  <div className="app-preview-widget-icon">
-                    <CalendarDays strokeWidth={1.8} aria-hidden="true" />
-                  </div>
-                  <div>
-                    <span>Calendar</span>
-                    <strong>Track availability instantly</strong>
-                  </div>
-                </div>
-
-                <div className="app-preview-calendar">
-                  <div className="app-preview-calendar-labels">
-                    {calendarLabels.map((label) => (
-                      <span key={label}>{label}</span>
-                    ))}
-                  </div>
-                  <div className="app-preview-calendar-grid">
-                    {calendarDays.map((day) => (
-                      <span
-                        key={day.label}
-                        className={`app-preview-calendar-cell${day.active ? " is-active" : ""}${
-                          day.muted ? " is-muted" : ""
-                        }`}
-                      >
-                        {day.label}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
             </div>
-          </PhoneFrame>
+
+            <div className="app-preview-phone app-preview-phone-secondary">
+              <div className="app-preview-phone-screen-media">
+                <video
+                  className="app-preview-phone-video app-preview-phone-video-secondary"
+                  src="/app-preview/mobile-preview.mp4"
+                  poster="/app-preview/trendy-studio.webp"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </Reveal>
     </div>
