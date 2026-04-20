@@ -4822,6 +4822,141 @@ textarea {
   margin-bottom: 0;
 }
 
+.business-promo-section-shell {
+  padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+.business-promo-section-panel {
+  padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+.business-promo-section-panel::before {
+  display: none;
+}
+
+.business-promo-showcase {
+  position: relative;
+  overflow: clip;
+}
+
+.business-promo-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
+  gap: clamp(28px, 4vw, 56px);
+  align-items: center;
+}
+
+.business-promo-copy {
+  display: grid;
+  gap: 18px;
+  align-content: start;
+  padding: clamp(10px, 2vw, 24px) 0;
+}
+
+.business-promo-copy h2 {
+  margin: 0;
+  max-width: 8ch;
+  font-family: var(--font-body), sans-serif;
+  font-size: clamp(3rem, 6vw, 5.4rem);
+  font-weight: 300;
+  letter-spacing: -0.07em;
+  line-height: 0.94;
+  color: #0f1d37;
+  text-wrap: balance;
+}
+
+.business-promo-copy p {
+  margin: 0;
+  max-width: 18ch;
+  font-size: clamp(1.12rem, 1.8vw, 1.58rem);
+  line-height: 1.45;
+  color: rgba(24, 39, 72, 0.78);
+}
+
+.business-promo-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 4px;
+}
+
+.business-promo-button {
+  min-width: 198px;
+  min-height: 60px;
+  box-shadow: 0 24px 52px rgba(80, 132, 235, 0.22);
+}
+
+.business-promo-proof {
+  display: grid;
+  gap: 10px;
+  margin-top: clamp(36px, 8vh, 112px);
+}
+
+.business-promo-proof strong {
+  font-family: var(--font-body), sans-serif;
+  font-size: clamp(1.8rem, 2.4vw, 2.8rem);
+  font-weight: 700;
+  letter-spacing: -0.05em;
+  line-height: 1;
+  color: #0f1d37;
+}
+
+.business-promo-stars {
+  display: flex;
+  gap: 8px;
+  color: #ffb400;
+  font-size: 1.7rem;
+  line-height: 1;
+}
+
+.business-promo-proof p {
+  max-width: 28ch;
+  font-size: 1.04rem;
+  line-height: 1.6;
+  color: rgba(30, 46, 82, 0.74);
+}
+
+.business-promo-visual {
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  min-height: clamp(340px, 42vw, 720px);
+  padding: clamp(16px, 3vw, 32px);
+}
+
+.business-promo-glow {
+  position: absolute;
+  inset: 12% 8% 12% 18%;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 26% 50%, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.28) 28%, transparent 62%),
+    radial-gradient(circle at 54% 50%, rgba(220, 255, 171, 0.88), rgba(220, 255, 171, 0.26) 26%, transparent 64%),
+    radial-gradient(circle at 72% 42%, rgba(122, 174, 255, 0.42), transparent 40%);
+  filter: blur(22px);
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+.business-promo-frame {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 1040px);
+}
+
+.business-promo-image {
+  width: 100%;
+  height: auto;
+  display: block;
+  filter: drop-shadow(0 28px 56px rgba(46, 83, 152, 0.16));
+}
+
 .faq-accordion {
   display: grid;
   gap: 16px;
@@ -5426,6 +5561,33 @@ textarea {
 
   .hero-stage {
     min-height: 520px;
+  }
+
+  .business-promo-grid {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .business-promo-copy {
+    max-width: 760px;
+  }
+
+  .business-promo-copy p {
+    max-width: 28ch;
+  }
+
+  .business-promo-proof {
+    margin-top: 24px;
+  }
+
+  .business-promo-visual {
+    justify-content: center;
+    min-height: auto;
+    padding: 10px 0 0;
+  }
+
+  .business-promo-glow {
+    inset: 10% 8%;
   }
 
   .featured-stylist-grid {
@@ -6106,6 +6268,49 @@ textarea {
   .preview-dashboard-panel,
   .cta-banner {
     padding: 22px;
+  }
+
+  .business-promo-copy {
+    gap: 16px;
+    text-align: center;
+    justify-items: center;
+  }
+
+  .business-promo-copy h2 {
+    max-width: none;
+    font-size: clamp(2.6rem, 12vw, 4rem);
+  }
+
+  .business-promo-copy p,
+  .business-promo-proof p {
+    max-width: 28ch;
+  }
+
+  .business-promo-actions {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .business-promo-button {
+    width: min(100%, 250px);
+  }
+
+  .business-promo-proof {
+    justify-items: center;
+    text-align: center;
+  }
+
+  .business-promo-stars {
+    justify-content: center;
+  }
+
+  .business-promo-visual {
+    padding-top: 4px;
+  }
+
+  .business-promo-glow {
+    inset: 8%;
+    filter: blur(16px);
   }
 
   .app-preview-copy h2 {

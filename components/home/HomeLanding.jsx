@@ -1,10 +1,10 @@
 import Reveal from "@/components/animated/Reveal";
 import RevealText from "@/components/animated/RevealText";
 import AppPreviewSection from "@/components/home/AppPreviewSection";
+import BusinessGrowthPromo from "@/components/home/BusinessGrowthPromo";
 import CategoryCarousel from "@/components/home/CategoryCarousel";
 import FaqAccordion from "@/components/home/FaqAccordion";
 import FeaturedStylistCarousel from "@/components/home/FeaturedStylistCarousel";
-import BusinessPromoSection from "@/components/home/BusinessPromoSection";
 import HeroBanner from "@/components/home/HeroBanner";
 import HowItWorksTimeline from "@/components/home/HowItWorksTimeline";
 import StickySearchBar from "@/components/home/StickySearchBar";
@@ -345,12 +345,6 @@ export default async function HomeLanding() {
         </div>
       </section>
 
-      <section className="section">
-        <div className="container">
-          <BusinessPromoSection />
-        </div>
-      </section>
-
       <section className="section" id="faqs">
         <div className="container">
           <HomeSectionShell>
@@ -362,6 +356,17 @@ export default async function HomeLanding() {
               />
               <FaqAccordion items={faqs} />
             </div>
+          </HomeSectionShell>
+        </div>
+      </section>
+
+      <section className="section business-promo-home-section">
+        <div className="container">
+          <HomeSectionShell
+            className="business-promo-section-shell"
+            panelClassName="business-promo-section-panel"
+          >
+            <BusinessGrowthPromo />
           </HomeSectionShell>
         </div>
       </section>
