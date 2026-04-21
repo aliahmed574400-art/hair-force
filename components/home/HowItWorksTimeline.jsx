@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
+import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
 import { CalendarDays, Check, Clock3, MapPin, Scissors, Search, Sparkles, Star } from "lucide-react";
 import { motion, useMotionValueEvent, useScroll, useSpring, useTransform } from "framer-motion";
 
@@ -24,30 +25,6 @@ function StepIcon({ name }) {
 }
 
 function SearchScene({ active }) {
-  const markers = [
-    { x: "18%", y: "30%", delay: 0.05 },
-    { x: "34%", y: "54%", delay: 0.18 },
-    { x: "47%", y: "38%", delay: 0, featured: true },
-    { x: "62%", y: "62%", delay: 0.26 },
-    { x: "76%", y: "24%", delay: 0.12 }
-  ];
-
-  const roads = [
-    "how-story-map-road road-a",
-    "how-story-map-road road-b",
-    "how-story-map-road road-c",
-    "how-story-map-road road-d",
-    "how-story-map-road road-e",
-    "how-story-map-road road-f"
-  ];
-
-  const blocks = [
-    "how-story-map-block block-a",
-    "how-story-map-block block-b",
-    "how-story-map-block block-c",
-    "how-story-map-block block-d"
-  ];
-
   return (
     <div className="how-story-scene how-story-scene-search">
       <div className="how-story-map-toolbar">
@@ -59,46 +36,17 @@ function SearchScene({ active }) {
         <div className="how-story-map-filter">Open now</div>
       </div>
 
-      <div className="how-story-map-canvas" aria-hidden="true">
-        <div className="how-story-map-water" />
-        {roads.map((road) => (
-          <span key={road} className={road} />
-        ))}
-        {blocks.map((block) => (
-          <span key={block} className={block} />
-        ))}
-
-        <span className="how-story-map-label label-a">Main St</span>
-        <span className="how-story-map-label label-b">Maple Ave</span>
-        <span className="how-story-map-label label-c">City Center</span>
-
-        {markers.map((marker) => (
-          <motion.span
-            key={`${marker.x}-${marker.y}`}
-            className={`how-story-map-marker ${marker.featured ? "is-featured" : ""}`}
-            style={{ left: marker.x, top: marker.y }}
-            animate={
-              active
-                ? {
-                  y: [0, -8, 0],
-                  scale: marker.featured ? [1, 1.08, 1] : [0.96, 1.04, 0.96]
-                }
-                : {
-                  y: 0,
-                  scale: 1
-                }
-            }
-            transition={{
-              duration: marker.featured ? 1.7 : 2.1,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: marker.delay
-            }}
-          >
-            <span className="how-story-map-marker-dot" />
-            {marker.featured ? <span className="how-story-map-marker-pulse" /> : null}
-          </motion.span>
-        ))}
+      <div className="how-story-map-canvas" aria-label="Interactive stylist discovery map">
+        <div className="how-story-map-live">
+          <iframe
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d50485.652103384586!2d-122.51686092481643!3d37.734855997932215!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x808f7e1b5370cb91%3A0xedb84052fc4cfd91!2sLouie&#39;s%20Barbershop%20SF!5e0!3m2!1sen!2s!4v1776714285088!5m2!1sen!2s"
+            title="Louie's Barbershop San Francisco map"
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            allowFullScreen
+          />
+        </div>
+        <div className="how-story-map-overlay" aria-hidden="true" />
       </div>
 
       <motion.div
@@ -127,9 +75,9 @@ function SearchScene({ active }) {
 
 function ChooseScene({ active }) {
   const cards = [
-    { title: "Studio Nova", meta: "4.9 rating" },
-    { title: "Muse Atelier", meta: "Luxury finish" },
-    { title: "Contour Collective", meta: "Top reviews" }
+    { title: "Studio Nova", meta: "4.9 rating", image: "/featured-stylists/fresha-02.jpg" },
+    { title: "Muse Atelier", meta: "Luxury finish", image: "/app-preview/trendy-studio.webp" },
+    { title: "Contour Collective", meta: "Top reviews", image: "/featured-stylists/fresha-09.jpg" }
   ];
 
   return (
@@ -160,8 +108,9 @@ function ChooseScene({ active }) {
           }}
           whileHover={{ y: -10, scale: 1.04, boxShadow: "0 28px 48px rgba(59, 130, 246, 0.18)" }}
         >
-          <div className="how-story-mini-card-avatar" />
-          <img src="/app-preview/trendy-studio.webp" alt="Trendy Studio preview" className="app-preview-phone-image app-preview-phone-image-primary" />
+          <div className="how-story-mini-card-avatar">
+            <img src={card.image} alt={`${card.title} preview`} />
+          </div>
           <div>
             <strong>{card.title}</strong>
             <span>{card.meta}</span>
@@ -236,23 +185,22 @@ function BookScene({ active }) {
 function StyledScene({ active }) {
   return (
     <div className="how-story-scene how-story-scene-styled">
-      <div className="how-story-before-after">
-        <div className="how-story-before-card">
-          <span>Before</span>
-          <div className="how-story-look how-story-look-before" />
+      <motion.div
+        className="how-story-style-photo-frame"
+        animate={active ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0.94, y: 4, scale: 0.985 }}
+        transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+      >
+        <div className="how-story-style-photo-shell">
+          <Image
+            src="/how-it-works/get-styled-transform.jpeg"
+            alt="Before and after hair transformation"
+            fill
+            sizes="(max-width: 900px) 70vw, 360px"
+            className="how-story-style-photo-image"
+            priority={false}
+          />
         </div>
-
-        <motion.div
-          className="how-story-morph-glow"
-          animate={active ? { x: ["-34%", "34%", "-34%"], opacity: [0.22, 0.48, 0.22] } : { x: 0, opacity: 0.24 }}
-          transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
-        />
-
-        <div className="how-story-after-card">
-          <span>After</span>
-          <div className="how-story-look how-story-look-after" />
-        </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
@@ -274,22 +222,58 @@ function StepScene({ icon, active }) {
 }
 
 function getCardMotion(index, progressValue) {
-  const distance = index - progressValue;
-  const absDistance = Math.abs(distance);
-  const clampedDistance = Math.min(absDistance, 3);
-  const isAhead = distance > 0;
+  const focusIndex = Math.round(progressValue);
+  const stackDistance = index - focusIndex;
+  const travelDistance = index - progressValue;
+  const absStackDistance = Math.abs(stackDistance);
+  const absTravelDistance = Math.abs(travelDistance);
+
+  if (stackDistance === 0) {
+    return {
+      opacity: 1,
+      scale: 1 - Math.min(absTravelDistance * 0.018, 0.018),
+      x: travelDistance * 26,
+      y: Math.min(absTravelDistance * 8, 8),
+      rotateZ: travelDistance * -0.9,
+      filter: "blur(0px)",
+      clipPath: "inset(0% 0% 0% 0% round 34px)",
+      zIndex: 30,
+      boxShadow:
+        "0 34px 84px rgba(108, 136, 190, 0.2), 0 0 32px rgba(96, 165, 250, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.56)"
+    };
+  }
+
+  if (absStackDistance === 1) {
+    const isAhead = stackDistance > 0;
+
+    return {
+      opacity: isAhead ? 0.18 : 0.1,
+      scale: isAhead ? 0.92 : 0.88,
+      x: isAhead ? 156 + travelDistance * 18 : -182 + travelDistance * 14,
+      y: isAhead ? 22 : 34,
+      rotateZ: isAhead ? 2.2 : -3.2,
+      filter: `blur(${isAhead ? 7 : 10}px)`,
+      clipPath: isAhead
+        ? "inset(8% 0% 8% 50% round 30px)"
+        : "inset(8% 58% 8% 0% round 30px)",
+      zIndex: isAhead ? 11 : 8,
+      boxShadow: "0 18px 42px rgba(108, 136, 190, 0.08)"
+    };
+  }
 
   return {
-    opacity: isAhead
-      ? Math.max(0.1, 1 - clampedDistance * 0.3)
-      : Math.max(0, 1 - clampedDistance * 2.8),
-    scale: Math.max(0.86, 1 - clampedDistance * 0.055),
-    x: isAhead ? distance * 118 : distance * 320,
-    y: isAhead ? clampedDistance * 28 : distance * -40,
-    rotateZ: isAhead ? distance * 2.8 : distance * 6,
-    filter: `blur(${Math.min(clampedDistance * 1.25, 3.5)}px)`,
-    zIndex: Math.max(1, 12 - Math.round(clampedDistance * 4) - (isAhead ? 2 : 0)),
-    pointerEvents: Math.abs(distance) < 0.5 ? "auto" : "none"
+    opacity: 0.03,
+    scale: 0.82,
+    x: stackDistance > 0 ? 256 + absStackDistance * 22 : -268 - absStackDistance * 24,
+    y: 48 + absStackDistance * 10,
+    rotateZ: stackDistance > 0 ? 4.5 : -5,
+    filter: "blur(16px)",
+    clipPath:
+      stackDistance > 0
+        ? "inset(12% 0% 12% 76% round 28px)"
+        : "inset(12% 76% 12% 0% round 28px)",
+    zIndex: 2,
+    boxShadow: "0 10px 24px rgba(108, 136, 190, 0.04)"
   };
 }
 
@@ -302,7 +286,9 @@ function DesktopCard({ step, index, activeIndex, rawCardProgress }) {
   const y = useTransform(rawCardProgress, (v) => getCardMotion(index, v).y);
   const rotateZ = useTransform(rawCardProgress, (v) => getCardMotion(index, v).rotateZ);
   const filter = useTransform(rawCardProgress, (v) => getCardMotion(index, v).filter);
+  const clipPath = useTransform(rawCardProgress, (v) => getCardMotion(index, v).clipPath);
   const zIndex = useTransform(rawCardProgress, (v) => getCardMotion(index, v).zIndex);
+  const boxShadow = useTransform(rawCardProgress, (v) => getCardMotion(index, v).boxShadow);
 
   return (
     <motion.article
@@ -315,6 +301,8 @@ function DesktopCard({ step, index, activeIndex, rawCardProgress }) {
         y,
         rotateZ,
         filter,
+        clipPath,
+        boxShadow,
         pointerEvents: isActive ? "auto" : "none",
         "--how-story-accent": STEP_ACCENTS[step.icon] ?? "rgba(96, 165, 250, 0.7)"
       }}

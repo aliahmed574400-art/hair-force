@@ -2,10 +2,11 @@
 
 import { useEffect, useRef } from "react";
 
-const MOBILE_PARTICLES = 460;
-const DESKTOP_PARTICLES = 840;
-const INTERACTION_RADIUS = 190;
-const INTERACTION_FORCE = 0.82;
+const MOBILE_PARTICLES = 760;
+const DESKTOP_PARTICLES = 1380;
+const INTERACTION_RADIUS = 260;
+const INTERACTION_FORCE = 1.6;
+const POINTER_SWEEP = 0.055;
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
@@ -15,8 +16,8 @@ function createParticle(width, height, large = false) {
   return {
     x: Math.random() * width,
     y: Math.random() * height,
-    vx: (Math.random() - 0.5) * (large ? 0.24 : 0.4),
-    vy: (Math.random() - 0.5) * (large ? 0.18 : 0.34),
+    vx: (Math.random() - 0.5) * (large ? 0.52 : 0.92),
+    vy: (Math.random() - 0.5) * (large ? 0.42 : 0.78),
     radius: large ? Math.random() * 3.8 + 2.8 : Math.random() * 1.8 + 0.4,
     alpha: large ? Math.random() * 0.18 + 0.08 : Math.random() * 0.55 + 0.18,
     blur: large ? 18 : 8,
@@ -52,7 +53,7 @@ export default function HeroParticles({
     let height = 0;
     let animationFrame = 0;
     let particles = [];
-    const pointer = { x: -9999, y: -9999, active: false };
+    const pointer = { x: -9999, y: -9999, active: false, vx: 0, vy: 0, lastX: -9999, lastY: -9999 };
 
     function resize() {
       width = parent.clientWidth;
@@ -82,8 +83,8 @@ export default function HeroParticles({
           ? `rgba(126, 184, 255, ${particle.alpha})`
           : `rgba(255, 255, 255, ${particle.alpha})`;
       context.arc(
-        particle.x + Math.sin(time * 0.0008 + particle.sway) * particle.orbitX,
-        particle.y + Math.cos(time * 0.00052 + particle.sway) * particle.orbitY,
+        particle.x + Math.sin(time * 0.0015 + particle.sway) * particle.orbitX,
+        particle.y + Math.cos(time * 0.00102 + particle.sway) * particle.orbitY,
         particle.radius,
         0,
         Math.PI * 2
@@ -104,22 +105,24 @@ export default function HeroParticles({
           const force = (1 - distance / INTERACTION_RADIUS) * INTERACTION_FORCE;
           particle.vx -= (dx / distance) * force;
           particle.vy -= (dy / distance) * force;
+          particle.vx += pointer.vx * force * POINTER_SWEEP;
+          particle.vy += pointer.vy * force * POINTER_SWEEP;
         }
 
         particle.x += particle.vx;
         particle.y += particle.vy;
-        particle.vx *= 0.994;
-        particle.vy *= 0.994;
+        particle.vx *= 0.997;
+        particle.vy *= 0.997;
 
         if (particle.x < -20) particle.x = width + 20;
         if (particle.x > width + 20) particle.x = -20;
         if (particle.y < -20) particle.y = height + 20;
         if (particle.y > height + 20) particle.y = -20;
 
-        particle.vx += (Math.random() - 0.5) * 0.012;
-        particle.vy += (Math.random() - 0.5) * 0.01;
-        particle.vx = clamp(particle.vx, -0.84, 0.84);
-        particle.vy = clamp(particle.vy, -0.72, 0.72);
+        particle.vx += (Math.random() - 0.5) * 0.024;
+        particle.vy += (Math.random() - 0.5) * 0.02;
+        particle.vx = clamp(particle.vx, -1.8, 1.8);
+        particle.vy = clamp(particle.vy, -1.56, 1.56);
 
         drawParticle(particle, time);
       }
@@ -129,13 +132,27 @@ export default function HeroParticles({
 
     function handlePointerMove(event) {
       const rect = parent.getBoundingClientRect();
-      pointer.x = event.clientX - rect.left;
-      pointer.y = event.clientY - rect.top;
+      const nextX = event.clientX - rect.left;
+      const nextY = event.clientY - rect.top;
+
+      if (pointer.lastX > -9000 && pointer.lastY > -9000) {
+        pointer.vx = clamp(nextX - pointer.lastX, -24, 24);
+        pointer.vy = clamp(nextY - pointer.lastY, -24, 24);
+      }
+
+      pointer.x = nextX;
+      pointer.y = nextY;
+      pointer.lastX = nextX;
+      pointer.lastY = nextY;
       pointer.active = true;
     }
 
     function handlePointerLeave() {
       pointer.active = false;
+      pointer.vx = 0;
+      pointer.vy = 0;
+      pointer.lastX = -9999;
+      pointer.lastY = -9999;
       pointer.x = -9999;
       pointer.y = -9999;
     }

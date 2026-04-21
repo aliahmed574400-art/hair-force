@@ -2,8 +2,74 @@
 
 import { useMemo, useState } from "react";
 
-const CITIES = ["Karachi", "Lahore", "Islamabad", "Rawalpindi"];
-const SERVICES = ["Haircut", "Beard", "Styling", "Coloring", "Facial"];
+const STATES = [
+  "Alabama",
+  "Alaska",
+  "Arizona",
+  "Arkansas",
+  "California",
+  "Colorado",
+  "Connecticut",
+  "Delaware",
+  "Florida",
+  "Georgia",
+  "Hawaii",
+  "Idaho",
+  "Illinois",
+  "Indiana",
+  "Iowa",
+  "Kansas",
+  "Kentucky",
+  "Louisiana",
+  "Maine",
+  "Maryland",
+  "Massachusetts",
+  "Michigan",
+  "Minnesota",
+  "Mississippi",
+  "Missouri",
+  "Montana",
+  "Nebraska",
+  "Nevada",
+  "New Hampshire",
+  "New Jersey",
+  "New Mexico",
+  "New York",
+  "North Carolina",
+  "North Dakota",
+  "Ohio",
+  "Oklahoma",
+  "Oregon",
+  "Pennsylvania",
+  "Rhode Island",
+  "South Carolina",
+  "South Dakota",
+  "Tennessee",
+  "Texas",
+  "Utah",
+  "Vermont",
+  "Virginia",
+  "Washington",
+  "West Virginia",
+  "Wisconsin",
+  "Wyoming",
+];
+const SERVICES = [
+  "Haircut",
+  "Beard",
+  "Styling",
+  "Coloring",
+  "Facial",
+  "Nails",
+  "Skin Care",
+  "Brows & Lashes",
+  "Massage",
+  "Makeup",
+  "Wellness & Spa",
+  "Braids & Locs",
+  "Hair Removal",
+  "Others",
+];
 
 export default function StickySearchBar() {
   const [selectedDate, setSelectedDate] = useState("");
@@ -19,10 +85,10 @@ export default function StickySearchBar() {
                 <label className="sticky-search-field">
                   <span className="sticky-search-label">Location</span>
                   <select name="city" defaultValue="">
-                    <option value="">Choose city</option>
-                    {CITIES.map((city) => (
-                      <option key={city} value={city}>
-                        {city}
+                    <option value="">Choose state</option>
+                    {STATES.map((state) => (
+                      <option key={state} value={state}>
+                        {state}
                       </option>
                     ))}
                   </select>

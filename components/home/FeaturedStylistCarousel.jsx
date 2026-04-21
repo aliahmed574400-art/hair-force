@@ -13,7 +13,7 @@ const FEATURED_SHOWCASE_STYLISTS = [
     name: "Cristan",
     rating: 5.0,
     reviewCount: 289,
-    location: "USA",
+    location: "Austin, Texas",
     category: "Hair Salon",
     image: "/featured-stylists/fresha-01.jpg"
   },
@@ -22,7 +22,7 @@ const FEATURED_SHOWCASE_STYLISTS = [
     name: "Ace Hair and Nail Salon",
     rating: 4.8,
     reviewCount: 4958,
-    location: "Al Bustan, Al Khobar",
+    location: "Brooklyn, New York",
     category: "Beauty Salon",
     image: "/featured-stylists/fresha-02.jpg"
   },
@@ -31,7 +31,7 @@ const FEATURED_SHOWCASE_STYLISTS = [
     name: "Eugenie Salon",
     rating: 4.8,
     reviewCount: 608,
-    location: "Al Olaya, Riyadh",
+    location: "Beverly Hills, California",
     category: "Beauty Salon",
     image: "/featured-stylists/fresha-03.jpg"
   },
@@ -40,7 +40,7 @@ const FEATURED_SHOWCASE_STYLISTS = [
     name: "Yin Salon and Spa",
     rating: 4.9,
     reviewCount: 498,
-    location: "Al Masiaf, Riyadh",
+    location: "Scottsdale, Arizona",
     category: "Hair Salon",
     image: "/featured-stylists/fresha-04.jpg"
   },
@@ -49,7 +49,7 @@ const FEATURED_SHOWCASE_STYLISTS = [
     name: "Top One Salon Spa",
     rating: 4.9,
     reviewCount: 533,
-    location: "Muscat Governorate, Muscat",
+    location: "Naples, Florida",
     category: "Spa",
     image: "/featured-stylists/fresha-05.jpg"
   },
@@ -58,7 +58,7 @@ const FEATURED_SHOWCASE_STYLISTS = [
     name: "Farzaneh Beauty Salon",
     rating: 4.8,
     reviewCount: 412,
-    location: "Bowsher, Muscat",
+    location: "Seattle, Washington",
     category: "Beauty Salon",
     image: "/featured-stylists/fresha-06.jpg"
   },
@@ -67,7 +67,7 @@ const FEATURED_SHOWCASE_STYLISTS = [
     name: "GOAT Barber",
     rating: 4.9,
     reviewCount: 441,
-    location: "Muscat Governorate, Muscat",
+    location: "Chicago, Illinois",
     category: "Barbershop",
     image: "/featured-stylists/fresha-07.jpg"
   },
@@ -76,7 +76,7 @@ const FEATURED_SHOWCASE_STYLISTS = [
     name: "Alchemic Beauty Studio",
     rating: 4.8,
     reviewCount: 267,
-    location: "Mulund East, Mumbai",
+    location: "Los Angeles, California",
     category: "Beauty Studio",
     image: "/featured-stylists/fresha-08.jpg"
   },
@@ -85,7 +85,7 @@ const FEATURED_SHOWCASE_STYLISTS = [
     name: "The Lair Man",
     rating: 4.9,
     reviewCount: 384,
-    location: "Khar West, Mumbai",
+    location: "Nashville, Tennessee",
     category: "Barbershop",
     image: "/featured-stylists/fresha-09.jpg"
   }
@@ -167,7 +167,7 @@ export default function FeaturedStylistCarousel() {
 
   const cardWidth = useMemo(() => {
     if (!viewportWidth) return null;
-    return (viewportWidth - GAP * (cardsPerView - 1)) / cardsPerView;
+    return Math.floor((viewportWidth - GAP * (cardsPerView - 1)) / cardsPerView);
   }, [cardsPerView, viewportWidth]);
 
   const trackStyle = {

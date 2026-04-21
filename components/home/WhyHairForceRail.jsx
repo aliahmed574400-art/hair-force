@@ -31,7 +31,31 @@ function getWrappedDistance(index, activeIndex, total) {
   return distance;
 }
 
-function getCardMotion(distance, stageWidth) {
+function getCardMotion(distance, stageWidth, isMobile) {
+  if (isMobile) {
+    if (distance === 0) {
+      return {
+        x: 0,
+        scale: 1.06,
+        y: -6,
+        rotateY: 0,
+        opacity: 1,
+        blur: 0,
+        zIndex: 6
+      };
+    }
+
+    return {
+      x: distance * Math.min(stageWidth * 0.18, 92),
+      scale: 0.92,
+      y: 10,
+      rotateY: 0,
+      opacity: 0,
+      blur: 0,
+      zIndex: 2
+    };
+  }
+
   const absDistance = Math.abs(distance);
   const firstOffset = Math.min(stageWidth * 0.27, 320);
   const secondOffset = Math.min(stageWidth * 0.43, 520);
@@ -97,6 +121,7 @@ export default function WhyHairForceRail({ items }) {
   });
   const [activeIndex, setActiveIndex] = useState(0);
   const [stageWidth, setStageWidth] = useState(1200);
+  const isMobile = stageWidth <= 640;
 
   const setCenteredIndex = useCallback((indexOrUpdater) => {
     setActiveIndex((previousIndex) => {
@@ -222,13 +247,31 @@ export default function WhyHairForceRail({ items }) {
     };
   }, [activeIndex]);
 
+  useEffect(() => {
+    if (!isMobile || items.length <= 1 || typeof window === "undefined") {
+      return undefined;
+    }
+
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) {
+      return undefined;
+    }
+
+    const autoplayInterval = window.setInterval(() => {
+      setCenteredIndex((previousIndex) => previousIndex + 1);
+    }, 2600);
+
+    return () => {
+      window.clearInterval(autoplayInterval);
+    };
+  }, [isMobile, items.length, setCenteredIndex]);
+
   const activeCard = items[activeIndex] ?? items[0];
   const focusX = items.length > 1 ? 14 + (activeIndex / (items.length - 1)) * 72 : 50;
 
   return (
     <div
       ref={stageRef}
-      className="why-hairforce-stage"
+      className={`why-hairforce-stage ${isMobile ? "is-mobile" : ""}`}
       style={{
         "--why-accent": activeCard?.accent ?? "#60A5FA",
         "--why-focus-x": `${focusX}%`
@@ -259,7 +302,7 @@ export default function WhyHairForceRail({ items }) {
       >
         {items.map((item, index) => {
           const distance = getWrappedDistance(index, activeIndex, items.length);
-          const motionState = getCardMotion(distance, stageWidth);
+          const motionState = getCardMotion(distance, stageWidth, isMobile);
           const isActive = distance === 0;
 
           return (

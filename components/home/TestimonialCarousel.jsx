@@ -5,6 +5,11 @@ import Reveal from "@/components/animated/Reveal";
 import RevealText from "@/components/animated/RevealText";
 
 const GAP = 24;
+const TESTIMONIAL_IMAGES = {
+  "Emma Collins": "/featured-stylists/fresha-01.jpg",
+  "Olivia Reed": "/featured-stylists/fresha-05.jpg",
+  "Ava Thompson": "/app-preview/trendy-studio.webp"
+};
 
 function getCardsPerView(width) {
   if (width <= 760) return 1;
@@ -13,13 +18,8 @@ function getCardsPerView(width) {
 }
 
 function TestimonialCard({ testimonial, index }) {
-  const initials = testimonial.name
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
   const isSpotlight = testimonial.variant === "spotlight";
+  const avatarSrc = testimonial.image || TESTIMONIAL_IMAGES[testimonial.name] || "/app-preview/trendy-studio.webp";
 
   return (
     <Reveal
@@ -47,7 +47,19 @@ function TestimonialCard({ testimonial, index }) {
       ) : (
         <>
           <div className="testimonial-header testimonial-header-stacked">
-            <div className="testimonial-avatar">{initials}</div>
+            <div className="testimonial-avatar">
+              <img
+                src={avatarSrc}
+                alt={testimonial.name}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  borderRadius: "inherit",
+                  objectFit: "cover",
+                  display: "block"
+                }}
+              />
+            </div>
             <div className="testimonial-quote-mark" aria-hidden="true">
               &ldquo;
             </div>

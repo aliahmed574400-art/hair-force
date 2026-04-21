@@ -28,6 +28,7 @@ function getDashboardLabel(sessionUser) {
 
 export default function NavbarClient({ sessionUser, links }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const pathname = usePathname();
   const dashboardHref = getDashboardHref(sessionUser);
   const dashboardLabel = getDashboardLabel(sessionUser);
@@ -59,10 +60,21 @@ export default function NavbarClient({ sessionUser, links }) {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  useEffect(() => {
+    function syncScrollState() {
+      setIsScrolled(window.scrollY > 24);
+    }
+
+    syncScrollState();
+    window.addEventListener("scroll", syncScrollState, { passive: true });
+
+    return () => window.removeEventListener("scroll", syncScrollState);
+  }, []);
+
   return (
     <>
       <div className="topbar-row">
-        <Logo />
+        <Logo dark={isScrolled} />
 
         <nav className="nav-links" aria-label="Primary navigation">
           {links.map((link) => (
