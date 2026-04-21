@@ -3282,8 +3282,7 @@ textarea {
 }
 
 .how-story-map-searchbar,
-.how-story-map-filter,
-.how-story-map-preview {
+.how-story-map-filter {
   backdrop-filter: blur(14px);
 }
 
@@ -3647,49 +3646,6 @@ textarea {
 .how-story-search-chip svg {
   width: 18px;
   height: 18px;
-}
-
-.how-story-map-preview {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  grid-template-columns: 44px minmax(0, 1fr);
-  gap: 12px;
-  align-items: center;
-  padding: 12px 14px;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.76);
-  border: 1px solid rgba(132, 166, 229, 0.14);
-  color: #1f2f58;
-  box-shadow: 0 12px 24px rgba(120, 138, 172, 0.12);
-}
-
-.how-story-map-preview-avatar {
-  width: 44px;
-  height: 44px;
-  border-radius: 16px;
-  background:
-    radial-gradient(circle at 50% 26%, rgba(255, 255, 255, 0.65), transparent 20%),
-    radial-gradient(circle at 50% 72%, rgba(255, 255, 255, 0.2), transparent 24%),
-    linear-gradient(180deg, rgba(96, 165, 250, 0.92), rgba(59, 87, 187, 0.88));
-}
-
-.how-story-map-preview strong,
-.how-story-map-preview span {
-  display: block;
-}
-
-.how-story-map-preview strong {
-  font-family: var(--font-display), sans-serif;
-  font-size: 0.98rem;
-  font-weight: 500;
-  letter-spacing: -0.03em;
-}
-
-.how-story-map-preview span {
-  margin-top: 3px;
-  color: rgba(39, 56, 94, 0.68);
-  font-size: 0.82rem;
 }
 
 .how-story-mini-card {
@@ -6257,7 +6213,7 @@ textarea {
   }
 
   .home-section-shell {
-    padding: 10px;
+    padding: 2px;
     border-radius: 24px;
   }
 
@@ -6360,7 +6316,7 @@ textarea {
 
   .home-section-panel,
   .home-search-panel {
-    padding: 22px 18px;
+    padding: 10px;
     border-radius: 18px;
   }
 
@@ -6393,10 +6349,6 @@ textarea {
     height: 34px;
   }
 
-  .category-card {
-    min-height: 252px;
-  }
-
   .category-carousel-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -6424,7 +6376,7 @@ textarea {
   .hero-banner-copy h1 {
     margin: 12px 0 12px;
     max-width: 10.2ch;
-    font-size: clamp(1.95rem, 8.4vw, 2.85rem);
+    font-size: 44px;
     line-height: 1.08;
     margin-left: auto;
     margin-right: auto;
@@ -6654,6 +6606,10 @@ textarea {
 
   .sticky-search-dock {
     min-height: 0;
+  }
+
+  .sticky-search-button {
+    min-height: 48px;
   }
 
   .footer-bottom,

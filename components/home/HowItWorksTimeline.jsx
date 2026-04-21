@@ -58,17 +58,6 @@ function SearchScene({ active }) {
         <span>5 salons nearby</span>
       </motion.div>
 
-      <motion.div
-        className="how-story-map-preview"
-        animate={active ? { y: [0, -6, 0] } : { y: 0 }}
-        transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut", delay: 0.12 }}
-      >
-        <div className="how-story-map-preview-avatar" />
-        <div>
-          <strong>Trending Studio</strong>
-          <span>4.9 rated and instant booking</span>
-        </div>
-      </motion.div>
     </div>
   );
 }

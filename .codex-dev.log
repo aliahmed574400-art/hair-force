@@ -2,97 +2,192 @@
 > hairforce-marketplace@0.1.0 dev
 > next dev
 
-  ▲ Next.js 14.2.24
-  - Local:        http://localhost:3000
-
- ✓ Starting...
- ✓ Ready in 4.1s
- ○ Compiling / ...
- ✓ Compiled / in 2.7s (1266 modules)
- GET / 200 in 3226ms
- GET / 200 in 191ms
- GET / 200 in 298ms
- GET / 200 in 186ms
- ✓ Compiled in 2.4s (1266 modules)
- ✓ Compiled in 3.2s (1280 modules)
- GET / 200 in 1040ms
- GET / 200 in 176ms
- ✓ Compiled in 1488ms (1266 modules)
- ✓ Compiled in 1876ms (1266 modules)
- ✓ Compiled in 2.1s (1280 modules)
- GET / 200 in 1319ms
- GET / 200 in 843ms
- GET / 200 in 401ms
- GET / 200 in 833ms
- GET / 200 in 508ms
- GET / 200 in 938ms
- GET / 200 in 498ms
- GET / 200 in 316ms
- GET / 200 in 346ms
- ✓ Compiled in 3.4s (651 modules)
- ✓ Compiled in 3.3s (1266 modules)
- ✓ Compiled in 3.7s (1266 modules)
-<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename 'E:\My business\Projects\hairforce\.next\cache\webpack\client-development\5.pack.gz_' -> 'E:\My business\Projects\hairforce\.next\cache\webpack\client-development\5.pack.gz'
- ✓ Compiled in 3.9s (1266 modules)
- ✓ Compiled in 3.3s (1280 modules)
-<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename 'E:\My business\Projects\hairforce\.next\cache\webpack\server-development\1.pack.gz_' -> 'E:\My business\Projects\hairforce\.next\cache\webpack\server-development\1.pack.gz'
- ✓ Compiled in 3s (1266 modules)
-<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename 'E:\My business\Projects\hairforce\.next\cache\webpack\client-development\2.pack.gz_' -> 'E:\My business\Projects\hairforce\.next\cache\webpack\client-development\2.pack.gz'
- ✓ Compiled in 2.5s (1266 modules)
- ✓ Compiled in 2.3s (1266 modules)
-<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename 'E:\My business\Projects\hairforce\.next\cache\webpack\client-development\0.pack.gz_' -> 'E:\My business\Projects\hairforce\.next\cache\webpack\client-development\0.pack.gz'
- ✓ Compiled in 2.4s (1266 modules)
- ✓ Compiled in 2.4s (1266 modules)
- ✓ Compiled in 5.4s (1307 modules)
- ✓ Compiled in 2.4s (1311 modules)
- ✓ Compiled in 370ms (679 modules)
-<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename 'E:\My business\Projects\hairforce\.next\cache\webpack\server-development\1.pack.gz_' -> 'E:\My business\Projects\hairforce\.next\cache\webpack\server-development\1.pack.gz'
- ⚠ Found a change in next.config.mjs. Restarting the server to apply the changes...
  ⚠ Port 3000 is in use, trying 3001 instead.
   ▲ Next.js 14.2.24
   - Local:        http://localhost:3001
 
  ✓ Starting...
- ✓ Ready in 5.7s
+[Error: EPERM: operation not permitted, open 'E:\My business\Projects\hairforce\.next\trace'] {
+  errno: -4048,
+  code: 'EPERM',
+  syscall: 'open',
+  path: 'E:\\My business\\Projects\\hairforce\\.next\\trace'
+}
+ ✓ Ready in 4.2s
  ○ Compiling / ...
- ✓ Compiled / in 8.4s (1343 modules)
- GET / 200 in 9349ms
- GET / 200 in 194ms
- ✓ Compiled in 1060ms (1311 modules)
- GET / 200 in 337ms
- ✓ Compiled in 751ms (679 modules)
- ✓ Compiled in 171ms (679 modules)
+ ⨯ ./components/home/HomeLanding.jsx
+Error: 
+  [31mx[0m the name `BusinessPromoSection` is defined multiple times
+    ,-[[36;1;4mE:\My business\Projects\hairforce\components\home\HomeLanding.jsx[0m:1:1]
+ [2m 1[0m | import Reveal from "@/components/animated/Reveal";
+ [2m 2[0m | import RevealText from "@/components/animated/RevealText";
+ [2m 3[0m | import AppPreviewSection from "@/components/home/AppPreviewSection";
+ [2m 4[0m | import BusinessPromoSection from "@/components/home/BusinessPromoSection";
+    : [31;1m       ^^^^^^^^^^|^^^^^^^^^[0m
+    :                  [31;1m`-- [31;1mprevious definition of `BusinessPromoSection` here[0m[0m
+ [2m 5[0m | import CategoryCarousel from "@/components/home/CategoryCarousel";
+ [2m 6[0m | import FaqAccordion from "@/components/home/FaqAccordion";
+ [2m 7[0m | import FeaturedStylistCarousel from "@/components/home/FeaturedStylistCarousel";
+ [2m 8[0m | import BusinessPromoSection from "@/components/home/BusinessPromoSection";
+    : [33;1m       ^^^^^^^^^^|^^^^^^^^^[0m
+    :                  [33;1m`-- [33;1m`BusinessPromoSection` redefined here[0m[0m
+ [2m 9[0m | import HeroBanner from "@/components/home/HeroBanner";
+ [2m10[0m | import HowItWorksTimeline from "@/components/home/HowItWorksTimeline";
+ [2m11[0m | import StickySearchBar from "@/components/home/StickySearchBar";
+    `----
+
+Import trace for requested module:
+./components/home/HomeLanding.jsx
+./app/page.jsx
+ ⨯ ./components/home/HomeLanding.jsx
+Error: 
+  [31mx[0m the name `BusinessPromoSection` is defined multiple times
+    ,-[[36;1;4mE:\My business\Projects\hairforce\components\home\HomeLanding.jsx[0m:1:1]
+ [2m 1[0m | import Reveal from "@/components/animated/Reveal";
+ [2m 2[0m | import RevealText from "@/components/animated/RevealText";
+ [2m 3[0m | import AppPreviewSection from "@/components/home/AppPreviewSection";
+ [2m 4[0m | import BusinessPromoSection from "@/components/home/BusinessPromoSection";
+    : [31;1m       ^^^^^^^^^^|^^^^^^^^^[0m
+    :                  [31;1m`-- [31;1mprevious definition of `BusinessPromoSection` here[0m[0m
+ [2m 5[0m | import CategoryCarousel from "@/components/home/CategoryCarousel";
+ [2m 6[0m | import FaqAccordion from "@/components/home/FaqAccordion";
+ [2m 7[0m | import FeaturedStylistCarousel from "@/components/home/FeaturedStylistCarousel";
+ [2m 8[0m | import BusinessPromoSection from "@/components/home/BusinessPromoSection";
+    : [33;1m       ^^^^^^^^^^|^^^^^^^^^[0m
+    :                  [33;1m`-- [33;1m`BusinessPromoSection` redefined here[0m[0m
+ [2m 9[0m | import HeroBanner from "@/components/home/HeroBanner";
+ [2m10[0m | import HowItWorksTimeline from "@/components/home/HowItWorksTimeline";
+ [2m11[0m | import StickySearchBar from "@/components/home/StickySearchBar";
+    `----
+
+Import trace for requested module:
+./components/home/HomeLanding.jsx
+./app/page.jsx
+ ⨯ ./components/home/HomeLanding.jsx
+Error: 
+  [31mx[0m the name `BusinessPromoSection` is defined multiple times
+    ,-[[36;1;4mE:\My business\Projects\hairforce\components\home\HomeLanding.jsx[0m:1:1]
+ [2m 1[0m | import Reveal from "@/components/animated/Reveal";
+ [2m 2[0m | import RevealText from "@/components/animated/RevealText";
+ [2m 3[0m | import AppPreviewSection from "@/components/home/AppPreviewSection";
+ [2m 4[0m | import BusinessPromoSection from "@/components/home/BusinessPromoSection";
+    : [31;1m       ^^^^^^^^^^|^^^^^^^^^[0m
+    :                  [31;1m`-- [31;1mprevious definition of `BusinessPromoSection` here[0m[0m
+ [2m 5[0m | import CategoryCarousel from "@/components/home/CategoryCarousel";
+ [2m 6[0m | import FaqAccordion from "@/components/home/FaqAccordion";
+ [2m 7[0m | import FeaturedStylistCarousel from "@/components/home/FeaturedStylistCarousel";
+ [2m 8[0m | import BusinessPromoSection from "@/components/home/BusinessPromoSection";
+    : [33;1m       ^^^^^^^^^^|^^^^^^^^^[0m
+    :                  [33;1m`-- [33;1m`BusinessPromoSection` redefined here[0m[0m
+ [2m 9[0m | import HeroBanner from "@/components/home/HeroBanner";
+ [2m10[0m | import HowItWorksTimeline from "@/components/home/HowItWorksTimeline";
+ [2m11[0m | import StickySearchBar from "@/components/home/StickySearchBar";
+    `----
+
+Import trace for requested module:
+./components/home/HomeLanding.jsx
+./app/page.jsx
+ GET / 500 in 39893ms
+ GET / 500 in 57ms
+ GET / 500 in 82ms
+ GET / 500 in 35ms
+ ⨯ ./components/home/HomeLanding.jsx
+Error: 
+  [31mx[0m the name `BusinessPromoSection` is defined multiple times
+    ,-[[36;1;4mE:\My business\Projects\hairforce\components\home\HomeLanding.jsx[0m:1:1]
+ [2m 1[0m | import Reveal from "@/components/animated/Reveal";
+ [2m 2[0m | import RevealText from "@/components/animated/RevealText";
+ [2m 3[0m | import AppPreviewSection from "@/components/home/AppPreviewSection";
+ [2m 4[0m | import BusinessPromoSection from "@/components/home/BusinessPromoSection";
+    : [31;1m       ^^^^^^^^^^|^^^^^^^^^[0m
+    :                  [31;1m`-- [31;1mprevious definition of `BusinessPromoSection` here[0m[0m
+ [2m 5[0m | import CategoryCarousel from "@/components/home/CategoryCarousel";
+ [2m 6[0m | import FaqAccordion from "@/components/home/FaqAccordion";
+ [2m 7[0m | import FeaturedStylistCarousel from "@/components/home/FeaturedStylistCarousel";
+ [2m 8[0m | import BusinessPromoSection from "@/components/home/BusinessPromoSection";
+    : [33;1m       ^^^^^^^^^^|^^^^^^^^^[0m
+    :                  [33;1m`-- [33;1m`BusinessPromoSection` redefined here[0m[0m
+ [2m 9[0m | import HeroBanner from "@/components/home/HeroBanner";
+ [2m10[0m | import HowItWorksTimeline from "@/components/home/HowItWorksTimeline";
+ [2m11[0m | import StickySearchBar from "@/components/home/StickySearchBar";
+    `----
+
+Import trace for requested module:
+./components/home/HomeLanding.jsx
+./app/page.jsx
+ GET /_next/static/webpack/ca8dbf0743f308c4.webpack.hot-update.json 500 in 4380ms
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ GET / 500 in 75ms
+ ✓ Compiled /_not-found in 4.9s (1111 modules)
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /_next/static/webpack/ca8dbf0743f308c4.webpack.hot-update.json 404 in 5793ms
+ ○ Compiling / ...
+ ⨯ ./components/home/HomeLanding.jsx
+Error: 
+  [31mx[0m the name `BusinessPromoSection` is defined multiple times
+    ,-[[36;1;4mE:\My business\Projects\hairforce\components\home\HomeLanding.jsx[0m:1:1]
+ [2m 1[0m | import Reveal from "@/components/animated/Reveal";
+ [2m 2[0m | import RevealText from "@/components/animated/RevealText";
+ [2m 3[0m | import AppPreviewSection from "@/components/home/AppPreviewSection";
+ [2m 4[0m | import BusinessPromoSection from "@/components/home/BusinessPromoSection";
+    : [31;1m       ^^^^^^^^^^|^^^^^^^^^[0m
+    :                  [31;1m`-- [31;1mprevious definition of `BusinessPromoSection` here[0m[0m
+ [2m 5[0m | import CategoryCarousel from "@/components/home/CategoryCarousel";
+ [2m 6[0m | import FaqAccordion from "@/components/home/FaqAccordion";
+ [2m 7[0m | import FeaturedStylistCarousel from "@/components/home/FeaturedStylistCarousel";
+ [2m 8[0m | import BusinessPromoSection from "@/components/home/BusinessPromoSection";
+    : [33;1m       ^^^^^^^^^^|^^^^^^^^^[0m
+    :                  [33;1m`-- [33;1m`BusinessPromoSection` redefined here[0m[0m
+ [2m 9[0m | import HeroBanner from "@/components/home/HeroBanner";
+ [2m10[0m | import HowItWorksTimeline from "@/components/home/HowItWorksTimeline";
+ [2m11[0m | import StickySearchBar from "@/components/home/StickySearchBar";
+    `----
+
+Import trace for requested module:
+./components/home/HomeLanding.jsx
+./app/page.jsx
+ GET / 500 in 1048ms
+ GET / 500 in 75ms
+ GET / 500 in 42ms
+ GET / 500 in 18ms
+ ✓ Compiled /_not-found in 1215ms (1111 modules)
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ GET /_next/static/webpack/ca8dbf0743f308c4.webpack.hot-update.json 404 in 1432ms
+ ○ Compiling / ...
+ ✓ Compiled / in 2s (1540 modules)
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ GET / 200 in 2525ms
+ GET /_next/static/webpack/ca8dbf0743f308c4.webpack.hot-update.json 404 in 712ms
+ GET / 200 in 191ms
+ GET / 200 in 171ms
+ ✓ Compiled in 1413ms (1537 modules)
+ GET / 200 in 388ms
+ GET / 200 in 146ms
+ GET / 200 in 217ms
+ GET / 200 in 185ms
+ GET / 200 in 167ms
+ GET / 200 in 135ms
+ ○ Compiling /discover ...
+ ✓ Compiled /discover in 1979ms (1541 modules)
+ GET /discover?city=Karachi&query=Haircut&date=2026-04-23 200 in 2830ms
+ GET / 200 in 459ms
+ ✓ Compiled in 1273ms (1541 modules)
+ GET / 200 in 531ms
+ GET / 200 in 273ms
+ ✓ Compiled in 982ms (1541 modules)
+ ✓ Compiled in 795ms (723 modules)
+ GET / 200 in 350ms
+ GET / 200 in 245ms
  ○ Compiling /_not-found ...
- ✓ Compiled /_not-found in 711ms (1314 modules)
- GET /.well-known/appspecific/com.chrome.devtools.json 404 in 939ms
- ✓ Compiled in 206ms (680 modules)
- GET /.well-known/appspecific/com.chrome.devtools.json 404 in 281ms
- GET / 200 in 261ms
- GET / 200 in 153ms
- GET / 200 in 196ms
- ✓ Compiled in 1197ms (1311 modules)
- GET / 200 in 532ms
- ✓ Compiled in 258ms (679 modules)
- ✓ Compiled in 228ms (679 modules)
+ ✓ Compiled /_not-found in 1390ms (1544 modules)
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 1841ms
+ ✓ Compiled in 1075ms (1541 modules)
+ GET / 200 in 487ms
+ GET / 200 in 240ms
+ ✓ Compiled in 2.7s (1555 modules)
  GET / 200 in 382ms
- ✓ Compiled in 724ms (1311 modules)
- ✓ Compiled in 323ms (679 modules)
- ✓ Compiled in 855ms (679 modules)
- ✓ Compiled in 1654ms (1311 modules)
- GET / 200 in 557ms
- ✓ Compiled in 2.5s (1311 modules)
- ✓ Compiled in 337ms (1311 modules)
- ✓ Compiled in 858ms (1311 modules)
- ✓ Compiled in 705ms (1311 modules)
- ✓ Compiled in 469ms (1311 modules)
- ✓ Compiled in 585ms (679 modules)
- ✓ Compiled in 911ms (679 modules)
- ✓ Compiled in 689ms (679 modules)
- ✓ Compiled in 1310ms (1311 modules)
- GET / 200 in 649ms
- ○ Compiling /_not-found ...
- ✓ Compiled /_not-found in 1810ms (1314 modules)
- GET /_next/static/css/app/layout.css?v=1776300062552 404 in 2204ms
- GET /_next/static/chunks/main-app.js?v=1776300062552 404 in 2215ms
- GET /_next/static/chunks/app-pages-internals.js 404 in 2175ms
- GET /_next/static/chunks/app/layout.js 404 in 2164ms
+ GET / 200 in 303ms
+ GET / 200 in 260ms
+ ✓ Compiled in 3.2s (1541 modules)
+ GET / 200 in 639ms
+ GET / 200 in 200ms
