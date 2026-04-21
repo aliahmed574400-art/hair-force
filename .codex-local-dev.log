@@ -7,3 +7,40 @@
 
  ✓ Starting...
  ✓ Ready in 3.1s
+ ○ Compiling / ...
+ ✓ Compiled / in 17.9s (1394 modules)
+ GET / 200 in 19147ms
+ GET / 200 in 359ms
+ ○ Compiling /_not-found ...
+ GET / 200 in 812ms
+ ✓ Compiled /_not-found in 1840ms (1356 modules)
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 2668ms
+ ✓ Compiled in 1488ms (1367 modules)
+ GET / 200 in 737ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 1140ms (1356 modules)
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 1908ms
+ GET / 200 in 445ms
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 75ms
+ ✓ Compiled in 1338ms (1367 modules)
+ GET / 200 in 578ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 1232ms (1356 modules)
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 1979ms
+ ✓ Compiled in 736ms (1370 modules)
+ ✓ Compiled in 2.2s (1367 modules)
+ GET / 200 in 403ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 708ms (1356 modules)
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 1080ms
+ GET / 200 in 379ms
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 94ms
+ ✓ Compiled in 1434ms (1367 modules)
+ GET / 200 in 600ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 628ms (1356 modules)
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 1249ms
+ GET / 200 in 336ms
+ GET / 200 in 252ms
+ GET / 200 in 242ms
+ ✓ Compiled in 1177ms (1367 modules)
