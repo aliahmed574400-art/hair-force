@@ -44,3 +44,5 @@
  GET / 200 in 252ms
  GET / 200 in 242ms
  ✓ Compiled in 1177ms (1367 modules)
+ ✓ Compiled in 2.4s (1367 modules)
+^C^C
