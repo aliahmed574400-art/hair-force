@@ -273,7 +273,8 @@ textarea {
   color: rgba(230, 238, 255, 0.78);
 }
 
-.nav-links a {
+.nav-links a,
+.nav-links span {
   position: relative;
   transition: color 0.2s ease;
 }
@@ -387,7 +388,8 @@ textarea {
   gap: 10px;
 }
 
-.mobile-nav-links a {
+.mobile-nav-links a,
+.mobile-nav-links span {
   display: block;
   padding: 10px 12px;
   border-radius: 14px;

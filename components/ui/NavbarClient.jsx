@@ -77,11 +77,15 @@ export default function NavbarClient({ sessionUser, links }) {
         <Logo dark={isScrolled} />
 
         <nav className="nav-links" aria-label="Primary navigation">
-          {links.map((link) => (
-            <Link key={link.href} href={link.href}>
-              {link.label}
-            </Link>
-          ))}
+          {links.map((link) =>
+            link.href ? (
+              <Link key={`${link.label}-${link.href}`} href={link.href}>
+                {link.label}
+              </Link>
+            ) : (
+              <span key={`${link.label}-static`}>{link.label}</span>
+            )
+          )}
         </nav>
 
         <div className="nav-actions">
@@ -121,11 +125,15 @@ export default function NavbarClient({ sessionUser, links }) {
       <div className={`mobile-nav-drawer ${isMenuOpen ? "is-open" : ""}`}>
         <div id="mobile-nav-panel" className="mobile-nav-panel" aria-hidden={!isMenuOpen}>
           <nav className="mobile-nav-links" aria-label="Mobile navigation">
-            {mobileLinks.map((link) => (
-              <Link key={link.href} href={link.href}>
-                {link.label}
-              </Link>
-            ))}
+            {mobileLinks.map((link) =>
+              link.href ? (
+                <Link key={`${link.label}-${link.href}`} href={link.href}>
+                  {link.label}
+                </Link>
+              ) : (
+                <span key={`${link.label}-static`}>{link.label}</span>
+              )
+            )}
           </nav>
 
           <div className="mobile-nav-divider" />
