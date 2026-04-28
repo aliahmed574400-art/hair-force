@@ -1,0 +1,114 @@
+  ▲ Next.js 14.2.24
+  - Local:        http://127.0.0.1:3001
+  - Network:      http://127.0.0.1:3001
+  - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 5.2s
+ ○ Compiling / ...
+ ✓ Compiled / in 8.7s (1331 modules)
+ GET / 200 in 10939ms
+ ✓ Compiled in 2.1s (640 modules)
+ ✓ Compiled in 207ms (640 modules)
+ GET / 200 in 489ms
+ ✓ Compiled in 5.7s (1345 modules)
+ ✓ Compiled in 2.1s (1345 modules)
+ ✓ Compiled in 844ms (647 modules)
+ ○ Compiling /_error ...
+ GET / 500 in 116ms
+ ✓ Compiled /_not-found in 4.6s (1568 modules)
+ ✓ Compiled (1554 modules)
+ GET /_next/static/webpack/ca8dbf0743f308c4.webpack.hot-update.json 404 in 5936ms
+ GET / 200 in 1500ms
+ GET / 200 in 785ms
+ ✓ Compiled in 2.8s (1565 modules)
+ GET / 200 in 945ms
+ GET / 200 in 606ms
+ GET / 200 in 574ms
+ GET / 200 in 374ms
+ GET / 200 in 1236ms
+ ✓ Compiled in 2.8s (1565 modules)
+ ✓ Compiled in 782ms (836 modules)
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 818ms (1553 modules)
+ GET / 200 in 1219ms
+ ✓ Compiled in 1782ms (1567 modules)
+ GET / 200 in 954ms
+ GET / 200 in 437ms
+ ✓ Compiled in 4.1s (1565 modules)
+ ✓ Compiled in 2s (836 modules)
+ GET / 200 in 1162ms
+ GET / 200 in 542ms
+ GET / 200 in 502ms
+ ✓ Compiled in 2.8s (1565 modules)
+ ✓ Compiled in 4.1s (1565 modules)
+ ✓ Compiled in 1830ms (1565 modules)
+ ✓ Compiled in 1722ms (1565 modules)
+ ○ Compiling /_error ...
+ GET / 500 in 79ms
+ ✓ Compiled /_not-found in 3.2s (1574 modules)
+ GET / 200 in 2266ms
+ ✓ Compiled in 2.8s (1560 modules)
+ GET / 500 in 77ms
+ ✓ Compiled in 2.5s (1574 modules)
+ ✓ Compiled (1560 modules)
+ GET / 200 in 906ms
+ GET /_next/static/webpack/ca8dbf0743f308c4.webpack.hot-update.json 404 in 3996ms
+ GET / 200 in 774ms
+ ✓ Compiled in 1579ms (1574 modules)
+ ✓ Compiled in 1681ms (1571 modules)
+ ✓ Compiled in 2.1s (1571 modules)
+ GET / 500 in 93ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 5.1s (1574 modules)
+ GET / 200 in 1985ms
+ ✓ Compiled in 2.4s (1560 modules)
+ ✓ Compiled in 2.5s (1574 modules)
+ ✓ Compiled in 1484ms (1574 modules)
+ GET / 500 in 734ms
+ ✓ Compiled in 1695ms (1574 modules)
+ GET / 200 in 1664ms
+ ✓ Compiled in 2.9s (1571 modules)
+ ✓ Compiled in 3s (1571 modules)
+ ✓ Compiled in 3.2s (1571 modules)
+ ✓ Compiled in 1090ms (832 modules)
+ GET / 500 in 66ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 7.4s (1575 modules)
+ GET / 200 in 4732ms
+ ✓ Compiled in 12.2s (1575 modules)
+ ✓ Compiled in 3.8s (1572 modules)
+ ✓ Compiled in 1095ms (840 modules)
+ ✓ Compiled in 2.5s (1572 modules)
+ GET / 200 in 3100ms
+ ✓ Compiled in 4.5s (1572 modules)
+ GET / 200 in 1806ms
+ ✓ Compiled in 2.8s (1572 modules)
+ ✓ Compiled in 1440ms (1572 modules)
+ GET / 200 in 1178ms
+ ✓ Compiled in 2.5s (840 modules)
+ ✓ Compiled in 1315ms (840 modules)
+ GET / 500 in 126ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 6.1s (1578 modules)
+ GET / 200 in 3699ms
+ ✓ Compiled in 5.4s (1564 modules)
+ ✓ Compiled in 1409ms (1578 modules)
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 948ms
+ ✓ Compiled in 2.2s (1578 modules)
+ ✓ Compiled in 2.7s (1575 modules)
+ ✓ Compiled in 4.1s (1575 modules)
+ ✓ Compiled in 689ms (1575 modules)
+ GET / 200 in 915ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 3.3s (1564 modules)
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 4137ms
+ ✓ Compiled in 1888ms (1575 modules)
+ GET / 200 in 658ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 1618ms (1564 modules)
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 2525ms
+ GET / 200 in 507ms
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 158ms
+ ✓ Compiled in 1527ms (1575 modules)
+ GET / 200 in 903ms

@@ -1,11 +1,11 @@
-import Link from "next/link";
 import ClientDashboard from "@/components/dashboard/ClientDashboard";
+import SiteButton from "@/components/ui/SiteButton";
 import VendorDashboardManager from "@/components/dashboard/VendorDashboardManager";
 import { getDashboardDataForUser } from "@/lib/postgres-repositories";
 import { getSessionFromServer } from "@/lib/session";
 
 export default async function DashboardPage() {
-  const sessionUser = getSessionFromServer();
+  const sessionUser = await getSessionFromServer();
 
   if (!sessionUser) {
     return (
@@ -32,12 +32,10 @@ export default async function DashboardPage() {
               </div>
             </div>
             <div className="hero-actions" style={{ marginTop: 20 }}>
-              <Link href="/signin" className="button button-primary">
-                Sign in
-              </Link>
-              <Link href="/join" className="button button-secondary">
+              <SiteButton href="/signin">Sign in</SiteButton>
+              <SiteButton href="/join" variant="secondary">
                 Create vendor account
-              </Link>
+              </SiteButton>
             </div>
           </div>
         </div>

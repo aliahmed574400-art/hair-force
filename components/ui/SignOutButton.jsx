@@ -1,8 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import SiteButton from "@/components/ui/SiteButton";
 
-export default function SignOutButton({ className = "button button-secondary" }) {
+export default function SignOutButton({
+  variant = "secondary",
+  size = "default",
+  className = "",
+  fullWidth = false
+}) {
   const router = useRouter();
 
   async function handleSignOut() {
@@ -12,8 +18,15 @@ export default function SignOutButton({ className = "button button-secondary" })
   }
 
   return (
-    <button type="button" className={className} onClick={handleSignOut}>
+    <SiteButton
+      type="button"
+      variant={variant}
+      size={size}
+      className={className}
+      fullWidth={fullWidth}
+      onClick={handleSignOut}
+    >
       Sign out
-    </button>
+    </SiteButton>
   );
 }

@@ -19,6 +19,35 @@ const STEP_ACCENTS = {
   sparkle: "rgba(186, 230, 253, 0.74)"
 };
 
+const CARD_HOLD_RATIO = 0.72;
+
+function getHeldCardProgress(progress, stepCount) {
+  const maxIndex = Math.max(stepCount - 1, 0);
+  const clampedProgress = Math.max(0, Math.min(1, progress));
+  const totalSegments = Math.max(stepCount, 1);
+
+  if (!maxIndex) {
+    return 0;
+  }
+
+  // Reserve one extra segment so the last card can fully appear and hold
+  // before the sticky section releases to the next page section.
+  const scaledProgress = clampedProgress * totalSegments;
+  const segmentIndex = Math.floor(scaledProgress);
+
+  if (segmentIndex >= maxIndex) {
+    return maxIndex;
+  }
+
+  const segmentProgress = scaledProgress - segmentIndex;
+
+  if (segmentProgress <= CARD_HOLD_RATIO) {
+    return segmentIndex;
+  }
+
+  return segmentIndex + (segmentProgress - CARD_HOLD_RATIO) / (1 - CARD_HOLD_RATIO);
+}
+
 function StepIcon({ name }) {
   const Icon = ICONS[name] || Search;
   return <Icon strokeWidth={1.9} aria-hidden="true" />;
@@ -210,90 +239,25 @@ function StepScene({ icon, active }) {
   return <StyledScene active={active} />;
 }
 
-function getCardMotion(index, progressValue) {
-  const focusIndex = Math.round(progressValue);
-  const stackDistance = index - focusIndex;
-  const travelDistance = index - progressValue;
-  const absStackDistance = Math.abs(stackDistance);
-  const absTravelDistance = Math.abs(travelDistance);
-
-  if (stackDistance === 0) {
-    return {
-      opacity: 1,
-      scale: 1 - Math.min(absTravelDistance * 0.018, 0.018),
-      x: travelDistance * 26,
-      y: Math.min(absTravelDistance * 8, 8),
-      rotateZ: travelDistance * -0.9,
-      filter: "blur(0px)",
-      clipPath: "inset(0% 0% 0% 0% round 34px)",
-      zIndex: 30,
-      boxShadow:
-        "0 34px 84px rgba(108, 136, 190, 0.2), 0 0 32px rgba(96, 165, 250, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.56)"
-    };
-  }
-
-  if (absStackDistance === 1) {
-    const isAhead = stackDistance > 0;
-
-    return {
-      opacity: isAhead ? 0.18 : 0.1,
-      scale: isAhead ? 0.92 : 0.88,
-      x: isAhead ? 156 + travelDistance * 18 : -182 + travelDistance * 14,
-      y: isAhead ? 22 : 34,
-      rotateZ: isAhead ? 2.2 : -3.2,
-      filter: `blur(${isAhead ? 7 : 10}px)`,
-      clipPath: isAhead
-        ? "inset(8% 0% 8% 50% round 30px)"
-        : "inset(8% 58% 8% 0% round 30px)",
-      zIndex: isAhead ? 11 : 8,
-      boxShadow: "0 18px 42px rgba(108, 136, 190, 0.08)"
-    };
-  }
-
-  return {
-    opacity: 0.03,
-    scale: 0.82,
-    x: stackDistance > 0 ? 256 + absStackDistance * 22 : -268 - absStackDistance * 24,
-    y: 48 + absStackDistance * 10,
-    rotateZ: stackDistance > 0 ? 4.5 : -5,
-    filter: "blur(16px)",
-    clipPath:
-      stackDistance > 0
-        ? "inset(12% 0% 12% 76% round 28px)"
-        : "inset(12% 76% 12% 0% round 28px)",
-    zIndex: 2,
-    boxShadow: "0 10px 24px rgba(108, 136, 190, 0.04)"
-  };
-}
-
-function DesktopCard({ step, index, activeIndex, rawCardProgress }) {
-  const isActive = Math.abs(index - activeIndex) < 0.5;
-
-  const opacity = useTransform(rawCardProgress, (v) => getCardMotion(index, v).opacity);
-  const scale = useTransform(rawCardProgress, (v) => getCardMotion(index, v).scale);
-  const x = useTransform(rawCardProgress, (v) => getCardMotion(index, v).x);
-  const y = useTransform(rawCardProgress, (v) => getCardMotion(index, v).y);
-  const rotateZ = useTransform(rawCardProgress, (v) => getCardMotion(index, v).rotateZ);
-  const filter = useTransform(rawCardProgress, (v) => getCardMotion(index, v).filter);
-  const clipPath = useTransform(rawCardProgress, (v) => getCardMotion(index, v).clipPath);
-  const zIndex = useTransform(rawCardProgress, (v) => getCardMotion(index, v).zIndex);
-  const boxShadow = useTransform(rawCardProgress, (v) => getCardMotion(index, v).boxShadow);
+function DesktopCard({ step, isActive, cardWidth }) {
+  const resolvedWidth = typeof cardWidth === "number" && cardWidth > 0 ? `${cardWidth}px` : "min(78vw, 860px)";
 
   return (
     <motion.article
       className={`how-story-card ${isActive ? "is-active" : ""}`}
       style={{
-        zIndex,
-        opacity,
-        scale,
-        x,
-        y,
-        rotateZ,
-        filter,
-        clipPath,
-        boxShadow,
-        pointerEvents: isActive ? "auto" : "none",
+        width: resolvedWidth,
         "--how-story-accent": STEP_ACCENTS[step.icon] ?? "rgba(96, 165, 250, 0.7)"
+      }}
+      animate={{
+        opacity: isActive ? 1 : 0.68,
+        scale: isActive ? 1 : 0.96,
+        filter: isActive ? "blur(0px)" : "blur(1.4px)"
+      }}
+      transition={{
+        opacity: { duration: 0.26, ease: "easeOut" },
+        scale: { type: "spring", stiffness: 220, damping: 24 },
+        filter: { duration: 0.26, ease: "easeOut" }
       }}
       whileHover={isActive ? { scale: 1.03, y: -8 } : undefined}
     >
@@ -365,8 +329,11 @@ function MobileCard({ step, index }) {
 export default function HowItWorksTimeline({ steps }) {
   const shellRef = useRef(null);
   const scrollRef = useRef(null);
+  const stageViewportRef = useRef(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [stageWidth, setStageWidth] = useState(0);
   const stepCount = Math.max(steps.length, 1);
+  const scrollStepCount = stepCount + 1;
   const { scrollYProgress } = useScroll({
     target: scrollRef,
     offset: ["start start", "end end"]
@@ -377,22 +344,49 @@ export default function HowItWorksTimeline({ steps }) {
     mass: 0.34
   });
 
-  const rawCardProgress = useTransform(smoothProgress, (latest) => latest * Math.max(stepCount - 1, 0));
+  // Hold each card in focus before shifting the track to the next card.
+  const cardProgress = useTransform(smoothProgress, (latest) => getHeldCardProgress(latest, stepCount));
 
-  useMotionValueEvent(rawCardProgress, "change", (latest) => {
-    const nextIndex = Math.max(0, Math.min(stepCount - 1, Math.round(latest)));
-    if (nextIndex !== activeIndex) {
-      setActiveIndex(nextIndex);
+  useEffect(() => {
+    const node = stageViewportRef.current;
+    if (!node) {
+      return undefined;
     }
+
+    const updateStageWidth = () => {
+      setStageWidth(node.clientWidth || 0);
+    };
+
+    updateStageWidth();
+
+    const observer = new ResizeObserver(() => {
+      updateStageWidth();
+    });
+
+    observer.observe(node);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
+  useMotionValueEvent(cardProgress, "change", (latest) => {
+    const nextIndex = Math.max(0, Math.min(stepCount - 1, Math.round(latest)));
+    setActiveIndex((previousIndex) => (previousIndex === nextIndex ? previousIndex : nextIndex));
   });
 
-  const backX = useTransform(rawCardProgress, (v) => -22 + v * 6);
-  const backY = useTransform(rawCardProgress, (v) => -20 + v * 5);
-  const backRot = useTransform(rawCardProgress, (v) => -6 + v * 0.8);
+  const backX = useTransform(cardProgress, (v) => -22 + v * 6);
+  const backY = useTransform(cardProgress, (v) => -20 + v * 5);
+  const backRot = useTransform(cardProgress, (v) => -6 + v * 0.8);
 
-  const frontX = useTransform(rawCardProgress, (v) => 18 - v * 5);
-  const frontY = useTransform(rawCardProgress, (v) => 22 - v * 4);
-  const frontRot = useTransform(rawCardProgress, (v) => 5 - v * 0.7);
+  const frontX = useTransform(cardProgress, (v) => 18 - v * 5);
+  const frontY = useTransform(cardProgress, (v) => 22 - v * 4);
+  const frontRot = useTransform(cardProgress, (v) => 5 - v * 0.7);
+  const cardWidth = stageWidth ? Math.min(stageWidth * 0.78, 860) : 0;
+  const trackGap = stageWidth ? Math.min(stageWidth * 0.035, 28) : 28;
+  const trackPadding = stageWidth && cardWidth ? Math.max((stageWidth - cardWidth) / 2, 0) : 0;
+  const trackStepWidth = cardWidth + trackGap;
+  const trackX = useTransform(cardProgress, (v) => -v * trackStepWidth);
 
   const handleMouseMove = (event) => {
     const shell = shellRef.current;
@@ -421,7 +415,7 @@ export default function HowItWorksTimeline({ steps }) {
     <div
       ref={scrollRef}
       className="how-story-shell"
-      style={{ "--how-story-step-count": stepCount }}
+      style={{ "--how-story-step-count": scrollStepCount }}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
@@ -469,7 +463,7 @@ export default function HowItWorksTimeline({ steps }) {
             "--how-story-active-accent": STEP_ACCENTS[steps[activeIndex]?.icon] ?? "rgba(96, 165, 250, 0.7)"
           }}
         >
-          <div className="how-story-card-stack">
+          <div ref={stageViewportRef} className="how-story-card-stack">
             <motion.span
               className="how-story-stage-backplate is-back"
               aria-hidden="true"
@@ -498,9 +492,24 @@ export default function HowItWorksTimeline({ steps }) {
               }}
               transition={{ duration: 4.2, repeat: Infinity, ease: "easeInOut" }}
             />
-            {steps.map((step, index) => (
-              <DesktopCard key={step.step} step={step} index={index} activeIndex={activeIndex} rawCardProgress={rawCardProgress} />
-            ))}
+
+            <motion.div
+              className="how-story-card-track"
+              style={{
+                x: trackX,
+                gap: `${trackGap}px`,
+                paddingInline: `${trackPadding}px`
+              }}
+            >
+              {steps.map((step, index) => (
+                <DesktopCard
+                  key={step.step}
+                  step={step}
+                  isActive={index === activeIndex}
+                  cardWidth={cardWidth}
+                />
+              ))}
+            </motion.div>
           </div>
         </div>
       </div>

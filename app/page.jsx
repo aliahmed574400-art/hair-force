@@ -3,6 +3,7 @@ import HeroStage from "@/components/animated/HeroStage";
 import Reveal from "@/components/animated/Reveal";
 import HomeLanding from "@/components/home/HomeLanding";
 import SearchBar from "@/components/ui/SearchBar";
+import SiteButton from "@/components/ui/SiteButton";
 import {
   faqs,
   howItWorks,
@@ -36,12 +37,10 @@ function StylistCard({ stylist }) {
           <span className="muted tiny">{stylist.responseTime}</span>
         </div>
         <div className="hero-actions" style={{ marginTop: 16 }}>
-          <Link href={`/stylists/${stylist.slug}`} className="button button-secondary">
+          <SiteButton href={`/stylists/${stylist.slug}`} variant="secondary">
             View profile
-          </Link>
-          <Link href={`/book/${stylist.slug}`} className="button button-primary">
-            Book now
-          </Link>
+          </SiteButton>
+          <SiteButton href={`/book/${stylist.slug}`}>Book now</SiteButton>
         </div>
       </div>
     </Reveal>
@@ -69,12 +68,10 @@ export default async function HomePage() {
               <SearchBar />
 
               <div className="hero-actions" style={{ marginTop: 22 }}>
-                <Link href="/discover" className="button button-primary">
-                  Find a stylist
-                </Link>
-                <Link href="/join" className="button button-secondary">
+                <SiteButton href="/discover">Find a stylist</SiteButton>
+                <SiteButton href="/join" variant="secondary">
                   Join as stylist
-                </Link>
+                </SiteButton>
               </div>
 
               <div className="hero-stats">
@@ -194,9 +191,9 @@ export default async function HomePage() {
                 </div>
               ))}
             </div>
-            <Link href="/join" className="button button-primary" style={{ marginTop: 20 }}>
+            <SiteButton href="/join" style={{ marginTop: 20 }}>
               Become a stylist
-            </Link>
+            </SiteButton>
           </Reveal>
         </div>
       </section>
@@ -232,12 +229,10 @@ export default async function HomePage() {
               </p>
             </div>
             <div className="hero-actions">
-              <Link href="/join" className="button button-primary">
-                Get started
-              </Link>
-              <Link href="/dashboard" className="button button-secondary">
+              <SiteButton href="/join">Get started</SiteButton>
+              <SiteButton href="/dashboard" variant="secondary">
                 View dashboard
-              </Link>
+              </SiteButton>
             </div>
           </Reveal>
         </div>

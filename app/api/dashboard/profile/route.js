@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
-import { getDashboardDataForUser, updateVendorProfile } from "@/lib/postgres-repositories";
+import {
+  getDashboardDataForUser,
+  updateClientProfile,
+  updateVendorProfile
+} from "@/lib/postgres-repositories";
 import { getSessionFromRequest } from "@/lib/session";
 
 export async function GET(request) {
-  const user = getSessionFromRequest(request);
+  const user = await getSessionFromRequest(request);
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
@@ -15,13 +19,19 @@ export async function GET(request) {
 
 export async function PUT(request) {
   try {
-    const user = getSessionFromRequest(request);
+    const user = await getSessionFromRequest(request);
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
 
     const payload = await request.json();
+
+    if (user.role === "client") {
+      const updatedUser = await updateClientProfile(user, payload);
+      return NextResponse.json({ user: updatedUser });
+    }
+
     const dashboard = await updateVendorProfile(user, payload);
     return NextResponse.json(dashboard);
   } catch (error) {

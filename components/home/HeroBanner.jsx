@@ -1,5 +1,5 @@
-import Link from "next/link";
 import HeroParticles from "@/components/home/HeroParticles";
+import SiteButton from "@/components/ui/SiteButton";
 
 function HeroLogo() {
   return (
@@ -41,12 +41,10 @@ export default function HeroBanner() {
           </p>
 
           <div className="hero-actions hero-banner-actions">
-            <Link href="/discover" className="button button-primary">
-              Find a Stylist
-            </Link>
-            <Link href="/join" className="button button-secondary">
+            <SiteButton href="/discover">Find a Stylist</SiteButton>
+            <SiteButton href="/join" variant="secondary">
               Join as Stylist
-            </Link>
+            </SiteButton>
           </div>
         </div>
       </div>

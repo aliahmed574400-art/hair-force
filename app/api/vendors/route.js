@@ -21,7 +21,7 @@ export async function POST(request) {
 
     const result = await createVendorAccount(payload);
     const response = NextResponse.json(result, { status: 201 });
-    applySessionCookie(response, result.user);
+    await applySessionCookie(response, result.user, request);
     return response;
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });

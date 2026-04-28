@@ -3,7 +3,7 @@ import { getUserById } from "@/lib/postgres-repositories";
 import { getSessionFromRequest } from "@/lib/session";
 
 export async function GET(request) {
-  const sessionUser = getSessionFromRequest(request);
+  const sessionUser = await getSessionFromRequest(request);
 
   if (!sessionUser) {
     return NextResponse.json({ user: null }, { status: 200 });

@@ -1,5 +1,5 @@
-import Link from "next/link";
 import Reveal from "@/components/animated/Reveal";
+import SiteButton from "@/components/ui/SiteButton";
 
 export default function UnderDevelopmentPage({
   eyebrow = "Under Development",
@@ -26,12 +26,10 @@ export default function UnderDevelopmentPage({
           </div>
 
           <div className="hero-actions" style={{ marginTop: 22 }}>
-            <Link href="/" className="button button-primary">
-              Back home
-            </Link>
-            <Link href="/discover" className="button button-secondary">
+            <SiteButton href="/">Back home</SiteButton>
+            <SiteButton href="/discover" variant="secondary">
               Discover stylists
-            </Link>
+            </SiteButton>
           </div>
         </Reveal>
       </div>

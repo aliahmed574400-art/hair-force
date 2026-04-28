@@ -16,7 +16,13 @@ const ServiceSchema = new Schema(
     depositValue: { type: Number, default: 20 },
     imageUrl: { type: String },
     description: { type: String },
-    featured: { type: Boolean, default: false }
+    featured: { type: Boolean, default: false },
+    bookingMethod: {
+      type: String,
+      enum: ["instant", "approval"],
+      default: "instant"
+    },
+    isActive: { type: Boolean, default: true }
   },
   { timestamps: true }
 );

@@ -1,6 +1,5 @@
 import { Manrope, Sora } from "next/font/google";
 import Footer from "@/components/ui/Footer";
-import FloatingBot from "@/components/ui/FloatingBot";
 import Navbar from "@/components/ui/Navbar";
 import "@/app/globals.css";
 
@@ -29,7 +28,6 @@ export default function RootLayout({ children }) {
           <Navbar />
           {children}
           <Footer />
-          <FloatingBot />
         </div>
       </body>
     </html>

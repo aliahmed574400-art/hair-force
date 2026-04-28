@@ -3,12 +3,16 @@ import { getDashboardDataForUser } from "@/lib/postgres-repositories";
 import { getSessionFromRequest } from "@/lib/session";
 
 export async function GET(request) {
-  const user = getSessionFromRequest(request);
+  const user = await getSessionFromRequest(request);
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
   const dashboard = await getDashboardDataForUser(user);
-  return NextResponse.json({ bookings: dashboard?.bookings || [] });
+  return NextResponse.json({
+    bookings: dashboard?.bookings || [],
+    upcomingBookings: dashboard?.upcomingBookings || [],
+    pastBookings: dashboard?.pastBookings || []
+  });
 }

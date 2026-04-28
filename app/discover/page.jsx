@@ -1,11 +1,26 @@
-import UnderDevelopmentPage from "@/components/ui/UnderDevelopmentPage";
+import DiscoverExperience from "@/components/discover/DiscoverExperience";
+import { searchDiscoverStylists } from "@/lib/postgres-repositories";
 
-export default function DiscoverPage() {
-  return (
-    <UnderDevelopmentPage
-      eyebrow="Find a Stylist"
-      title="Stylist discovery is under development"
-      description="We are still refining the discovery experience. Search, browsing, and stylist matching are being polished before this page goes fully live."
-    />
-  );
+function getParamValue(value) {
+  if (Array.isArray(value)) {
+    return value[0] || "";
+  }
+
+  return value || "";
+}
+
+export default async function DiscoverPage({ searchParams }) {
+  const initialFilters = {
+    query: getParamValue(searchParams?.query),
+    state: getParamValue(searchParams?.state) || getParamValue(searchParams?.city),
+    sort: getParamValue(searchParams?.sort) || "highest_rated",
+    priceRange: getParamValue(searchParams?.priceRange),
+    verifiedOnly: getParamValue(searchParams?.verifiedOnly),
+    instantOnly: getParamValue(searchParams?.instantOnly),
+    page: 1,
+    limit: 12
+  };
+  const initialResults = await searchDiscoverStylists(initialFilters);
+
+  return <DiscoverExperience initialFilters={initialFilters} initialResults={initialResults} />;
 }

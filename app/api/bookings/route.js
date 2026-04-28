@@ -5,7 +5,7 @@ import { getSessionFromRequest } from "@/lib/session";
 export async function POST(request) {
   try {
     const payload = await request.json();
-    const sessionUser = getSessionFromRequest(request);
+    const sessionUser = await getSessionFromRequest(request);
 
     const requiredFields = [
       "vendorSlug",

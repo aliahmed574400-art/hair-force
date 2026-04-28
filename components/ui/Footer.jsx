@@ -1,5 +1,6 @@
 import Link from "next/link";
 import HeroParticles from "@/components/home/HeroParticles";
+import SiteButton from "@/components/ui/SiteButton";
 
 function SocialIcon({ label, href, path }) {
   return (
@@ -33,9 +34,9 @@ export default function Footer() {
               Grow your business with Hair Force. Join now and connect with more clients in your
               area.
             </p>
-            <Link href="/join" className="button button-primary footer-cta-button">
+            <SiteButton href="/join" className="footer-cta-button">
               Get Started
-            </Link>
+            </SiteButton>
           </div>
 
           <div className="footer-divider" aria-hidden="true" />

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Logo from "@/components/brand/Logo";
+import SiteButton from "@/components/ui/SiteButton";
 import SignOutButton from "@/components/ui/SignOutButton";
 
 function getDashboardHref(sessionUser) {
@@ -30,6 +31,7 @@ export default function NavbarClient({ sessionUser, links }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const pathname = usePathname();
+  const isHomePage = pathname === "/";
   const dashboardHref = getDashboardHref(sessionUser);
   const dashboardLabel = getDashboardLabel(sessionUser);
 
@@ -72,60 +74,13 @@ export default function NavbarClient({ sessionUser, links }) {
   }, []);
 
   return (
-    <>
-      <div className="topbar-row">
-        <Logo dark={isScrolled} />
+    <header className={`topbar ${isHomePage ? "topbar-home" : "topbar-static"}`}>
+      <div className="container">
+        <div className="topbar-row">
+          <Logo dark={!isHomePage || isScrolled} />
 
-        <nav className="nav-links" aria-label="Primary navigation">
-          {links.map((link) =>
-            link.href ? (
-              <Link key={`${link.label}-${link.href}`} href={link.href}>
-                {link.label}
-              </Link>
-            ) : (
-              <span key={`${link.label}-static`}>{link.label}</span>
-            )
-          )}
-        </nav>
-
-        <div className="nav-actions">
-          {sessionUser ? (
-            <>
-              <Link href={dashboardHref} className="button button-secondary">
-                {dashboardLabel}
-              </Link>
-              <SignOutButton />
-            </>
-          ) : (
-            <>
-              <Link href="/signin" className="button button-secondary">
-                Sign in
-              </Link>
-              <Link href="/join" className="button button-primary">
-                Join as stylist
-              </Link>
-            </>
-          )}
-        </div>
-
-        <button
-          type="button"
-          className={`topbar-mobile-toggle ${isMenuOpen ? "is-open" : ""}`}
-          aria-expanded={isMenuOpen}
-          aria-controls="mobile-nav-panel"
-          aria-label={isMenuOpen ? "Close navigation menu" : "Open navigation menu"}
-          onClick={() => setIsMenuOpen((open) => !open)}
-        >
-          <span />
-          <span />
-          <span />
-        </button>
-      </div>
-
-      <div className={`mobile-nav-drawer ${isMenuOpen ? "is-open" : ""}`}>
-        <div id="mobile-nav-panel" className="mobile-nav-panel" aria-hidden={!isMenuOpen}>
-          <nav className="mobile-nav-links" aria-label="Mobile navigation">
-            {mobileLinks.map((link) =>
+          <nav className="nav-links" aria-label="Primary navigation">
+            {links.map((link) =>
               link.href ? (
                 <Link key={`${link.label}-${link.href}`} href={link.href}>
                   {link.label}
@@ -136,29 +91,78 @@ export default function NavbarClient({ sessionUser, links }) {
             )}
           </nav>
 
-          <div className="mobile-nav-divider" />
-
-          <div className="mobile-nav-actions">
+          <div className="nav-actions">
             {sessionUser ? (
               <>
-                <Link href={dashboardHref} className="button button-secondary">
+                <SiteButton href={dashboardHref} variant="secondary" size="sm">
                   {dashboardLabel}
-                </Link>
-                <SignOutButton className="button button-secondary" />
+                </SiteButton>
+                <SignOutButton size="sm" />
               </>
             ) : (
               <>
-                <Link href="/signin" className="button button-secondary">
+                <SiteButton href="/signin" variant="secondary" size="sm">
                   Sign in
-                </Link>
-                <Link href="/join" className="button button-primary">
+                </SiteButton>
+                <SiteButton href="/join" size="sm">
                   Join as stylist
-                </Link>
+                </SiteButton>
               </>
             )}
           </div>
+
+          <button
+            type="button"
+            className={`topbar-mobile-toggle ${isMenuOpen ? "is-open" : ""}`}
+            aria-expanded={isMenuOpen}
+            aria-controls="mobile-nav-panel"
+            aria-label={isMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+            onClick={() => setIsMenuOpen((open) => !open)}
+          >
+            <span />
+            <span />
+            <span />
+          </button>
+        </div>
+
+        <div className={`mobile-nav-drawer ${isMenuOpen ? "is-open" : ""}`}>
+          <div id="mobile-nav-panel" className="mobile-nav-panel" aria-hidden={!isMenuOpen}>
+            <nav className="mobile-nav-links" aria-label="Mobile navigation">
+              {mobileLinks.map((link) =>
+                link.href ? (
+                  <Link key={`${link.label}-${link.href}`} href={link.href}>
+                    {link.label}
+                  </Link>
+                ) : (
+                  <span key={`${link.label}-static`}>{link.label}</span>
+                )
+              )}
+            </nav>
+
+            <div className="mobile-nav-divider" />
+
+            <div className="mobile-nav-actions">
+              {sessionUser ? (
+                <>
+                  <SiteButton href={dashboardHref} variant="secondary" fullWidth>
+                    {dashboardLabel}
+                  </SiteButton>
+                  <SignOutButton fullWidth />
+                </>
+              ) : (
+                <>
+                  <SiteButton href="/signin" variant="secondary" fullWidth>
+                    Sign in
+                  </SiteButton>
+                  <SiteButton href="/join" fullWidth>
+                    Join as stylist
+                  </SiteButton>
+                </>
+              )}
+            </div>
+          </div>
         </div>
       </div>
-    </>
+    </header>
   );
 }

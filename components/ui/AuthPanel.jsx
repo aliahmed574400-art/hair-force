@@ -1,13 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import GoogleAuthButton from "@/components/ui/GoogleAuthButton";
+import PhoneSigninPanel from "@/components/ui/PhoneSigninPanel";
+import SiteButton from "@/components/ui/SiteButton";
 
 export default function AuthPanel({ mode = "signup" }) {
   const isSignup = mode === "signup";
   const router = useRouter();
   const [form, setForm] = useState({ name: "", phone: "", email: "", password: "" });
   const [status, setStatus] = useState({ loading: false, message: "" });
+  const forgotPasswordHref = form.email
+    ? `/forgot-password?email=${encodeURIComponent(form.email)}`
+    : "/forgot-password";
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -37,7 +44,9 @@ export default function AuthPanel({ mode = "signup" }) {
         setForm({ name: "", phone: "", email: "", password: "" });
       }
 
-      router.push("/dashboard");
+      const nextHref = !isSignup && data.user?.role === "admin" ? "/admin" : "/dashboard";
+
+      router.push(nextHref);
       router.refresh();
     } catch (error) {
       setStatus({ loading: false, message: error.message });
@@ -59,44 +68,86 @@ export default function AuthPanel({ mode = "signup" }) {
       <form className="form-grid" onSubmit={handleSubmit}>
         {isSignup ? (
           <>
-            <input
-              className="form-control"
-              placeholder="Full name"
-              value={form.name}
-              onChange={(event) => setForm({ ...form, name: event.target.value })}
-              required
-            />
-            <input
-              className="form-control"
-              placeholder="Phone number"
-              value={form.phone}
-              onChange={(event) => setForm({ ...form, phone: event.target.value })}
-            />
+            <div className="form-field">
+              <label className="form-label" htmlFor={`${mode}-name`}>
+                Full name
+              </label>
+              <input
+                id={`${mode}-name`}
+                className="form-control"
+                placeholder="Full name"
+                value={form.name}
+                onChange={(event) => setForm({ ...form, name: event.target.value })}
+                required
+              />
+            </div>
+            <div className="form-field">
+              <label className="form-label" htmlFor={`${mode}-phone`}>
+                Phone number
+              </label>
+              <input
+                id={`${mode}-phone`}
+                className="form-control"
+                placeholder="Phone number"
+                value={form.phone}
+                onChange={(event) => setForm({ ...form, phone: event.target.value })}
+              />
+            </div>
           </>
         ) : null}
 
-        <input
-          className={`form-control ${isSignup ? "" : "form-span-2"}`}
-          type="email"
-          placeholder="Email address"
-          value={form.email}
-          onChange={(event) => setForm({ ...form, email: event.target.value })}
-          required
-        />
+        <div className={`form-field ${isSignup ? "" : "form-span-2"}`}>
+          <label className="form-label" htmlFor={`${mode}-email`}>
+            Email address
+          </label>
+          <input
+            id={`${mode}-email`}
+            className="form-control"
+            type="email"
+            placeholder="Email address"
+            value={form.email}
+            onChange={(event) => setForm({ ...form, email: event.target.value })}
+            required
+          />
+        </div>
 
-        <input
-          className={`form-control ${isSignup ? "" : "form-span-2"}`}
-          type="password"
-          placeholder="Password"
-          value={form.password}
-          onChange={(event) => setForm({ ...form, password: event.target.value })}
-          required
-        />
+        <div className={`form-field ${isSignup ? "" : "form-span-2"}`}>
+          <label className="form-label" htmlFor={`${mode}-password`}>
+            Password
+          </label>
+          <input
+            id={`${mode}-password`}
+            className="form-control"
+            type="password"
+            placeholder="Password"
+            value={form.password}
+            onChange={(event) => setForm({ ...form, password: event.target.value })}
+            required
+          />
+        </div>
 
-        <button className="button button-primary form-span-2" disabled={status.loading}>
+        {!isSignup ? (
+          <div className="auth-panel-meta form-span-2">
+            <Link href={forgotPasswordHref} className="auth-panel-link">
+              Forgot password?
+            </Link>
+            <span className="muted tiny">
+              New here?{" "}
+              <Link href="/signup" className="auth-panel-link">
+                Sign up
+              </Link>
+            </span>
+          </div>
+        ) : null}
+
+        <SiteButton className="form-span-2" disabled={status.loading} fullWidth type="submit">
           {status.loading ? "Working..." : isSignup ? "Create account" : "Sign in"}
-        </button>
+        </SiteButton>
       </form>
+
+      <GoogleAuthButton mode={mode} onStatusChange={setStatus} />
+
+      {!isSignup ? <PhoneSigninPanel /> : null}
 
       {status.message ? (
         <div className="booking-confirm">
@@ -107,13 +158,31 @@ export default function AuthPanel({ mode = "signup" }) {
       {!isSignup ? (
         <div className="booking-confirm">
           <strong style={{ display: "block", marginBottom: 8 }}>Demo access</strong>
-          <span className="muted">Client: `client@hairforce.app` / `demo12345`</span>
-          <br />
-          <span className="muted">Vendor: `vendor@hairforce.app` / `demo12345`</span>
-          <br />
-          <span className="muted">Admin: `admin@hairforce.app` / `demo12345`</span>
+          <div className="auth-panel-demo-list">
+            <code className="auth-panel-demo-code">Client: client@hairforce.app / demo12345</code>
+            <code className="auth-panel-demo-code">Vendor: vendor@hairforce.app / demo12345</code>
+            <code className="auth-panel-demo-code">Admin: admin@hairforce.app / demo12345</code>
+          </div>
         </div>
       ) : null}
+
+      <p className="auth-panel-switch">
+        {isSignup ? (
+          <>
+            Already have an account?{" "}
+            <Link href="/signin" className="auth-panel-link">
+              Sign in
+            </Link>
+          </>
+        ) : (
+          <>
+            Need a Hair Force account?{" "}
+            <Link href="/signup" className="auth-panel-link">
+              Create one
+            </Link>
+          </>
+        )}
+      </p>
     </div>
   );
 }

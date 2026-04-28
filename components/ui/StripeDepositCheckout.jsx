@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
+import SiteButton from "@/components/ui/SiteButton";
 import { formatCurrency } from "@/lib/utils";
 
 const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "";
@@ -48,12 +49,12 @@ function StripeDepositForm({ amount, onPaid, onCancel }) {
       <form onSubmit={handleSubmit}>
         <PaymentElement />
         <div className="hero-actions" style={{ marginTop: 16 }}>
-          <button type="submit" className="button button-primary" disabled={submitting || !stripe}>
+          <SiteButton disabled={submitting || !stripe} type="submit">
             {submitting ? "Processing..." : "Pay and confirm"}
-          </button>
-          <button type="button" className="button button-secondary" onClick={onCancel}>
+          </SiteButton>
+          <SiteButton onClick={onCancel} type="button" variant="secondary">
             Cancel
-          </button>
+          </SiteButton>
         </div>
       </form>
       {status ? (

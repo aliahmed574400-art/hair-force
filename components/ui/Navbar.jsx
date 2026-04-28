@@ -7,14 +7,8 @@ const links = [
   { href: "/ai", label: "Hairforce AI" }
 ];
 
-export default function Navbar() {
-  const sessionUser = getSessionFromServer();
+export default async function Navbar() {
+  const sessionUser = await getSessionFromServer();
 
-  return (
-    <header className="topbar">
-      <div className="container">
-        <NavbarClient sessionUser={sessionUser} links={links} />
-      </div>
-    </header>
-  );
+  return <NavbarClient sessionUser={sessionUser} links={links} />;
 }

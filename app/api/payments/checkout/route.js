@@ -4,7 +4,7 @@ export async function POST(request) {
   try {
     const payload = await request.json();
     const amount = Number(payload.amount || 0);
-    const currency = String(payload.currency || process.env.PAYMENT_CURRENCY || "pkr").toLowerCase();
+    const currency = String(payload.currency || process.env.PAYMENT_CURRENCY || "usd").toLowerCase();
 
     if (!amount) {
       return NextResponse.json({ error: "Amount is required." }, { status: 400 });

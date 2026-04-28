@@ -1,6 +1,6 @@
 import Image from "next/image";
-import Link from "next/link";
 import Reveal from "@/components/animated/Reveal";
+import SiteButton from "@/components/ui/SiteButton";
 
 const REVIEW_STARS = ["★", "★", "★", "★", "★"];
 
@@ -19,9 +19,9 @@ export default function BusinessPromoSection() {
           </p>
 
           <div className="hero-actions" style={{ marginTop: 28, marginBottom: 36 }}>
-            <Link href="/join" className="button button-primary window-button">
+            <SiteButton href="/join" className="window-button">
               Find out more
-            </Link>
+            </SiteButton>
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>

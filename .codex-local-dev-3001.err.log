@@ -1,0 +1,156 @@
+ ⨯ ./components/home/WhyHairForceRail.jsx
+Error: Failed to read source code from E:\My business\Projects\hairforce\components\home\WhyHairForceRail.jsx
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./components/home/WhyHairForceRail.jsx
+./components/home/HomeLanding.jsx
+./app/page.jsx
+ ⨯ ./components/home/WhyHairForceRail.jsx
+Error: Failed to read source code from E:\My business\Projects\hairforce\components\home\WhyHairForceRail.jsx
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./components/home/WhyHairForceRail.jsx
+./components/home/HomeLanding.jsx
+./app/page.jsx
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⨯ SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at loadManifest (E:\My business\Projects\hairforce\node_modules\next\dist\server\load-manifest.js:36:25)
+    at DevServer.getNextFontManifest (E:\My business\Projects\hairforce\node_modules\next\dist\server\next-server.js:750:47)
+    at DevServer.findPageComponents (E:\My business\Projects\hairforce\node_modules\next\dist\server\dev\next-dev-server.js:571:43)
+    at async DevServer.renderPageComponent (E:\My business\Projects\hairforce\node_modules\next\dist\server\base-server.js:1910:24)
+    at async DevServer.renderToResponseImpl (E:\My business\Projects\hairforce\node_modules\next\dist\server\base-server.js:1962:32)
+    at async DevServer.pipeImpl (E:\My business\Projects\hairforce\node_modules\next\dist\server\base-server.js:922:25)
+    at async NextNodeServer.handleCatchallRenderRequest (E:\My business\Projects\hairforce\node_modules\next\dist\server\next-server.js:272:17)
+    at async DevServer.handleRequestImpl (E:\My business\Projects\hairforce\node_modules\next\dist\server\base-server.js:818:17)
+    at async E:\My business\Projects\hairforce\node_modules\next\dist\server\dev\next-dev-server.js:339:20
+    at async Span.traceAsyncFn (E:\My business\Projects\hairforce\node_modules\next\dist\trace\trace.js:154:20)
+    at async DevServer.handleRequest (E:\My business\Projects\hairforce\node_modules\next\dist\server\dev\next-dev-server.js:336:24)
+    at async invokeRender (E:\My business\Projects\hairforce\node_modules\next\dist\server\lib\router-server.js:178:21)
+    at async handleRequest (E:\My business\Projects\hairforce\node_modules\next\dist\server\lib\router-server.js:355:24)
+    at async requestHandlerImpl (E:\My business\Projects\hairforce\node_modules\next\dist\server\lib\router-server.js:379:13)
+    at async Server.requestListener (E:\My business\Projects\hairforce\node_modules\next\dist\server\lib\start-server.js:141:13) {
+  page: '/'
+}
+ ⨯ ./components/home/WhyHairForceRail.jsx
+Error: Failed to read source code from E:\My business\Projects\hairforce\components\home\WhyHairForceRail.jsx
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./components/home/WhyHairForceRail.jsx
+ ⨯ ./components/home/WhyHairForceRail.jsx
+Error: Failed to read source code from E:\My business\Projects\hairforce\components\home\WhyHairForceRail.jsx
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./components/home/WhyHairForceRail.jsx
+./components/home/HomeLanding.jsx
+./app/page.jsx
+ ⨯ ./components/home/WhyHairForceRail.jsx
+Error: Failed to read source code from E:\My business\Projects\hairforce\components\home\WhyHairForceRail.jsx
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./components/home/WhyHairForceRail.jsx
+./components/home/HomeLanding.jsx
+./app/page.jsx
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⨯ ./components/home/BusinessGrowthPromo.jsx
+Error: Failed to read source code from E:\My business\Projects\hairforce\components\home\BusinessGrowthPromo.jsx
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./components/home/BusinessGrowthPromo.jsx
+./components/home/HomeLanding.jsx
+./app/page.jsx
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⨯ ./components/home/WhyHairForceRail.jsx
+Error: Failed to read source code from E:\My business\Projects\hairforce\components\home\WhyHairForceRail.jsx
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./components/home/WhyHairForceRail.jsx
+ ⨯ ./components/home/WhyHairForceRail.jsx
+Error: Failed to read source code from E:\My business\Projects\hairforce\components\home\WhyHairForceRail.jsx
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./components/home/WhyHairForceRail.jsx
+./components/home/HomeLanding.jsx
+./app/page.jsx
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⨯ components\home\HomeLanding.jsx (320:38) @ whyHairForceCards
+ ⨯ ReferenceError: whyHairForceCards is not defined
+    at HomeLanding (./components/home/HomeLanding.jsx:784:40)
+digest: "4028655110"
+[0m [90m 318 |[39m               center[0m
+[0m [90m 319 |[39m             [33m/[39m[33m>[39m[0m
+[0m[31m[1m>[22m[39m[90m 320 |[39m             [33m<[39m[33mWhyHairForceRail[39m items[33m=[39m{whyHairForceCards} [33m/[39m[33m>[39m[0m
+[0m [90m     |[39m                                      [31m[1m^[22m[39m[0m
+[0m [90m 321 |[39m           [33m<[39m[33m/[39m[33mHomeSectionShell[39m[33m>[39m[0m
+[0m [90m 322 |[39m         [33m<[39m[33m/[39m[33mdiv[39m[33m>[39m[0m
+[0m [90m 323 |[39m       [33m<[39m[33m/[39m[33msection[39m[33m>[39m[0m
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⨯ components\home\HomeLanding.jsx (320:38) @ whyHairForceCards
+ ⨯ ReferenceError: whyHairForceCards is not defined
+    at HomeLanding (./components/home/HomeLanding.jsx:784:40)
+digest: "4028655110"
+[0m [90m 318 |[39m               center[0m
+[0m [90m 319 |[39m             [33m/[39m[33m>[39m[0m
+[0m[31m[1m>[22m[39m[90m 320 |[39m             [33m<[39m[33mWhyHairForceRail[39m items[33m=[39m{whyHairForceCards} [33m/[39m[33m>[39m[0m
+[0m [90m     |[39m                                      [31m[1m^[22m[39m[0m
+[0m [90m 321 |[39m           [33m<[39m[33m/[39m[33mHomeSectionShell[39m[33m>[39m[0m
+[0m [90m 322 |[39m         [33m<[39m[33m/[39m[33mdiv[39m[33m>[39m[0m
+[0m [90m 323 |[39m       [33m<[39m[33m/[39m[33msection[39m[33m>[39m[0m
+ ⨯ components\home\HomeLanding.jsx (320:38) @ whyHairForceCards
+ ⨯ ReferenceError: whyHairForceCards is not defined
+    at HomeLanding (./components/home/HomeLanding.jsx:784:40)
+digest: "4028655110"
+[0m [90m 318 |[39m               center[0m
+[0m [90m 319 |[39m             [33m/[39m[33m>[39m[0m
+[0m[31m[1m>[22m[39m[90m 320 |[39m             [33m<[39m[33mWhyHairForceRail[39m items[33m=[39m{whyHairForceCards} [33m/[39m[33m>[39m[0m
+[0m [90m     |[39m                                      [31m[1m^[22m[39m[0m
+[0m [90m 321 |[39m           [33m<[39m[33m/[39m[33mHomeSectionShell[39m[33m>[39m[0m
+[0m [90m 322 |[39m         [33m<[39m[33m/[39m[33mdiv[39m[33m>[39m[0m
+[0m [90m 323 |[39m       [33m<[39m[33m/[39m[33msection[39m[33m>[39m[0m
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⨯ ./components/home/WhyHairForceRail.jsx
+Error: Failed to read source code from E:\My business\Projects\hairforce\components\home\WhyHairForceRail.jsx
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./components/home/WhyHairForceRail.jsx
+./components/home/HomeLanding.jsx
+./app/page.jsx
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⨯ ./components/home/WhyHairForceRail.jsx
+Error: Failed to read source code from E:\My business\Projects\hairforce\components\home\WhyHairForceRail.jsx
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./components/home/WhyHairForceRail.jsx
+./components/home/HomeLanding.jsx
+./app/page.jsx
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.

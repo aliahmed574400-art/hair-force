@@ -14,8 +14,7 @@ import {
   faqs,
   homeServiceCategories,
   howItWorks,
-  testimonials,
-  whyHairForceCards
+  testimonials
 } from "@/lib/data";
 
 function HomeIcon({ name }) {
@@ -312,13 +311,7 @@ export default async function HomeLanding() {
             className="why-hairforce-section-shell"
             panelClassName="why-hairforce-section-panel"
           >
-            <SectionHeading
-              eyebrow="Why Hairforce"
-              title="Why choose Hairforce"
-              description="Everything you need to book smarter, manage better, and grow faster — all in one platform."
-              center
-            />
-            <WhyHairForceRail items={whyHairForceCards} />
+            <WhyHairForceRail />
           </HomeSectionShell>
         </div>
       </section>

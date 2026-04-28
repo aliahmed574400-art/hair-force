@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { gsap } from "gsap";
+import SiteButton from "@/components/ui/SiteButton";
 
 export default function HeroStage() {
   const scope = useRef(null);
@@ -86,9 +87,9 @@ export default function HeroStage() {
                 <span className="chip">Balayage</span>
                 <span className="chip">Blowout</span>
               </div>
-              <button className="button button-primary" style={{ width: "100%", marginTop: 16 }}>
+              <SiteButton fullWidth style={{ marginTop: 16 }} type="button">
                 Book now
-              </button>
+              </SiteButton>
             </div>
           </div>
         </div>

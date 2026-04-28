@@ -1,9 +1,10 @@
 import { notFound } from "next/navigation";
 import BookingForm from "@/components/ui/BookingForm";
+import { buildVendorCityStateLabel } from "@/lib/discovery";
 import { getStylistBySlug } from "@/lib/postgres-repositories";
 import { calculateDeposit, formatCurrency } from "@/lib/utils";
 
-export default async function BookingPage({ params }) {
+export default async function BookingPage({ params, searchParams }) {
   const stylist = await getStylistBySlug(params.slug);
 
   if (!stylist) {
@@ -18,7 +19,7 @@ export default async function BookingPage({ params }) {
             <span className="eyebrow">Booking flow</span>
             <h1 style={{ fontSize: "clamp(2.6rem, 6vw, 4.5rem)" }}>Book {stylist.name}</h1>
             <p>
-              This page mirrors the most important marketplace conversion moment: select a service, choose a slot, and reserve directly from the vendor profile.
+              This page completes the profile-to-booking handoff: review the selected service, choose a live slot, fill in your details, and either confirm instantly or send a booking request depending on the service rules.
             </p>
           </div>
 
@@ -27,7 +28,7 @@ export default async function BookingPage({ params }) {
               <div>
                 <h3 style={{ margin: 0, fontFamily: "var(--font-display)", fontSize: "2rem" }}>{stylist.heroTag}</h3>
                 <p className="muted" style={{ marginBottom: 0 }}>
-                  {stylist.city} - {stylist.location}
+                  {buildVendorCityStateLabel(stylist)} - {stylist.location}
                 </p>
               </div>
               <span className="badge badge-accent">{stylist.rating} rating</span>
@@ -67,7 +68,14 @@ export default async function BookingPage({ params }) {
         </section>
 
         <aside>
-          <BookingForm vendor={stylist} />
+          <BookingForm
+            vendor={stylist}
+            initialSelection={{
+              serviceId: searchParams?.service || "",
+              date: searchParams?.date || "",
+              slot: searchParams?.slot || ""
+            }}
+          />
         </aside>
       </div>
     </main>

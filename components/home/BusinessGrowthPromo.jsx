@@ -3,7 +3,7 @@ import Link from "next/link";
 import Reveal from "@/components/animated/Reveal";
 import RevealText from "@/components/animated/RevealText";
 
-const REVIEW_STARS = ["★", "★", "★", "★", "★"];
+const REVIEW_STARS = ["\u2605", "\u2605", "\u2605", "\u2605", "\u2605"];
 
 export default function BusinessGrowthPromo() {
   return (

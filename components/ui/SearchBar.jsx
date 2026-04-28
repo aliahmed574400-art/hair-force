@@ -1,57 +1,14 @@
-const STATES = [
-  "Alabama",
-  "Alaska",
-  "Arizona",
-  "Arkansas",
-  "California",
-  "Colorado",
-  "Connecticut",
-  "Delaware",
-  "Florida",
-  "Georgia",
-  "Hawaii",
-  "Idaho",
-  "Illinois",
-  "Indiana",
-  "Iowa",
-  "Kansas",
-  "Kentucky",
-  "Louisiana",
-  "Maine",
-  "Maryland",
-  "Massachusetts",
-  "Michigan",
-  "Minnesota",
-  "Mississippi",
-  "Missouri",
-  "Montana",
-  "Nebraska",
-  "Nevada",
-  "New Hampshire",
-  "New Jersey",
-  "New Mexico",
-  "New York",
-  "North Carolina",
-  "North Dakota",
-  "Ohio",
-  "Oklahoma",
-  "Oregon",
-  "Pennsylvania",
-  "Rhode Island",
-  "South Carolina",
-  "South Dakota",
-  "Tennessee",
-  "Texas",
-  "Utah",
-  "Vermont",
-  "Virginia",
-  "Washington",
-  "West Virginia",
-  "Wisconsin",
-  "Wyoming",
-];
+import SiteButton from "@/components/ui/SiteButton";
+import { US_STATES } from "@/lib/discovery";
 
-export default function SearchBar({ defaultQuery = "", defaultCity = "", defaultCategory = "" }) {
+export default function SearchBar({
+  defaultQuery = "",
+  defaultState = "",
+  defaultCity = "",
+  defaultCategory = ""
+}) {
+  const initialState = defaultState || defaultCity;
+
   return (
     <form className="search-shell" action="/discover">
       <input
@@ -60,9 +17,9 @@ export default function SearchBar({ defaultQuery = "", defaultCity = "", default
         defaultValue={defaultQuery}
         placeholder="Search salons, barbers, spas, or services"
       />
-      <select className="search-field" name="city" defaultValue={defaultCity}>
+      <select className="search-field" name="state" defaultValue={initialState}>
         <option value="">All states</option>
-        {STATES.map((state) => (
+        {US_STATES.map((state) => (
           <option key={state} value={state}>
             {state}
           </option>
@@ -77,9 +34,7 @@ export default function SearchBar({ defaultQuery = "", defaultCity = "", default
         <option value="Nails">Nails</option>
         <option value="Braids">Braids</option>
       </select>
-      <button className="button button-primary" type="submit">
-        Search
-      </button>
+      <SiteButton type="submit">Search</SiteButton>
     </form>
   );
 }

@@ -24,10 +24,18 @@ const BookingSchema = new Schema(
     notes: { type: String },
     status: {
       type: String,
-      enum: ["confirmed", "pending", "completed", "cancelled"],
+      enum: ["pending_approval", "confirmed", "completed", "cancelled", "declined"],
       default: "confirmed"
     },
-    source: { type: String, default: "web" }
+    source: { type: String, default: "web" },
+    bookingMethod: {
+      type: String,
+      enum: ["instant", "approval"],
+      default: "instant"
+    },
+    requestedAt: { type: Date },
+    approvedAt: { type: Date },
+    declinedAt: { type: Date }
   },
   { timestamps: true }
 );

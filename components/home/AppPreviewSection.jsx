@@ -1,5 +1,5 @@
-import Link from "next/link";
 import Reveal from "@/components/animated/Reveal";
+import SiteButton from "@/components/ui/SiteButton";
 
 export default function AppPreviewSection() {
   return (
@@ -13,12 +13,10 @@ export default function AppPreviewSection() {
         </p>
 
         <div className="app-preview-actions">
-          <Link href="#faqs" className="button button-primary">
-            Explore Features
-          </Link>
-          <Link href="/join" className="button button-secondary">
+          <SiteButton href="#faqs">Explore Features</SiteButton>
+          <SiteButton href="/join" variant="secondary">
             Get Started
-          </Link>
+          </SiteButton>
         </div>
       </Reveal>
 

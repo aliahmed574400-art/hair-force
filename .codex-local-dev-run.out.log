@@ -1,0 +1,199 @@
+
+> hairforce-marketplace@0.1.0 dev
+> next dev
+
+  ▲ Next.js 14.2.24
+  - Local:        http://localhost:3000
+  - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 4.6s
+ ○ Compiling / ...
+ ✓ Compiled / in 13.1s (1325 modules)
+ GET / 200 in 2051ms
+ GET / 200 in 11124ms
+ GET / 200 in 345ms
+ ○ Compiling /api/auth/signout ...
+ ✓ Compiled /api/auth/signout in 1090ms (715 modules)
+ POST /api/auth/signout 200 in 1469ms
+ ○ Compiling /signin ...
+ ✓ Compiled /signin in 4.1s (1432 modules)
+ ✓ Compiled in 1242ms (683 modules)
+ ○ Compiling /api/auth/google ...
+ ✓ Compiled /api/auth/google in 804ms (751 modules)
+ POST /api/auth/google 200 in 18617ms
+ GET /signin 200 in 497ms
+ POST /api/auth/google 200 in 3277ms
+ ○ Compiling /dashboard ...
+ ✓ Compiled /dashboard in 3s (1446 modules)
+ ○ Compiling /ai ...
+ ✓ Compiled /ai in 2s (1423 modules)
+ GET /signin 200 in 644ms
+ GET / 200 in 1224ms
+ ○ Compiling /stylists/[slug] ...
+ ✓ Compiled /stylists/[slug] in 2.3s (1444 modules)
+ ✓ Compiled in 616ms (696 modules)
+ ○ Compiling /book/[slug] ...
+ ✓ Compiled /book/[slug] in 1413ms (1475 modules)
+ ○ Compiling /api/auth/me ...
+ ✓ Compiled /api/auth/me in 753ms (793 modules)
+ GET /api/auth/me 200 in 1505ms
+ GET /api/auth/me 200 in 348ms
+ ○ Compiling /api/payments/checkout ...
+ ✓ Compiled /api/payments/checkout in 1445ms (935 modules)
+ POST /api/payments/checkout 200 in 1601ms
+ ✓ Compiled /api/bookings in 308ms (937 modules)
+ POST /api/bookings 201 in 3476ms
+ ✓ Compiled in 2.1s (1427 modules)
+ ✓ Compiled in 961ms (1427 modules)
+ ✓ Compiled in 1235ms (1427 modules)
+ ✓ Compiled in 1121ms (1427 modules)
+ ✓ Compiled in 1629ms (1427 modules)
+ ✓ Compiled in 948ms (1427 modules)
+ ✓ Compiled in 912ms (1427 modules)
+ ✓ Compiled in 1303ms (1427 modules)
+ ✓ Compiled in 3.1s (1427 modules)
+ ✓ Compiled in 4.5s (1427 modules)
+ ✓ Compiled in 1975ms (1427 modules)
+ ✓ Compiled in 1572ms (1427 modules)
+ ✓ Compiled in 1405ms (1427 modules)
+ ✓ Compiled in 2.7s (1427 modules)
+ ✓ Compiled in 2s (1427 modules)
+ ✓ Compiled in 1127ms (710 modules)
+ ○ Compiling /api/dashboard/payments ...
+ ✓ Compiled /api/dashboard/payments in 705ms (745 modules)
+ GET /dashboard?tab=payments 200 in 1454ms
+ GET /api/dashboard/payments 401 in 1534ms
+ ✓ Compiled /api/auth/signin in 294ms (747 modules)
+ POST /api/auth/signin 200 in 3191ms
+ POST /api/auth/signin 200 in 3199ms
+ ✓ Compiled /api/dashboard/profile in 186ms (749 modules)
+ GET /api/dashboard/payments 200 in 2862ms
+ GET /api/dashboard/profile 200 in 2907ms
+ POST /api/auth/signin 200 in 2633ms
+ POST /api/auth/signin 200 in 2548ms
+ GET /api/dashboard/payments 200 in 2494ms
+ ✓ Compiled /api/dashboard/payments/bookings/[id] in 232ms (751 modules)
+ POST /api/dashboard/payments 200 in 4613ms
+ GET /api/dashboard/payments 200 in 632ms
+ POST /api/dashboard/payments/bookings/bk-demo-103 400 in 2910ms
+ GET /api/dashboard/payments 200 in 560ms
+ ✓ Compiled /api/dashboard/payments/receipts/[id] in 197ms (753 modules)
+ GET /api/dashboard/payments/receipts/pay-973a9d05-ab8e-4515-93c9-d501dca295ec 200 in 1032ms
+ POST /api/auth/signin 200 in 3837ms
+ GET /api/dashboard/payments 200 in 2828ms
+ POST /api/auth/signin 200 in 7625ms
+ GET /api/dashboard/payments 200 in 880ms
+ POST /api/auth/signin 200 in 2991ms
+ GET /dashboard?tab=payments 200 in 2930ms
+ ○ Compiling /api/dashboard/notifications/[id] ...
+ ✓ Compiled /api/dashboard/notifications/[id] in 754ms (745 modules)
+ PATCH /api/dashboard/notifications/ntf-1d22fb17-82c4-43d2-b849-6be1f317c8c2 200 in 4217ms
+ ✓ Compiled /api/dashboard/profile in 466ms (747 modules)
+ GET /api/dashboard/profile 200 in 3018ms
+ ✓ Compiled in 3.4s (1427 modules)
+ ✓ Compiled in 1369ms (1427 modules)
+ ✓ Compiled in 889ms (1427 modules)
+ ✓ Compiled in 1030ms (1427 modules)
+ ✓ Compiled in 2.4s (1427 modules)
+ ✓ Compiled in 1635ms (1427 modules)
+ GET /dashboard?tab=payments 200 in 374ms
+ ○ Compiling / ...
+ ✓ Compiled / in 1655ms (765 modules)
+ GET / 200 in 2498ms
+ ✓ Compiled /api/auth/signin in 302ms (793 modules)
+ POST /api/auth/signin 200 in 1200ms
+ GET /dashboard?tab=payments 200 in 947ms
+ ✓ Compiled in 4.2s (1427 modules)
+ ✓ Compiled in 2.5s (1427 modules)
+ ✓ Compiled in 1592ms (1427 modules)
+ GET /dashboard?tab=payments 200 in 517ms
+ GET /dashboard 200 in 526ms
+ ✓ Compiled in 1952ms (1427 modules)
+ ✓ Compiled in 2.4s (1427 modules)
+ ○ Compiling / ...
+ ✓ Compiled / in 1705ms (765 modules)
+ ✓ Compiled in 1792ms (1441 modules)
+ ✓ Compiled in 1485ms (1441 modules)
+ ✓ Compiled in 1159ms (1441 modules)
+ GET /dashboard?tab=bookings 200 in 360ms
+ ✓ Compiled in 3s (1441 modules)
+ ✓ Compiled in 1198ms (1441 modules)
+ GET /dashboard?tab=payments 200 in 341ms
+ ✓ Compiled in 4.6s (1441 modules)
+ ✓ Compiled in 2.2s (1441 modules)
+ ✓ Compiled in 2.5s (1441 modules)
+ GET /dashboard?tab=profile 200 in 507ms
+ GET /dashboard?tab=profile 200 in 4482ms
+ ✓ Compiled in 2.6s (1443 modules)
+ ✓ Compiled in 897ms (1443 modules)
+ ✓ Compiled in 1104ms (1443 modules)
+ ✓ Compiled in 472ms (711 modules)
+ GET /dashboard?tab=profile 200 in 197ms
+ ○ Compiling /api/dashboard/profile ...
+ ✓ Compiled /api/dashboard/profile in 749ms (760 modules)
+ PUT /api/dashboard/profile 200 in 4265ms
+ GET /api/dashboard/profile 200 in 2567ms
+ ✓ Compiled in 2.7s (1443 modules)
+ GET /dashboard?tab=profile 200 in 407ms
+ ✓ Compiled in 2.4s (1443 modules)
+ ✓ Compiled in 1608ms (1443 modules)
+ ✓ Compiled in 1192ms (1443 modules)
+ ✓ Compiled in 1255ms (1443 modules)
+ ✓ Compiled in 875ms (1443 modules)
+ ✓ Compiled in 1200ms (1443 modules)
+ ✓ Compiled in 2.2s (1443 modules)
+ ✓ Compiled in 1355ms (1443 modules)
+ GET /dashboard?tab=profile 200 in 325ms
+ ○ Compiling /api/dashboard/profile ...
+ ✓ Compiled /api/dashboard/profile in 1674ms (760 modules)
+ PUT /api/dashboard/profile 200 in 5412ms
+ GET /api/dashboard/profile 200 in 2452ms
+ ✓ Compiled in 2.8s (1443 modules)
+ GET /dashboard?tab=profile 200 in 476ms
+ ✓ Compiled in 1635ms (1443 modules)
+ ✓ Compiled in 1474ms (1443 modules)
+ ✓ Compiled in 1255ms (1443 modules)
+ ✓ Compiled in 957ms (1443 modules)
+ ✓ Compiled in 1330ms (1443 modules)
+ ✓ Compiled in 1346ms (1443 modules)
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 3.9s (1446 modules)
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 4528ms
+ ✓ Compiled in 2.3s (1443 modules)
+ ✓ Compiled in 1355ms (1443 modules)
+ ✓ Compiled in 1223ms (1443 modules)
+ ✓ Compiled in 1916ms (1443 modules)
+ ✓ Compiled in 1161ms (1443 modules)
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 1601ms (1669 modules)
+ ✓ Compiled in 2.2s (1667 modules)
+ ✓ Compiled in 679ms (895 modules)
+ ✓ Compiled in 523ms (895 modules)
+ ✓ Compiled in 540ms (895 modules)
+ ✓ Compiled in 18.8s (1653 modules)
+ ✓ Compiled in 2.5s (1667 modules)
+ ✓ Compiled in 1445ms (1667 modules)
+ ✓ Compiled in 1539ms (1667 modules)
+ ✓ Compiled in 3.5s (1667 modules)
+ ✓ Compiled in 1811ms (1667 modules)
+ ✓ Compiled in 1515ms (1667 modules)
+ ✓ Compiled in 2.1s (1667 modules)
+ ✓ Compiled in 786ms (895 modules)
+ GET /dashboard 200 in 514ms
+ ○ Compiling /signin ...
+ ✓ Compiled /signin in 1472ms (806 modules)
+ ○ Compiling /api/auth/google ...
+ ✓ Compiled /api/auth/google in 1422ms (834 modules)
+ POST /api/auth/google 200 in 6254ms
+ ○ Compiling /api/dashboard/account/export ...
+ ✓ Compiled /api/dashboard/account/export in 654ms (831 modules)
+ POST /api/dashboard/account/export 200 in 5545ms
+ ✓ Compiled in 3s (1698 modules)
+ GET /dashboard?tab=profile 200 in 3176ms
+ ○ Compiling /discover ...
+ ✓ Compiled /discover in 2s (1701 modules)
+ ○ Compiling /api/auth/me ...
+ ✓ Compiled /api/auth/me in 1183ms (832 modules)
+ GET /api/auth/me 200 in 2408ms
+ GET /api/auth/me 200 in 864ms

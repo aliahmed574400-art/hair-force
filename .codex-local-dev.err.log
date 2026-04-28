@@ -1,0 +1,100 @@
+Error: spawn EPERM
+    at ChildProcess.spawn (node:internal/child_process:421:11)
+    at spawn (node:child_process:761:9)
+    at fork (node:child_process:172:10)
+    at E:\My business\Projects\hairforce\node_modules\next\dist\cli\next-dev.js:213:45
+    at new Promise (<anonymous>)
+    at startServer (E:\My business\Projects\hairforce\node_modules\next\dist\cli\next-dev.js:199:16)
+    at runDevServer (E:\My business\Projects\hairforce\node_modules\next\dist\cli\next-dev.js:280:23)
+    at Module.nextDev (E:\My business\Projects\hairforce\node_modules\next\dist\cli\next-dev.js:288:11) {
+  errno: -4048,
+  code: 'EPERM',
+  syscall: 'spawn'
+}
+ ⨯ error: could not create unique index "bookings_vendor_slot_active_idx"
+    at async initializePostgres (./lib/postgres.js:741:13)
+    at async ensurePostgresReady (./lib/postgres.js:763:5)
+    at async queryPostgres (./lib/postgres.js:767:18)
+    at async getStylists (./lib/postgres-repositories.js:2232:22)
+    at async searchDiscoverStylists (./lib/postgres-repositories.js:2200:20)
+    at async DiscoverPage (./app/discover/page.jsx:32:28)
+digest: "3008768005"
+ ⨯ error: could not create unique index "bookings_vendor_slot_active_idx"
+    at async initializePostgres (./lib/postgres.js:741:13)
+    at async ensurePostgresReady (./lib/postgres.js:763:5)
+    at async queryPostgres (./lib/postgres.js:767:18)
+    at async getStylists (./lib/postgres-repositories.js:2232:22)
+    at async searchDiscoverStylists (./lib/postgres-repositories.js:2200:20)
+    at async DiscoverPage (./app/discover/page.jsx:32:28)
+digest: "3008768005"
+ ⨯ error: could not create unique index "bookings_vendor_slot_active_idx"
+    at async initializePostgres (./lib/postgres.js:741:13)
+    at async ensurePostgresReady (./lib/postgres.js:763:5)
+    at async queryPostgres (./lib/postgres.js:767:18)
+    at async getStylists (./lib/postgres-repositories.js:2232:22)
+    at async searchDiscoverStylists (./lib/postgres-repositories.js:2200:20)
+    at async DiscoverPage (./app/discover/page.jsx:32:28)
+digest: "3008768005"
+ ⨯ error: could not create unique index "bookings_vendor_slot_active_idx"
+    at async initializePostgres (./lib/postgres.js:741:13)
+    at async ensurePostgresReady (./lib/postgres.js:763:5)
+    at async queryPostgres (./lib/postgres.js:767:18)
+    at async getStylists (./lib/postgres-repositories.js:2232:22)
+    at async searchDiscoverStylists (./lib/postgres-repositories.js:2200:20)
+    at async DiscoverPage (./app/discover/page.jsx:32:28)
+digest: "3008768005"
+ ⨯ error: could not create unique index "bookings_vendor_slot_active_idx"
+    at async initializePostgres (./lib/postgres.js:741:13)
+    at async ensurePostgresReady (./lib/postgres.js:763:5)
+    at async queryPostgres (./lib/postgres.js:767:18)
+    at async getStylists (./lib/postgres-repositories.js:2232:22)
+    at async searchDiscoverStylists (./lib/postgres-repositories.js:2200:20)
+    at async DiscoverPage (./app/discover/page.jsx:32:28)
+digest: "3008768005"
+ ⨯ error: could not create unique index "bookings_vendor_slot_active_idx"
+    at async initializePostgres (./lib/postgres.js:741:13)
+    at async ensurePostgresReady (./lib/postgres.js:763:5)
+    at async queryPostgres (./lib/postgres.js:767:18)
+    at async getStylists (./lib/postgres-repositories.js:2232:22)
+    at async searchDiscoverStylists (./lib/postgres-repositories.js:2200:20)
+    at async DiscoverPage (./app/discover/page.jsx:32:28)
+digest: "3008768005"
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+Skipping strict bookings slot index because legacy duplicate active slots already exist. App-level availability checks remain enabled.
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⨯ components\discover\DiscoverExperience.jsx (462:24) @ useMemo
+ ⨯ ReferenceError: useMemo is not defined
+    at DiscoverExperience (./components/discover/DiscoverExperience.jsx:673:26)
+digest: "3795550699"
+[0m [90m 460 |[39m   }[0m
+[0m [90m 461 |[39m[0m
+[0m[31m[1m>[22m[39m[90m 462 |[39m   [36mconst[39m summaryChips [33m=[39m useMemo([0m
+[0m [90m     |[39m                        [31m[1m^[22m[39m[0m
+[0m [90m 463 |[39m     () [33m=>[39m [[0m
+[0m [90m 464 |[39m       [32m`${results.meta?.total || 0} stylists`[39m[33m,[39m[0m
+[0m [90m 465 |[39m       [32m`${results.meta?.mappableCount || 0} public map pins`[39m[33m,[39m[0m
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⨯ components\discover\DiscoverExperience.jsx (462:24) @ useMemo
+ ⨯ ReferenceError: useMemo is not defined
+    at DiscoverExperience (./components/discover/DiscoverExperience.jsx:673:26)
+digest: "3795550699"
+[0m [90m 460 |[39m   }[0m
+[0m [90m 461 |[39m[0m
+[0m[31m[1m>[22m[39m[90m 462 |[39m   [36mconst[39m summaryChips [33m=[39m useMemo([0m
+[0m [90m     |[39m                        [31m[1m^[22m[39m[0m
+[0m [90m 463 |[39m     () [33m=>[39m [[0m
+[0m [90m 464 |[39m       [32m`${results.meta?.total || 0} stylists`[39m[33m,[39m[0m
+[0m [90m 465 |[39m       [32m`${results.meta?.mappableCount || 0} public map pins`[39m[33m,[39m[0m
+ ⨯ components\discover\DiscoverExperience.jsx (462:24) @ useMemo
+ ⨯ ReferenceError: useMemo is not defined
+    at DiscoverExperience (./components/discover/DiscoverExperience.jsx:673:26)
+digest: "3795550699"
+[0m [90m 460 |[39m   }[0m
+[0m [90m 461 |[39m[0m
+[0m[31m[1m>[22m[39m[90m 462 |[39m   [36mconst[39m summaryChips [33m=[39m useMemo([0m
+[0m [90m     |[39m                        [31m[1m^[22m[39m[0m
+[0m [90m 463 |[39m     () [33m=>[39m [[0m
+[0m [90m 464 |[39m       [32m`${results.meta?.total || 0} stylists`[39m[33m,[39m[0m
+[0m [90m 465 |[39m       [32m`${results.meta?.mappableCount || 0} public map pins`[39m[33m,[39m[0m
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.

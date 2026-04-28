@@ -15,7 +15,7 @@ export async function POST(request) {
 
     const user = await signinUser(payload);
     const response = NextResponse.json({ user });
-    applySessionCookie(response, user);
+    await applySessionCookie(response, user, request);
     return response;
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });

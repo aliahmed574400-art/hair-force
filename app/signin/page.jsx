@@ -1,11 +1,9 @@
-import UnderDevelopmentPage from "@/components/ui/UnderDevelopmentPage";
+import AnimatedCharactersLoginPage from "@/components/ui/animated-characters-login-page";
 
 export default function SigninPage() {
   return (
-    <UnderDevelopmentPage
-      eyebrow="Sign In"
-      title="Sign in is under development"
-      description="We are still working on the client and vendor login experience. This page will be available once the authentication flow is ready to ship."
-    />
+    <main className="page-intro">
+      <AnimatedCharactersLoginPage />
+    </main>
   );
 }

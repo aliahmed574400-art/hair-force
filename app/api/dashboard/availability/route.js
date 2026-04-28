@@ -4,7 +4,7 @@ import { getSessionFromRequest } from "@/lib/session";
 
 export async function PUT(request) {
   try {
-    const user = getSessionFromRequest(request);
+    const user = await getSessionFromRequest(request);
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });

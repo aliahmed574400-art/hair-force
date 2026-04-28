@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import SiteButton from "@/components/ui/SiteButton";
 
 function VendorTable({ title, vendors, onModerate, loadingSlug }) {
   return (
@@ -30,30 +31,29 @@ function VendorTable({ title, vendors, onModerate, loadingSlug }) {
                 {vendor.tagline}
               </p>
               <div className="hero-actions" style={{ marginTop: 12 }}>
-                <button
-                  type="button"
-                  className="button button-primary"
+                <SiteButton
                   onClick={() => onModerate(vendor.slug, "active")}
                   disabled={loadingSlug === vendor.slug || vendor.status === "active"}
+                  type="button"
                 >
                   Approve
-                </button>
-                <button
-                  type="button"
-                  className="button button-secondary"
+                </SiteButton>
+                <SiteButton
                   onClick={() => onModerate(vendor.slug, "pending")}
                   disabled={loadingSlug === vendor.slug || vendor.status === "pending"}
+                  type="button"
+                  variant="secondary"
                 >
                   Mark pending
-                </button>
-                <button
-                  type="button"
-                  className="button button-ghost"
+                </SiteButton>
+                <SiteButton
                   onClick={() => onModerate(vendor.slug, "rejected")}
                   disabled={loadingSlug === vendor.slug || vendor.status === "rejected"}
+                  type="button"
+                  variant="ghost"
                 >
                   Reject
-                </button>
+                </SiteButton>
               </div>
             </div>
           ))

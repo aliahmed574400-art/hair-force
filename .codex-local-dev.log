@@ -1,48 +1,124 @@
-
-> hairforce-marketplace@0.1.0 dev
-> next dev
-
   ▲ Next.js 14.2.24
-  - Local:        http://localhost:3000
+  - Local:        http://127.0.0.1:3000
+  - Network:      http://127.0.0.1:3000
+  - Environments: .env.local
 
  ✓ Starting...
- ✓ Ready in 3.1s
+ ✓ Ready in 2.6s
  ○ Compiling / ...
- ✓ Compiled / in 17.9s (1394 modules)
- GET / 200 in 19147ms
- GET / 200 in 359ms
- ○ Compiling /_not-found ...
- GET / 200 in 812ms
- ✓ Compiled /_not-found in 1840ms (1356 modules)
- GET /.well-known/appspecific/com.chrome.devtools.json 404 in 2668ms
- ✓ Compiled in 1488ms (1367 modules)
- GET / 200 in 737ms
- ○ Compiling /_not-found ...
- ✓ Compiled /_not-found in 1140ms (1356 modules)
- GET /.well-known/appspecific/com.chrome.devtools.json 404 in 1908ms
- GET / 200 in 445ms
- GET /.well-known/appspecific/com.chrome.devtools.json 404 in 75ms
- ✓ Compiled in 1338ms (1367 modules)
- GET / 200 in 578ms
- ○ Compiling /_not-found ...
- ✓ Compiled /_not-found in 1232ms (1356 modules)
- GET /.well-known/appspecific/com.chrome.devtools.json 404 in 1979ms
- ✓ Compiled in 736ms (1370 modules)
- ✓ Compiled in 2.2s (1367 modules)
- GET / 200 in 403ms
- ○ Compiling /_not-found ...
- ✓ Compiled /_not-found in 708ms (1356 modules)
- GET /.well-known/appspecific/com.chrome.devtools.json 404 in 1080ms
- GET / 200 in 379ms
- GET /.well-known/appspecific/com.chrome.devtools.json 404 in 94ms
- ✓ Compiled in 1434ms (1367 modules)
- GET / 200 in 600ms
- ○ Compiling /_not-found ...
- ✓ Compiled /_not-found in 628ms (1356 modules)
- GET /.well-known/appspecific/com.chrome.devtools.json 404 in 1249ms
- GET / 200 in 336ms
- GET / 200 in 252ms
- GET / 200 in 242ms
- ✓ Compiled in 1177ms (1367 modules)
- ✓ Compiled in 2.4s (1367 modules)
-^C^C
+ ✓ Compiled / in 1868ms (1327 modules)
+ GET / 200 in 2836ms
+ GET / 200 in 221ms
+ GET / 200 in 128ms
+ ○ Compiling /discover ...
+ ✓ Compiled /discover in 2.8s (1346 modules)
+ ✓ Compiled in 754ms (654 modules)
+ ○ Compiling /join ...
+ ✓ Compiled /join in 803ms (1334 modules)
+ ✓ Compiled in 614ms (654 modules)
+ ✓ Compiled in 341ms (654 modules)
+ ✓ Compiled in 801ms (1348 modules)
+ ✓ Compiled in 710ms (1348 modules)
+ ✓ Compiled in 852ms (1348 modules)
+ ✓ Compiled in 377ms (654 modules)
+ ✓ Compiled in 701ms (1349 modules)
+ ✓ Compiled in 739ms (1351 modules)
+ ✓ Compiled in 901ms (1351 modules)
+ ✓ Compiled in 1251ms (1351 modules)
+ ✓ Compiled in 814ms (1351 modules)
+ ✓ Compiled in 715ms (1351 modules)
+ ✓ Compiled in 501ms (1351 modules)
+ ✓ Compiled in 354ms (655 modules)
+ ✓ Compiled in 974ms (1351 modules)
+ ✓ Compiled in 317ms (655 modules)
+ ✓ Compiled in 657ms (1337 modules)
+ ✓ Compiled in 275ms (655 modules)
+ ✓ Compiled in 455ms (655 modules)
+ ✓ Compiled in 429ms (655 modules)
+ ✓ Compiled in 6.2s (1349 modules)
+ ✓ Compiled in 1681ms (1335 modules)
+ ✓ Compiled in 2.1s (655 modules)
+ ✓ Compiled in 1468ms (655 modules)
+ ✓ Compiled in 1343ms (655 modules)
+ ✓ Compiled in 1077ms (655 modules)
+ ✓ Compiled in 2.5s (1349 modules)
+ ✓ Compiled in 814ms (655 modules)
+ ✓ Compiled in 1740ms (655 modules)
+ ✓ Compiled in 1713ms (655 modules)
+ ✓ Compiled in 1049ms (655 modules)
+ ✓ Compiled in 2.9s (1349 modules)
+ ✓ Compiled in 1908ms (1349 modules)
+ GET / 200 in 1455ms
+ ○ Compiling /discover ...
+ ✓ Compiled /discover in 3.1s (1356 modules)
+ GET /discover?state=Alaska&query=Haircut&date=2026-04-26 500 in 467ms
+ GET /discover 500 in 18528ms
+ GET / 200 in 667ms
+ ✓ Compiled in 2.1s (1370 modules)
+ ✓ Compiled in 1357ms (1370 modules)
+ GET /discover 200 in 42863ms
+ ○ Compiling /api/stylists ...
+ ✓ Compiled /api/stylists in 801ms (734 modules)
+ GET /api/stylists?page=1&limit=12&sort=highest_rated 200 in 1949ms
+ GET /api/stylists?page=1&limit=12&sort=highest_rated 200 in 721ms
+ GET /api/stylists?page=1&limit=12&sort=highest_rated&state=Arizona 200 in 2606ms
+ GET /discover 200 in 3249ms
+ GET /api/stylists?page=1&limit=12&sort=highest_rated 200 in 679ms
+ GET /api/stylists?page=1&limit=12&sort=highest_rated 200 in 906ms
+ ○ Compiling /stylists/[slug] ...
+ ✓ Compiled /stylists/[slug] in 2.4s (1396 modules)
+ ○ Compiling /book/[slug] ...
+ ✓ Compiled /book/[slug] in 2.3s (1427 modules)
+ ○ Compiling /api/stylists/[slug]/availability ...
+ ✓ Compiled /api/stylists/[slug]/availability in 781ms (763 modules)
+ ✓ Compiled (765 modules)
+ GET /api/auth/me 200 in 1800ms
+ GET /api/auth/me 200 in 68ms
+ GET /api/stylists/zoya-bridal-room/availability?serviceId=srv-401&maxWindows=12 200 in 3945ms
+ GET /api/stylists/zoya-bridal-room/availability?serviceId=srv-401&maxWindows=12 200 in 929ms
+ GET /api/stylists/zoya-bridal-room/availability?serviceId=srv-403&maxWindows=12 200 in 848ms
+ GET /api/stylists/zoya-bridal-room/availability?serviceId=srv-402&maxWindows=12 200 in 2493ms
+ GET /api/stylists?page=1&limit=12&sort=highest_rated 200 in 2718ms
+ GET /api/stylists?page=1&limit=12&sort=highest_rated 200 in 596ms
+ ✓ Compiled in 7.1s (1413 modules)
+ GET /discover 200 in 3116ms
+ ○ Compiling /api/stylists ...
+ ✓ Compiled /api/stylists in 887ms (761 modules)
+ GET /api/stylists?page=1&limit=12&sort=highest_rated 200 in 1974ms
+ GET /api/stylists?page=1&limit=12&sort=highest_rated 200 in 605ms
+ ✓ Compiled in 2s (1441 modules)
+ ✓ Compiled in 4.2s (1413 modules)
+ GET /discover 500 in 5019ms
+ ✓ Compiled in 1563ms (1413 modules)
+ GET /discover 500 in 3683ms
+ ✓ Compiled in 3.4s (1413 modules)
+ GET /discover 200 in 3673ms
+ ○ Compiling /api/stylists ...
+ ✓ Compiled /api/stylists in 1705ms (761 modules)
+ GET /api/stylists?page=1&limit=12&sort=highest_rated 200 in 2830ms
+ GET /api/stylists?page=1&limit=12&sort=highest_rated 200 in 608ms
+ ✓ Compiled in 3.7s (1441 modules)
+ ✓ Compiled in 2.4s (1413 modules)
+ ✓ Compiled in 1989ms (1413 modules)
+ ✓ Compiled in 3.4s (1413 modules)
+ GET /discover 200 in 3719ms
+ ○ Compiling /api/stylists ...
+ ✓ Compiled /api/stylists in 1220ms (761 modules)
+ GET /api/stylists?page=1&limit=12&sort=highest_rated 200 in 2491ms
+ GET /api/stylists?page=1&limit=12&sort=highest_rated 200 in 726ms
+ ✓ Compiled in 2.9s (1413 modules)
+ ✓ Compiled in 2.8s (1413 modules)
+ ✓ Compiled in 1305ms (680 modules)
+ ✓ Compiled in 2.1s (1413 modules)
+ ✓ Compiled in 5.1s (1414 modules)
+ ✓ Compiled in 4.2s (1414 modules)
+ GET /discover 200 in 3270ms
+ ○ Compiling /api/stylists ...
+ ✓ Compiled /api/stylists in 1885ms (762 modules)
+ GET /api/stylists?page=1&limit=12&sort=highest_rated 200 in 3114ms
+ GET /api/stylists?page=1&limit=12&sort=highest_rated 200 in 645ms
+ GET /discover 200 in 3124ms
+ GET /api/stylists?page=1&limit=12&sort=highest_rated 200 in 661ms
+ GET /api/stylists?page=1&limit=12&sort=highest_rated 200 in 615ms
+ GET /api/stylists?page=1&limit=12&sort=highest_rated 200 in 2298ms
+ GET /api/stylists?page=1&limit=12&sort=highest_rated 200 in 610ms

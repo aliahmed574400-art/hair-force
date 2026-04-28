@@ -1,10 +1,10 @@
-import Link from "next/link";
 import AdminVendorManager from "@/components/admin/AdminVendorManager";
+import SiteButton from "@/components/ui/SiteButton";
 import { getAdminDataForUser } from "@/lib/postgres-repositories";
 import { getSessionFromServer } from "@/lib/session";
 
 export default async function AdminPage() {
-  const sessionUser = getSessionFromServer();
+  const sessionUser = await getSessionFromServer();
 
   if (!sessionUser) {
     return (
@@ -22,9 +22,7 @@ export default async function AdminPage() {
               <p className="muted">demo12345</p>
             </div>
             <div className="hero-actions" style={{ marginTop: 18 }}>
-              <Link href="/signin" className="button button-primary">
-                Go to sign in
-              </Link>
+              <SiteButton href="/signin">Go to sign in</SiteButton>
             </div>
           </div>
         </div>

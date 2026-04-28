@@ -1,59 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import SiteButton from "@/components/ui/SiteButton";
+import { US_STATES } from "@/lib/discovery";
 
-const STATES = [
-  "Alabama",
-  "Alaska",
-  "Arizona",
-  "Arkansas",
-  "California",
-  "Colorado",
-  "Connecticut",
-  "Delaware",
-  "Florida",
-  "Georgia",
-  "Hawaii",
-  "Idaho",
-  "Illinois",
-  "Indiana",
-  "Iowa",
-  "Kansas",
-  "Kentucky",
-  "Louisiana",
-  "Maine",
-  "Maryland",
-  "Massachusetts",
-  "Michigan",
-  "Minnesota",
-  "Mississippi",
-  "Missouri",
-  "Montana",
-  "Nebraska",
-  "Nevada",
-  "New Hampshire",
-  "New Jersey",
-  "New Mexico",
-  "New York",
-  "North Carolina",
-  "North Dakota",
-  "Ohio",
-  "Oklahoma",
-  "Oregon",
-  "Pennsylvania",
-  "Rhode Island",
-  "South Carolina",
-  "South Dakota",
-  "Tennessee",
-  "Texas",
-  "Utah",
-  "Vermont",
-  "Virginia",
-  "Washington",
-  "West Virginia",
-  "Wisconsin",
-  "Wyoming",
-];
 const SERVICES = [
   "Haircut",
   "Beard",
@@ -84,9 +34,9 @@ export default function StickySearchBar() {
               <form className="sticky-search-card" action="/discover">
                 <label className="sticky-search-field">
                   <span className="sticky-search-label">Location</span>
-                  <select name="city" defaultValue="">
+                  <select name="state" defaultValue="">
                     <option value="">Choose state</option>
-                    {STATES.map((state) => (
+                    {US_STATES.map((state) => (
                       <option key={state} value={state}>
                         {state}
                       </option>
@@ -116,9 +66,9 @@ export default function StickySearchBar() {
                   />
                 </label>
 
-                <button className="button button-primary sticky-search-button" type="submit">
+                <SiteButton className="sticky-search-button" fullWidth type="submit">
                   Search
-                </button>
+                </SiteButton>
               </form>
             </div>
           </div>

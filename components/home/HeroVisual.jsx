@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { gsap } from "gsap";
 import PhoneFrame from "@/components/home/PhoneFrame";
+import SiteButton from "@/components/ui/SiteButton";
 
 export default function HeroVisual() {
   const scope = useRef(null);
@@ -90,19 +91,19 @@ export default function HeroVisual() {
                 {
                   name: "Noor Atelier",
                   meta: "Color Specialist",
-                  price: "From PKR 3,500",
+                  price: "From $65",
                   rating: "4.9"
                 },
                 {
                   name: "Rayan Fade Club",
                   meta: "Modern Barber",
-                  price: "From PKR 1,800",
+                  price: "From $35",
                   rating: "4.8"
                 },
                 {
                   name: "Safa Skin Spa",
                   meta: "Facial Lounge",
-                  price: "From PKR 4,200",
+                  price: "From $90",
                   rating: "4.9"
                 }
               ].map((item) => (
@@ -120,9 +121,9 @@ export default function HeroVisual() {
               ))}
             </div>
 
-            <button className="button button-primary device-button" type="button">
+            <SiteButton className="device-button" size="sm" type="button">
               Find a Stylist
-            </button>
+            </SiteButton>
           </div>
         </PhoneFrame>
       </div>

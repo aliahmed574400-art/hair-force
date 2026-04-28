@@ -3,7 +3,7 @@ import { createVendorService, getDashboardDataForUser } from "@/lib/postgres-rep
 import { getSessionFromRequest } from "@/lib/session";
 
 export async function GET(request) {
-  const user = getSessionFromRequest(request);
+  const user = await getSessionFromRequest(request);
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
@@ -15,7 +15,7 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    const user = getSessionFromRequest(request);
+    const user = await getSessionFromRequest(request);
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });

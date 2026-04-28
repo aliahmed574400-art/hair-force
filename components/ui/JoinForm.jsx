@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import SiteButton from "@/components/ui/SiteButton";
 
 export default function JoinForm() {
   const router = useRouter();
@@ -126,9 +127,9 @@ export default function JoinForm() {
           value={form.notes}
           onChange={(event) => setForm({ ...form, notes: event.target.value })}
         />
-        <button className="button button-primary form-span-2" disabled={status.loading}>
+        <SiteButton className="form-span-2" disabled={status.loading} fullWidth type="submit">
           {status.loading ? "Submitting..." : "Start onboarding"}
-        </button>
+        </SiteButton>
       </form>
       {status.message ? (
         <div className="booking-confirm">
