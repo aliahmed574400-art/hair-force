@@ -5,6 +5,11 @@ import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
 
+type AsChildElementProps = {
+  className?: string
+  children?: React.ReactNode
+}
+
 const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-semibold tracking-[-0.01em] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-200/70 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
@@ -47,7 +52,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ children, className, variant, size, asChild = false, ...props }, ref) => {
     const resolvedClassName = cn(buttonVariants({ variant, size, className }))
 
-    if (asChild && React.isValidElement(children)) {
+    if (asChild && React.isValidElement<AsChildElementProps>(children)) {
       return React.cloneElement(children, {
         ...props,
         className: cn(resolvedClassName, children.props.className),
@@ -116,7 +121,10 @@ function LiquidButton({
     "relative isolate overflow-hidden rounded-full",
     liquidbuttonVariants({ variant, size, className })
   )
-  const content = asChild && React.isValidElement(children) ? children.props.children : children
+  const content =
+    asChild && React.isValidElement<AsChildElementProps>(children)
+      ? children.props.children
+      : children
 
   const chrome = (
     <>
@@ -137,7 +145,7 @@ function LiquidButton({
   )
 
   if (asChild) {
-    if (!React.isValidElement(children)) {
+    if (!React.isValidElement<AsChildElementProps>(children)) {
       return null
     }
 
