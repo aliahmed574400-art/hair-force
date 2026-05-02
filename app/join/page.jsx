@@ -1,11 +1,26 @@
-import UnderDevelopmentPage from "@/components/ui/UnderDevelopmentPage";
+import JoinForm from "@/components/ui/JoinForm";
+import { getDashboardDataForUser } from "@/lib/postgres-repositories";
+import { getSessionFromServer } from "@/lib/session";
 
-export default function JoinPage() {
+export default async function JoinPage() {
+  const sessionUser = await getSessionFromServer();
+  let initialDashboard = null;
+
+  if (sessionUser?.role === "vendor" && sessionUser.vendorSlug) {
+    try {
+      const dashboard = await getDashboardDataForUser(sessionUser);
+      initialDashboard = dashboard.kind === "vendor" ? dashboard : null;
+    } catch {
+      initialDashboard = null;
+    }
+  }
+
   return (
-    <UnderDevelopmentPage
-      eyebrow="Join as Stylist"
-      title="Stylist onboarding is under development"
-      description="We are still shaping the onboarding flow for vendors and stylists. This page will return once account setup, approvals, and profile creation are ready."
-    />
+    <main className="vendor-join-page">
+      <JoinForm
+        initialUser={sessionUser?.role === "vendor" ? sessionUser : null}
+        initialDashboard={initialDashboard}
+      />
+    </main>
   );
 }

@@ -7,6 +7,7 @@ export async function POST(request) {
     const payload = await request.json();
     const phone = String(payload.phone || "").trim();
     const code = String(payload.code || "").trim();
+    const allowedRoles = Array.isArray(payload.allowedRoles) ? payload.allowedRoles : undefined;
 
     if (!phone || !code) {
       return NextResponse.json(
@@ -15,11 +16,14 @@ export async function POST(request) {
       );
     }
 
-    const user = await verifyPhoneSigninOtp({ phone, code });
+    const user = await verifyPhoneSigninOtp({ phone, code, allowedRoles });
     const response = NextResponse.json({ user });
     await applySessionCookie(response, user, request);
     return response;
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    return NextResponse.json(
+      { error: error.message },
+      { status: Number(error?.status) || 400 }
+    );
   }
 }

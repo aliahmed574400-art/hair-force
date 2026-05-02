@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import {
   getDashboardDataForUser,
-  markAllClientNotificationsRead
+  markAllClientNotificationsRead,
+  markAllVendorNotificationsRead
 } from "@/lib/postgres-repositories";
 import { getSessionFromRequest } from "@/lib/session";
 
@@ -13,7 +14,10 @@ export async function GET(request) {
   }
 
   const dashboard = await getDashboardDataForUser(user);
-  return NextResponse.json({ notifications: dashboard?.notifications || [] });
+  return NextResponse.json({
+    notifications: dashboard?.notifications || [],
+    unreadNotificationCount: dashboard?.unreadNotificationCount || 0
+  });
 }
 
 export async function PATCH(request) {
@@ -30,7 +34,10 @@ export async function PATCH(request) {
       return NextResponse.json({ error: "Unsupported notification action." }, { status: 400 });
     }
 
-    const dashboard = await markAllClientNotificationsRead(user);
+    const dashboard =
+      user.role === "vendor"
+        ? await markAllVendorNotificationsRead(user)
+        : await markAllClientNotificationsRead(user);
     return NextResponse.json(dashboard);
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });

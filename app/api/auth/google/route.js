@@ -41,6 +41,8 @@ export async function POST(request) {
 
     const payload = await request.json();
     const credential = String(payload.credential || "").trim();
+    const allowedRoles = Array.isArray(payload.allowedRoles) ? payload.allowedRoles : undefined;
+    const accountRole = String(payload.accountRole || "").trim();
 
     if (!credential) {
       return NextResponse.json(
@@ -63,14 +65,18 @@ export async function POST(request) {
 
     const tokenInfo = await tokenInfoResponse.json();
     const googleProfile = getGoogleProfileFromTokenInfo(tokenInfo);
-    const user = await signinWithGoogle(googleProfile);
+    const user = await signinWithGoogle({
+      ...googleProfile,
+      allowedRoles,
+      accountRole
+    });
     const response = NextResponse.json({ user });
     await applySessionCookie(response, user, request);
     return response;
   } catch (error) {
     return NextResponse.json(
       { error: error.message || "Google sign in failed." },
-      { status: 400 }
+      { status: Number(error?.status) || 400 }
     );
   }
 }

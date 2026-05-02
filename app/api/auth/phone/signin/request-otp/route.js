@@ -5,6 +5,7 @@ export async function POST(request) {
   try {
     const payload = await request.json();
     const phone = String(payload.phone || "").trim();
+    const allowedRoles = Array.isArray(payload.allowedRoles) ? payload.allowedRoles : undefined;
 
     if (!phone) {
       return NextResponse.json(
@@ -13,9 +14,12 @@ export async function POST(request) {
       );
     }
 
-    const otpState = await requestPhoneSigninOtp({ phone });
+    const otpState = await requestPhoneSigninOtp({ phone, allowedRoles });
     return NextResponse.json(otpState, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    return NextResponse.json(
+      { error: error.message },
+      { status: Number(error?.status) || 400 }
+    );
   }
 }

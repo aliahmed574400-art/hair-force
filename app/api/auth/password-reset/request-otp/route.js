@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requestPasswordResetOtp } from "@/lib/postgres-repositories";
 import { sendPasswordResetOtpEmail } from "@/lib/email";
+import { checkEmailRateLimit } from "@/lib/security-middleware";
 
 export async function POST(request) {
   try {
@@ -11,6 +12,14 @@ export async function POST(request) {
       return NextResponse.json(
         { error: "Email is required." },
         { status: 400 }
+      );
+    }
+
+    // SECURITY: Rate limit OTP requests per email (5 per hour)
+    if (!checkEmailRateLimit(email, 5)) {
+      return NextResponse.json(
+        { error: "Too many OTP requests. Please try again later." },
+        { status: 429 }
       );
     }
 
@@ -31,6 +40,6 @@ export async function POST(request) {
       { status: 201 }
     );
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    return NextResponse.json({ error: "Failed to send OTP." }, { status: 400 });
   }
 }

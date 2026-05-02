@@ -2,29 +2,58 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import {
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  ClipboardList,
+  LayoutDashboard,
+  LogOut,
+  MessageSquareText,
+  Scissors,
+  Settings,
+  Sparkles,
+  UserRound
+} from "lucide-react";
 import SiteButton from "@/components/ui/SiteButton";
+import VendorAvailabilityAgenda from "@/components/dashboard/VendorAvailabilityAgenda";
 import { formatCurrency } from "@/lib/utils";
 
-const DAY_OPTIONS = [
-  { value: "0", label: "Sunday" },
-  { value: "1", label: "Monday" },
-  { value: "2", label: "Tuesday" },
-  { value: "3", label: "Wednesday" },
-  { value: "4", label: "Thursday" },
-  { value: "5", label: "Friday" },
-  { value: "6", label: "Saturday" }
+const SECTION_OPTIONS = [
+  { id: "overview", label: "Overview", icon: LayoutDashboard },
+  { id: "profile", label: "Profile", icon: UserRound },
+  { id: "services", label: "Services", icon: Scissors },
+  { id: "availability", label: "Availability", icon: CalendarDays },
+  { id: "bookings", label: "Bookings", icon: ClipboardList },
+  { id: "messages", label: "Messages", icon: MessageSquareText },
+  { id: "settings", label: "Settings", icon: Settings }
 ];
 
-const SECTION_OPTIONS = [
-  { id: "overview", label: "Overview" },
-  { id: "profile", label: "Profile" },
-  { id: "portfolio", label: "Portfolio" },
-  { id: "services", label: "Services" },
-  { id: "availability", label: "Availability" },
-  { id: "bookings", label: "Bookings" },
-  { id: "messages", label: "Messages" },
-  { id: "settings", label: "Settings" }
+const CALENDAR_WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const OVERVIEW_BOOKING_FILTERS = [
+  { id: "upcoming", label: "Upcoming" },
+  { id: "today", label: "Ongoing" },
+  { id: "past", label: "Past appointments" }
 ];
+const AVATAR_SWATCHES = [
+  ["#d9ecff", "#1d4ed8"],
+  ["#dff7f4", "#0f766e"],
+  ["#efe4ff", "#6d28d9"],
+  ["#fee7db", "#c2410c"],
+  ["#e7ecff", "#3730a3"],
+  ["#dbeafe", "#1e3a8a"]
+];
+
+const VENDOR_SECTION_IDS = new Set(SECTION_OPTIONS.map((section) => section.id));
+
+function resolveVendorSection(value) {
+  const nextSection = String(value || "").trim().toLowerCase();
+  if (nextSection === "portfolio") {
+    return "profile";
+  }
+  return VENDOR_SECTION_IDS.has(nextSection) ? nextSection : "";
+}
 
 function defaultServiceForm() {
   return {
@@ -57,7 +86,7 @@ function createProfileForm(vendor) {
     avatar: vendor.avatar || "",
     specialties: (vendor.specialties || []).join(", "),
     amenities: (vendor.amenities || []).join(", "),
-    serviceLocationType: vendor.serviceLocationType || "studio",
+    serviceLocationType: vendor.serviceLocationType ?? "",
     portfolioImages: vendor.portfolioImages || [],
     policies: {
       deposit: vendor.policies?.deposit || "",
@@ -82,16 +111,6 @@ function createAvailabilityForm(vendor) {
     slotMinutes: String(item.slotMinutes || 120),
     active: item.active !== false
   }));
-}
-
-function createAvailabilityItem() {
-  return {
-    dayOfWeek: "1",
-    startTime: "10:00",
-    endTime: "18:00",
-    slotMinutes: "120",
-    active: true
-  };
 }
 
 function bookingStatusTone(status) {
@@ -150,9 +169,172 @@ function sanitizePortfolioImages(images) {
   return [...new Set((images || []).map((item) => String(item || "").trim()).filter(Boolean))];
 }
 
+function getInitials(value) {
+  return String(value || "HF")
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((item) => item.charAt(0).toUpperCase())
+    .join("");
+}
+
+function getAvatarSwatch(value) {
+  const source = String(value || "");
+  const index = source.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0) % AVATAR_SWATCHES.length;
+  return AVATAR_SWATCHES[index];
+}
+
+function formatDashboardNumber(value) {
+  return new Intl.NumberFormat("en-US").format(Number(value || 0));
+}
+
+function formatMonthLabel(date) {
+  return date.toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric"
+  });
+}
+
+function formatLineupDate(value) {
+  if (!value) {
+    return "Date pending";
+  }
+
+  const parsed = new Date(`${String(value).slice(0, 10)}T12:00:00`);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+
+  return parsed.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric"
+  });
+}
+
+function normalizeAppointmentTime(value) {
+  const input = String(value || "").trim();
+
+  if (!input) {
+    return "12:00";
+  }
+
+  if (/^\d{2}:\d{2}$/.test(input)) {
+    return input;
+  }
+
+  const match = input.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+
+  if (!match) {
+    return "12:00";
+  }
+
+  let hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  const period = match[3].toUpperCase();
+
+  if (period === "PM" && hours < 12) {
+    hours += 12;
+  }
+
+  if (period === "AM" && hours === 12) {
+    hours = 0;
+  }
+
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+}
+
+function getAppointmentDateTime(dateValue, slotValue) {
+  const normalizedDate = String(dateValue || "").slice(0, 10);
+
+  if (!normalizedDate) {
+    return null;
+  }
+
+  const parsed = new Date(`${normalizedDate}T${normalizeAppointmentTime(slotValue)}:00`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function isPastBooking(booking) {
+  const appointment = getAppointmentDateTime(booking?.appointmentDate, booking?.appointmentSlot);
+
+  if (!appointment) {
+    return false;
+  }
+
+  return appointment.getTime() < Date.now();
+}
+
+function buildCalendarMonth(referenceDate, bookings = []) {
+  const monthStart = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), 1);
+  const gridStart = new Date(monthStart);
+  const mondayOffset = (monthStart.getDay() + 6) % 7;
+  gridStart.setDate(monthStart.getDate() - mondayOffset);
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const bookingMap = bookings.reduce((map, booking) => {
+    const key = String(booking.appointmentDate || "").slice(0, 10);
+
+    if (!key) {
+      return map;
+    }
+
+    if (!map[key]) {
+      map[key] = [];
+    }
+
+    map[key].push(booking);
+    return map;
+  }, {});
+
+  const weeks = Array.from({ length: 6 }, (_, weekIndex) =>
+    Array.from({ length: 7 }, (_, dayIndex) => {
+      const date = new Date(gridStart);
+      date.setDate(gridStart.getDate() + weekIndex * 7 + dayIndex);
+      const dateKey = date.toISOString().slice(0, 10);
+      const dayBookings = bookingMap[dateKey] || [];
+      let tone = "";
+
+      if (dayBookings.length) {
+        if (dayBookings.some((booking) => booking.status === "pending_approval")) {
+          tone = "pending";
+        } else if (dayBookings.some((booking) => booking.status === "completed")) {
+          tone = "completed";
+        } else if (dayBookings.some((booking) => ["cancelled", "declined"].includes(booking.status))) {
+          tone = "cancelled";
+        } else {
+          tone = "booked";
+        }
+      }
+
+      return {
+        dayLabel: date.getDate(),
+        dateKey,
+        currentMonth: date.getMonth() === referenceDate.getMonth(),
+        isToday: dateKey === todayKey,
+        tone,
+        count: dayBookings.length
+      };
+    })
+  );
+
+  return {
+    label: formatMonthLabel(referenceDate),
+    weeks
+  };
+}
+
 export default function VendorDashboardManager({ user, initialData }) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const requestedSection = resolveVendorSection(searchParams.get("section"));
   const [dashboard, setDashboard] = useState(initialData);
-  const [activeSection, setActiveSection] = useState("overview");
+  const [activeSection, setActiveSection] = useState(requestedSection || "overview");
+  const [calendarCursor, setCalendarCursor] = useState(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  });
+  const [overviewBookingFilter, setOverviewBookingFilter] = useState("upcoming");
   const [profileForm, setProfileForm] = useState(createProfileForm(initialData.vendor));
   const [availabilityForm, setAvailabilityForm] = useState(createAvailabilityForm(initialData.vendor));
   const [blackoutDatesText, setBlackoutDatesText] = useState(
@@ -179,12 +361,27 @@ export default function VendorDashboardManager({ user, initialData }) {
     coverUpload: false,
     avatarUpload: false,
     serviceUpload: false,
-    portfolioUpload: false
+    portfolioUpload: false,
+    deleteAccount: false,
+    signout: false
   });
 
   const bookings = dashboard.bookings || [];
   const services = dashboard.services || [];
   const conversations = dashboard.conversations || [];
+  const unreadMessages = conversations.reduce(
+    (sum, item) => sum + Number(item.vendorUnreadCount || 0),
+    0
+  );
+  const uniqueClientCount = useMemo(
+    () =>
+      new Set(
+        bookings
+          .map((booking) => booking.customerEmail || booking.customerName)
+          .filter(Boolean)
+      ).size,
+    [bookings]
+  );
   const pendingBookings = useMemo(
     () => sortBookings(bookings.filter((booking) => booking.status === "pending_approval")),
     [bookings]
@@ -203,18 +400,100 @@ export default function VendorDashboardManager({ user, initialData }) {
   );
   const metrics = useMemo(
     () => [
-      { label: "Revenue", value: formatCurrency(dashboard.summary?.revenue || 0) },
-      { label: "Bookings today", value: dashboard.summary?.bookingsToday || 0 },
-      { label: "Pending requests", value: pendingBookings.length },
-      { label: "Unread threads", value: conversations.reduce((sum, item) => sum + Number(item.vendorUnreadCount || 0), 0) }
+      {
+        label: "Total Clients",
+        value: formatDashboardNumber(uniqueClientCount),
+        meta: "This month",
+        accent: "clients"
+      },
+      {
+        label: "Completed",
+        value: formatDashboardNumber(completedBookings.length),
+        meta: "Appointments",
+        accent: "completed"
+      },
+      {
+        label: "Cancel",
+        value: formatDashboardNumber(closedBookings.length),
+        meta: "Requests",
+        accent: "cancelled"
+      }
     ],
-    [conversations, dashboard.summary, pendingBookings.length]
+    [closedBookings.length, completedBookings.length, uniqueClientCount]
   );
   const activeConversation = conversations.find((item) => item.id === activeConversationId) || null;
+  const calendarData = useMemo(
+    () => buildCalendarMonth(calendarCursor, bookings),
+    [bookings, calendarCursor]
+  );
+  const lineupBookings = useMemo(
+    () => {
+      const sorted = [...bookings]
+        .filter((booking) => !["cancelled", "declined"].includes(booking.status))
+        .sort((left, right) => {
+          const leftTime = getAppointmentDateTime(left.appointmentDate, left.appointmentSlot)?.getTime() || 0;
+          const rightTime = getAppointmentDateTime(right.appointmentDate, right.appointmentSlot)?.getTime() || 0;
+          return leftTime - rightTime;
+        });
+      const upcomingOnly = sorted.filter((booking) => !isPastBooking(booking));
+
+      return (upcomingOnly.length ? upcomingOnly : sorted).slice(0, 5);
+    },
+    [bookings]
+  );
+  const overviewBookings = useMemo(() => {
+    const todayKey = new Date().toISOString().slice(0, 10);
+    const filtered = bookings.filter((booking) => {
+      if (overviewBookingFilter === "today") {
+        return booking.appointmentDate === todayKey;
+      }
+
+      if (overviewBookingFilter === "past") {
+        return isPastBooking(booking);
+      }
+
+      return !isPastBooking(booking);
+    });
+
+    return [...filtered]
+      .sort((left, right) => {
+        const leftTime = getAppointmentDateTime(left.appointmentDate, left.appointmentSlot)?.getTime() || 0;
+        const rightTime = getAppointmentDateTime(right.appointmentDate, right.appointmentSlot)?.getTime() || 0;
+
+        if (overviewBookingFilter === "past") {
+          return rightTime - leftTime;
+        }
+
+        return leftTime - rightTime;
+      })
+      .slice(0, 8);
+  }, [bookings, overviewBookingFilter]);
 
   useEffect(() => {
     setDashboard(initialData);
   }, [initialData]);
+
+  useEffect(() => {
+    if (requestedSection && requestedSection !== activeSection) {
+      setActiveSection(requestedSection);
+    }
+  }, [activeSection, requestedSection]);
+
+  function handleSectionSelect(nextSection) {
+    const resolvedSection = resolveVendorSection(nextSection) || "overview";
+    const params = new URLSearchParams(searchParams.toString());
+
+    setActiveSection(resolvedSection);
+
+    if (resolvedSection === "overview") {
+      params.delete("section");
+    } else {
+      params.set("section", resolvedSection);
+    }
+
+    const nextQuery = params.toString();
+    router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false });
+  }
 
   useEffect(() => {
     setProfileForm(createProfileForm(dashboard.vendor));
@@ -352,7 +631,7 @@ export default function VendorDashboardManager({ user, initialData }) {
         ...current,
         portfolioImages: sanitizePortfolioImages([...(current.portfolioImages || []), url])
       }));
-      setStatus({ type: "success", message: "Portfolio image uploaded. Save portfolio changes to publish it." });
+      setStatus({ type: "success", message: "Portfolio image uploaded. Save profile changes to publish it." });
     } catch (error) {
       setStatus({ type: "error", message: error.message });
     } finally {
@@ -378,50 +657,6 @@ export default function VendorDashboardManager({ user, initialData }) {
         [field]: value
       }
     }));
-  }
-
-  async function handleAvailabilitySubmit(event) {
-    event.preventDefault();
-    setLoading((current) => ({ ...current, availability: true }));
-    setStatus({ type: "", message: "" });
-
-    try {
-      const payload = availabilityForm.map((item) => ({
-        dayOfWeek: Number(item.dayOfWeek),
-        startTime: item.startTime,
-        endTime: item.endTime,
-        slotMinutes: Number(item.slotMinutes),
-        active: item.active
-      }));
-
-      const hasInvalidRule = payload.some(
-        (item) =>
-          !item.startTime ||
-          !item.endTime ||
-          item.startTime >= item.endTime ||
-          Number.isNaN(item.slotMinutes) ||
-          item.slotMinutes < 15
-      );
-
-      if (hasInvalidRule) {
-        throw new Error(
-          "Each availability rule needs a valid day, a start time before the end time, and slots of at least 15 minutes."
-        );
-      }
-
-      const response = await fetch("/api/dashboard/availability", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ availabilityRules: payload, blackoutDates: blackoutDatesText })
-      });
-
-      await refreshFromResponse(response);
-      setStatus({ type: "success", message: "Availability updated." });
-    } catch (error) {
-      setStatus({ type: "error", message: error.message });
-    } finally {
-      setLoading((current) => ({ ...current, availability: false }));
-    }
   }
 
   async function handleServiceImageUpload(event) {
@@ -516,7 +751,7 @@ export default function VendorDashboardManager({ user, initialData }) {
       bookingMethod: service.bookingMethod || "instant",
       isActive: service.isActive !== false
     });
-    setActiveSection("services");
+    handleSectionSelect("services");
   }
 
   async function performBookingAction(bookingId, payload, successMessage) {
@@ -598,6 +833,18 @@ export default function VendorDashboardManager({ user, initialData }) {
     return data.conversations || [];
   }
 
+  async function handleSignOut() {
+    setLoading((current) => ({ ...current, signout: true }));
+
+    try {
+      await fetch("/api/auth/signout", { method: "POST" });
+      router.push("/");
+      router.refresh();
+    } finally {
+      setLoading((current) => ({ ...current, signout: false }));
+    }
+  }
+
   async function loadConversation(conversationId) {
     if (!conversationId) {
       return;
@@ -625,8 +872,39 @@ export default function VendorDashboardManager({ user, initialData }) {
     }
   }
 
+  async function handleDeleteAccount() {
+    if (typeof window !== "undefined") {
+      const confirmed = window.confirm(
+        "Delete your stylist account permanently? This removes your vendor profile and frees this Google login for the client side."
+      );
+
+      if (!confirmed) {
+        return;
+      }
+    }
+
+    setLoading((current) => ({ ...current, deleteAccount: true }));
+    setStatus({ type: "", message: "" });
+
+    try {
+      const response = await fetch("/api/dashboard/account", { method: "DELETE" });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Unable to delete account.");
+      }
+
+      router.push("/");
+      router.refresh();
+    } catch (error) {
+      setStatus({ type: "error", message: error.message });
+    } finally {
+      setLoading((current) => ({ ...current, deleteAccount: false }));
+    }
+  }
+
   async function openConversationForBooking(bookingId) {
-    setActiveSection("messages");
+    handleSectionSelect("messages");
 
     try {
       const response = await fetch("/api/dashboard/messages", {
@@ -688,135 +966,259 @@ export default function VendorDashboardManager({ user, initialData }) {
   }
 
   return (
-    <div>
-      <div className="section-heading">
-        <span className="eyebrow">Vendor dashboard</span>
-        <h1 style={{ fontSize: "clamp(2.6rem, 6vw, 4.8rem)" }}>{dashboard.vendor.name} workspace</h1>
-        <p>
-          Signed in as {user.email}. Manage your profile, services, live availability, bookings, and client messages from one workspace.
-        </p>
-      </div>
+    <div className="vendor-reference-shell">
+      <aside className="vendor-reference-sidebar" aria-label="Vendor dashboard navigation">
+        <div className="vendor-reference-sidebar-mark">
+          <Sparkles size={18} />
+        </div>
 
-      <div className="booking-confirm" style={{ marginTop: 0 }}>
-        <span className="muted">
-          Marketplace status: <strong>{dashboard.vendor.status || "pending"}</strong>{" "}
-          {dashboard.vendor.status === "active"
-            ? "Your profile is visible in discovery."
-            : dashboard.vendor.status === "rejected"
-              ? "Your profile needs updates before it can go live."
-              : "Your profile is waiting for admin approval before it appears publicly."}
-        </span>
-      </div>
+        <nav className="vendor-reference-sidebar-nav">
+          {SECTION_OPTIONS.map((section) => {
+            const Icon = section.icon;
+            const badgeCount =
+              section.id === "bookings"
+                ? pendingBookings.length
+                : section.id === "messages"
+                  ? unreadMessages
+                  : 0;
 
-      <div className="vendor-dashboard-tabs">
-        {SECTION_OPTIONS.map((section) => (
+            return (
+              <button
+                key={section.id}
+                type="button"
+                className={`vendor-reference-sidebar-button ${activeSection === section.id ? "active" : ""}`}
+                onClick={() => handleSectionSelect(section.id)}
+                aria-label={section.label}
+                title={section.label}
+              >
+                <Icon size={18} />
+                {badgeCount ? <span className="vendor-reference-sidebar-badge">{badgeCount}</span> : null}
+              </button>
+            );
+          })}
+        </nav>
+
+        <div className="vendor-reference-sidebar-foot">
           <button
-            key={section.id}
             type="button"
-            className={`vendor-dashboard-tab ${activeSection === section.id ? "active" : ""}`}
-            onClick={() => setActiveSection(section.id)}
+            className="vendor-reference-sidebar-button"
+            onClick={handleSignOut}
+            aria-label="Sign out"
+            title="Sign out"
           >
-            {section.label}
-            {section.id === "bookings" ? <span>{pendingBookings.length}</span> : null}
-            {section.id === "messages" ? (
-              <span>{conversations.reduce((sum, item) => sum + Number(item.vendorUnreadCount || 0), 0)}</span>
-            ) : null}
+            <LogOut size={18} />
           </button>
-        ))}
-      </div>
-
-      <div className="four-grid">
-        {metrics.map((metric) => (
-          <div key={metric.label} className="metric-card">
-            <strong>{metric.value}</strong>
-            <span className="muted">{metric.label}</span>
-          </div>
-        ))}
-      </div>
-
-      {status.message ? (
-        <div
-          className="booking-confirm"
-          style={{
-            background: status.type === "error" ? "rgba(255, 130, 130, 0.08)" : undefined,
-            borderColor: status.type === "error" ? "rgba(255, 130, 130, 0.24)" : undefined
-          }}
-        >
-          <span className="muted">{status.message}</span>
         </div>
-      ) : null}
+      </aside>
 
-      {activeSection === "overview" ? (
-        <div className="dashboard-layout" style={{ marginTop: 18 }}>
-          <div className="dashboard-card">
-            <div className="eyebrow">Snapshot</div>
-            <h3 style={{ margin: "12px 0 16px", fontFamily: "var(--font-display)", fontSize: "2rem" }}>
-              Business overview
-            </h3>
-            <div className="timeline">
-              <div className="timeline-item">
-                <strong>Pending approvals</strong>
-                <p className="muted tiny" style={{ margin: "8px 0 0" }}>
-                  {pendingBookings.length
-                    ? `${pendingBookings.length} booking request(s) need a decision.`
-                    : "No pending requests right now."}
-                </p>
-              </div>
-              <div className="timeline-item">
-                <strong>Portfolio status</strong>
-                <p className="muted tiny" style={{ margin: "8px 0 0" }}>
-                  {profileForm.portfolioImages.length
-                    ? `${profileForm.portfolioImages.length} portfolio image(s) are ready on the public profile.`
-                    : "Add portfolio images to build more trust on the public profile."}
-                </p>
-              </div>
-              <div className="timeline-item">
-                <strong>Message inbox</strong>
-                <p className="muted tiny" style={{ margin: "8px 0 0" }}>
-                  {conversations.length
-                    ? `${conversations.reduce((sum, item) => sum + Number(item.vendorUnreadCount || 0), 0)} unread message(s) across ${conversations.length} conversation(s).`
-                    : "Messages open automatically when bookings are created."}
-                </p>
-              </div>
-            </div>
-            <div className="hero-actions" style={{ marginTop: 18 }}>
-              <SiteButton href={`/stylists/${dashboard.vendor.slug}`}>View live profile</SiteButton>
-              <SiteButton href={`/book/${dashboard.vendor.slug}`} variant="secondary">
-                Test booking page
-              </SiteButton>
-            </div>
-          </div>
-
-          <div className="dashboard-card">
-            <div className="eyebrow">Upcoming slots</div>
-            <h3 style={{ margin: "12px 0 16px", fontFamily: "var(--font-display)", fontSize: "2rem" }}>
-              Live calendar preview
-            </h3>
-            <div className="timeline">
-              {(dashboard.vendor.bookingWindows || []).length ? (
-                (dashboard.vendor.bookingWindows || []).map((window) => (
-                  <div key={window.date} className="timeline-item">
-                    <strong>{window.label}</strong>
-                    <div className="slot-grid">
-                      {window.slots.map((slot) => (
-                        <span key={slot} className="chip">
-                          {slot}
-                        </span>
-                      ))}
-                    </div>
+      <div className="vendor-reference-main">
+        {activeSection === "overview" ? (
+          <div className="vendor-reference-overview">
+            <div className="vendor-reference-stat-grid">
+              {metrics.map((metric) => (
+                <article key={metric.label} className="vendor-reference-stat-card">
+                  <div className="vendor-reference-stat-copy">
+                    <span className="vendor-reference-stat-meta">{metric.meta}</span>
+                    <h3>{metric.label}</h3>
+                    <strong>{metric.value}</strong>
                   </div>
-                ))
-              ) : (
-                <div className="timeline-item">
-                  <p className="muted" style={{ margin: 0 }}>
-                    No public booking windows are live right now.
-                  </p>
-                </div>
-              )}
+                  <div className={`vendor-reference-stat-icon ${metric.accent}`}>
+                    {metric.accent === "clients" ? <UserRound size={20} /> : null}
+                    {metric.accent === "completed" ? <Sparkles size={20} /> : null}
+                    {metric.accent === "cancelled" ? <CalendarDays size={20} /> : null}
+                  </div>
+                </article>
+              ))}
             </div>
+
+            <div className="vendor-reference-overview-grid">
+              <section className="vendor-reference-panel vendor-reference-calendar-panel">
+                <div className="vendor-reference-panel-head">
+                  <div>
+                    <h2>{calendarData.label}</h2>
+                  </div>
+                  <div className="vendor-reference-calendar-actions">
+                    <button
+                      type="button"
+                      className="vendor-reference-icon-button"
+                      aria-label="Previous month"
+                      onClick={() =>
+                        setCalendarCursor(
+                          (current) => new Date(current.getFullYear(), current.getMonth() - 1, 1)
+                        )
+                      }
+                    >
+                      <ChevronLeft size={16} />
+                    </button>
+                    <button
+                      type="button"
+                      className="vendor-reference-icon-button"
+                      aria-label="Next month"
+                      onClick={() =>
+                        setCalendarCursor(
+                          (current) => new Date(current.getFullYear(), current.getMonth() + 1, 1)
+                        )
+                      }
+                    >
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="vendor-reference-calendar">
+                  <div className="vendor-reference-calendar-weekdays">
+                    {CALENDAR_WEEKDAYS.map((day) => (
+                      <span key={day}>{day}</span>
+                    ))}
+                  </div>
+
+                  <div className="vendor-reference-calendar-grid">
+                    {calendarData.weeks.flat().map((day) => (
+                      <div
+                        key={day.dateKey}
+                        className={`vendor-reference-calendar-cell ${day.currentMonth ? "" : "outside"} ${day.tone ? `is-${day.tone}` : ""} ${day.isToday ? "is-today" : ""}`.trim()}
+                      >
+                        <span>{day.dayLabel}</span>
+                        {day.count ? <small>{day.count}</small> : null}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="vendor-reference-calendar-legend">
+                  <span><i className="pending" /> Pending</span>
+                  <span><i className="booked" /> Booking</span>
+                  <span><i className="completed" /> Completed</span>
+                </div>
+              </section>
+
+              <section className="vendor-reference-panel vendor-reference-lineup-panel">
+                <div className="vendor-reference-panel-head">
+                  <div>
+                    <h2>Daily lineup</h2>
+                  </div>
+                  <button type="button" className="vendor-reference-view-link" onClick={() => handleSectionSelect("bookings")}>
+                    View All
+                  </button>
+                </div>
+
+                <div className="vendor-reference-lineup-list">
+                  {lineupBookings.length ? (
+                    lineupBookings.map((booking) => {
+                      const [backgroundColor, color] = getAvatarSwatch(
+                        booking.customerEmail || booking.customerName
+                      );
+
+                      return (
+                        <div key={booking.id} className="vendor-reference-lineup-row">
+                          <span
+                            className="vendor-reference-lineup-avatar"
+                            style={{ backgroundColor, color }}
+                          >
+                            {getInitials(booking.customerName)}
+                          </span>
+                          <div className="vendor-reference-lineup-copy">
+                            <strong>{booking.customerName}</strong>
+                            <small>{formatLineupDate(booking.appointmentDate)}</small>
+                          </div>
+                          <span className="vendor-reference-lineup-service">{booking.serviceName}</span>
+                          <span className="vendor-reference-lineup-time">{booking.appointmentSlot}</span>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="vendor-reference-empty-state">
+                      No client appointments are scheduled yet.
+                    </div>
+                  )}
+                </div>
+              </section>
+            </div>
+
+            <section className="vendor-reference-panel vendor-reference-bookings-panel">
+              <div className="vendor-reference-panel-head vendor-reference-panel-head-wrap">
+                <div>
+                  <h2>Booking list</h2>
+                </div>
+                <div className="vendor-reference-filter-group">
+                  {OVERVIEW_BOOKING_FILTERS.map((option) => (
+                    <button
+                      key={option.id}
+                      type="button"
+                      className={`vendor-reference-filter-button ${overviewBookingFilter === option.id ? "active" : ""}`}
+                      onClick={() => setOverviewBookingFilter(option.id)}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="vendor-reference-table-wrap">
+                <table className="vendor-reference-table">
+                  <thead>
+                    <tr>
+                      <th>Customer Name</th>
+                      <th>Order no</th>
+                      <th>Service</th>
+                      <th>Date</th>
+                      <th>Time</th>
+                      <th>Status</th>
+                      <th>Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {overviewBookings.length ? (
+                      overviewBookings.map((booking) => {
+                        const [backgroundColor, color] = getAvatarSwatch(
+                          booking.customerEmail || booking.customerName
+                        );
+
+                        return (
+                          <tr key={booking.id}>
+                            <td>
+                              <div className="vendor-reference-customer-cell">
+                                <span
+                                  className="vendor-reference-table-avatar"
+                                  style={{ backgroundColor, color }}
+                                >
+                                  {getInitials(booking.customerName)}
+                                </span>
+                                <span>{booking.customerName}</span>
+                              </div>
+                            </td>
+                            <td>#{String(booking.id || "").replace(/[^\d]/g, "").slice(-5) || "00001"}</td>
+                            <td>{booking.serviceName}</td>
+                            <td>{formatLineupDate(booking.appointmentDate)}</td>
+                            <td>{booking.appointmentSlot}</td>
+                            <td>
+                              <span className={`vendor-reference-status-pill ${bookingStatusTone(booking.status)}`}>
+                                {booking.status === "pending_approval"
+                                  ? "Pending"
+                                  : booking.status === "confirmed"
+                                    ? "Confirmed"
+                                    : booking.status === "completed"
+                                      ? "Completed"
+                                      : booking.status}
+                              </span>
+                            </td>
+                            <td>{formatCurrency(booking.total)}</td>
+                          </tr>
+                        );
+                      })
+                    ) : (
+                      <tr>
+                        <td colSpan="7">
+                          <div className="vendor-reference-empty-state">No bookings in this view yet.</div>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </section>
           </div>
-        </div>
-      ) : null}
+        ) : null}
 
       {activeSection === "profile" ? (
         <div className="dashboard-card vendor-dashboard-panel" style={{ marginTop: 18 }}>
@@ -833,6 +1235,33 @@ export default function VendorDashboardManager({ user, initialData }) {
           </div>
 
           <form className="form-grid" onSubmit={handleProfileSubmit}>
+            <div className="surface form-span-2" style={{ padding: "16px 18px", display: "grid", gap: 12 }}>
+              <strong>Account details</strong>
+              <div className="two-grid" style={{ gap: 12 }}>
+                <div>
+                  <span className="muted tiny">Account owner</span>
+                  <div>{user?.name || dashboard.vendor.owner || "Not set"}</div>
+                </div>
+                <div>
+                  <span className="muted tiny">Email</span>
+                  <div>{user?.email || "Not set"}</div>
+                </div>
+                <div>
+                  <span className="muted tiny">Phone</span>
+                  <div>{user?.phone || "Not set"}</div>
+                </div>
+                <div>
+                  <span className="muted tiny">SMS updates</span>
+                  <div>{user?.smsOptIn ? "Enabled" : "Off"}</div>
+                </div>
+              </div>
+              {user?.promoCode ? (
+                <div>
+                  <span className="muted tiny">Promo code</span>
+                  <div>{user.promoCode}</div>
+                </div>
+              ) : null}
+            </div>
             <input className="form-control" placeholder="Business name" value={profileForm.name} onChange={(event) => setProfileForm({ ...profileForm, name: event.target.value })} />
             <input className="form-control" placeholder="Owner name" value={profileForm.owner} onChange={(event) => setProfileForm({ ...profileForm, owner: event.target.value })} />
             <input className="form-control" placeholder="Category" value={profileForm.category} onChange={(event) => setProfileForm({ ...profileForm, category: event.target.value })} />
@@ -861,14 +1290,91 @@ export default function VendorDashboardManager({ user, initialData }) {
             <input className="form-control form-span-2" placeholder="Specialties, comma separated" value={profileForm.specialties} onChange={(event) => setProfileForm({ ...profileForm, specialties: event.target.value })} />
             <input className="form-control form-span-2" placeholder="Amenities, comma separated" value={profileForm.amenities} onChange={(event) => setProfileForm({ ...profileForm, amenities: event.target.value })} />
             <select className="form-control form-span-2" value={profileForm.serviceLocationType} onChange={(event) => setProfileForm({ ...profileForm, serviceLocationType: event.target.value })}>
+              <option value="">Select location type</option>
               <option value="studio">Studio visit</option>
               <option value="home">Home service</option>
+              <option value="mobile">Mobile service</option>
               <option value="both">Studio + home service</option>
             </select>
             <input className="form-control form-span-2" placeholder="Cover image URL or upload below" value={profileForm.coverImage} onChange={(event) => setProfileForm({ ...profileForm, coverImage: event.target.value })} />
             <input className="form-control form-span-2" type="file" accept="image/*" onChange={(event) => handleImageUpload("coverImage", "covers", event.target.files?.[0], "coverUpload")} />
             <input className="form-control form-span-2" placeholder="Profile image URL or upload below" value={profileForm.avatar} onChange={(event) => setProfileForm({ ...profileForm, avatar: event.target.value })} />
             <input className="form-control form-span-2" type="file" accept="image/*" onChange={(event) => handleImageUpload("avatar", "avatars", event.target.files?.[0], "avatarUpload")} />
+
+            <div className="surface form-span-2" style={{ padding: "16px 18px", display: "grid", gap: 14 }}>
+              <div className="row-between" style={{ gap: 16 }}>
+                <div>
+                  <strong>Portfolio</strong>
+                  <p className="muted tiny" style={{ margin: "6px 0 0" }}>
+                    Upload and reorder work samples directly from your profile manager.
+                  </p>
+                </div>
+                <input type="file" accept="image/*" onChange={handlePortfolioUpload} />
+              </div>
+
+              <div className="vendor-portfolio-grid">
+                {profileForm.portfolioImages.length ? (
+                  profileForm.portfolioImages.map((image, index) => (
+                    <div key={`${image}-${index}`} className="vendor-portfolio-item">
+                      <img src={image} alt={`Portfolio ${index + 1}`} className="vendor-portfolio-image" />
+                      <div className="hero-actions" style={{ marginTop: 12 }}>
+                        <SiteButton
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          onClick={() =>
+                            setProfileForm((current) => {
+                              const next = [...current.portfolioImages];
+                              if (index > 0) {
+                                [next[index - 1], next[index]] = [next[index], next[index - 1]];
+                              }
+                              return { ...current, portfolioImages: next };
+                            })
+                          }
+                        >
+                          Up
+                        </SiteButton>
+                        <SiteButton
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          onClick={() =>
+                            setProfileForm((current) => {
+                              const next = [...current.portfolioImages];
+                              if (index < next.length - 1) {
+                                [next[index], next[index + 1]] = [next[index + 1], next[index]];
+                              }
+                              return { ...current, portfolioImages: next };
+                            })
+                          }
+                        >
+                          Down
+                        </SiteButton>
+                        <SiteButton
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            setProfileForm((current) => ({
+                              ...current,
+                              portfolioImages: current.portfolioImages.filter((_, itemIndex) => itemIndex !== index)
+                            }))
+                          }
+                        >
+                          Remove
+                        </SiteButton>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="timeline-item">
+                    <p className="muted" style={{ margin: 0 }}>
+                      Upload portfolio images here to feature your best work on the public profile.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
 
             <textarea className="form-control form-span-2" rows="3" placeholder="Deposit policy" value={profileForm.policies.deposit} onChange={(event) => updatePolicy("deposit", event.target.value)} />
             <textarea className="form-control form-span-2" rows="3" placeholder="Cancellation policy" value={profileForm.policies.cancellation} onChange={(event) => updatePolicy("cancellation", event.target.value)} />
@@ -884,87 +1390,6 @@ export default function VendorDashboardManager({ user, initialData }) {
               {loading.profile ? "Saving..." : "Save profile changes"}
             </SiteButton>
           </form>
-        </div>
-      ) : null}
-
-      {activeSection === "portfolio" ? (
-        <div className="dashboard-card vendor-dashboard-panel" style={{ marginTop: 18 }}>
-          <div className="row-between" style={{ marginBottom: 18 }}>
-            <div>
-              <div className="eyebrow">Portfolio manager</div>
-              <h3 style={{ margin: "10px 0 0", fontFamily: "var(--font-display)", fontSize: "2rem" }}>
-                Publish real work samples
-              </h3>
-            </div>
-            <input type="file" accept="image/*" onChange={handlePortfolioUpload} />
-          </div>
-
-          <div className="vendor-portfolio-grid">
-            {profileForm.portfolioImages.length ? (
-              profileForm.portfolioImages.map((image, index) => (
-                <div key={`${image}-${index}`} className="vendor-portfolio-item">
-                  <img src={image} alt={`Portfolio ${index + 1}`} className="vendor-portfolio-image" />
-                  <div className="hero-actions" style={{ marginTop: 12 }}>
-                    <SiteButton
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      onClick={() =>
-                        setProfileForm((current) => {
-                          const next = [...current.portfolioImages];
-                          if (index > 0) {
-                            [next[index - 1], next[index]] = [next[index], next[index - 1]];
-                          }
-                          return { ...current, portfolioImages: next };
-                        })
-                      }
-                    >
-                      Up
-                    </SiteButton>
-                    <SiteButton
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      onClick={() =>
-                        setProfileForm((current) => {
-                          const next = [...current.portfolioImages];
-                          if (index < next.length - 1) {
-                            [next[index], next[index + 1]] = [next[index + 1], next[index]];
-                          }
-                          return { ...current, portfolioImages: next };
-                        })
-                      }
-                    >
-                      Down
-                    </SiteButton>
-                    <SiteButton
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() =>
-                        setProfileForm((current) => ({
-                          ...current,
-                          portfolioImages: current.portfolioImages.filter((_, itemIndex) => itemIndex !== index)
-                        }))
-                      }
-                    >
-                      Remove
-                    </SiteButton>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="timeline-item">
-                <p className="muted" style={{ margin: 0 }}>
-                  Upload portfolio images to replace placeholder gallery content on the public profile.
-                </p>
-              </div>
-            )}
-          </div>
-
-          <SiteButton style={{ marginTop: 18 }} onClick={() => saveProfileChanges(profileForm, "Portfolio updated.")} disabled={loading.profile}>
-            {loading.profile ? "Saving..." : "Save portfolio"}
-          </SiteButton>
         </div>
       ) : null}
 
@@ -1065,90 +1490,15 @@ export default function VendorDashboardManager({ user, initialData }) {
       ) : null}
 
       {activeSection === "availability" ? (
-        <div className="dashboard-layout" style={{ marginTop: 18 }}>
-          <div className="dashboard-card">
-            <div className="row-between" style={{ marginBottom: 16 }}>
-              <div>
-                <div className="eyebrow">Availability editor</div>
-                <h3 style={{ margin: "10px 0 0", fontFamily: "var(--font-display)", fontSize: "2rem" }}>
-                  Manage booking windows
-                </h3>
-              </div>
-              <SiteButton onClick={() => setAvailabilityForm((current) => [...current, createAvailabilityItem()])} type="button" variant="secondary">
-                Add day
-              </SiteButton>
-            </div>
-
-            <form onSubmit={handleAvailabilitySubmit}>
-              <div className="timeline">
-                {availabilityForm.map((item, index) => (
-                  <div key={`rule-${index}`} className="timeline-item">
-                    <div className="form-grid">
-                      <select className="form-control" value={item.dayOfWeek} onChange={(event) => setAvailabilityForm((current) => current.map((rule, ruleIndex) => ruleIndex === index ? { ...rule, dayOfWeek: event.target.value } : rule))}>
-                        {DAY_OPTIONS.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                      <input className="form-control" type="time" value={item.startTime} onChange={(event) => setAvailabilityForm((current) => current.map((rule, ruleIndex) => ruleIndex === index ? { ...rule, startTime: event.target.value } : rule))} />
-                      <input className="form-control" type="time" value={item.endTime} onChange={(event) => setAvailabilityForm((current) => current.map((rule, ruleIndex) => ruleIndex === index ? { ...rule, endTime: event.target.value } : rule))} />
-                      <input className="form-control" type="number" min="15" step="15" placeholder="Slot length" value={item.slotMinutes} onChange={(event) => setAvailabilityForm((current) => current.map((rule, ruleIndex) => ruleIndex === index ? { ...rule, slotMinutes: event.target.value } : rule))} />
-                      <label className="surface form-span-2" style={{ padding: "14px 16px", display: "flex", alignItems: "center", gap: 12 }}>
-                        <input type="checkbox" checked={item.active} onChange={(event) => setAvailabilityForm((current) => current.map((rule, ruleIndex) => ruleIndex === index ? { ...rule, active: event.target.checked } : rule))} />
-                        <span className="muted tiny">
-                          This day is open for new bookings. Turn it off to keep the rule saved without showing slots.
-                        </span>
-                      </label>
-                    </div>
-                    <SiteButton style={{ marginTop: 12 }} onClick={() => setAvailabilityForm((current) => current.filter((_, windowIndex) => windowIndex !== index))} type="button" variant="ghost">
-                      Remove day
-                    </SiteButton>
-                  </div>
-                ))}
-              </div>
-              <div className="surface" style={{ marginTop: 16, padding: 18 }}>
-                <div className="eyebrow">Blackout dates</div>
-                <p className="muted tiny" style={{ margin: "10px 0 14px" }}>
-                  Add comma-separated dates like 2026-04-18, 2026-04-25 to hide those days from booking even when the weekly rule is active.
-                </p>
-                <input className="form-control" placeholder="2026-04-18, 2026-04-25" value={blackoutDatesText} onChange={(event) => setBlackoutDatesText(event.target.value)} />
-              </div>
-              <SiteButton disabled={loading.availability} style={{ marginTop: 18 }} type="submit">
-                {loading.availability ? "Saving..." : "Save availability"}
-              </SiteButton>
-            </form>
-          </div>
-
-          <div className="dashboard-card">
-            <div className="eyebrow">Live booking snapshot</div>
-            <h3 style={{ margin: "12px 0 16px", fontFamily: "var(--font-display)", fontSize: "2rem" }}>
-              Upcoming bookable dates
-            </h3>
-            <div className="timeline">
-              {(dashboard.vendor.bookingWindows || []).length ? (
-                (dashboard.vendor.bookingWindows || []).map((window) => (
-                  <div key={window.date} className="timeline-item">
-                    <strong>{window.label}</strong>
-                    <div className="slot-grid">
-                      {window.slots.map((slotItem) => (
-                        <span key={slotItem} className="chip">
-                          {slotItem}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="timeline-item">
-                  <p className="muted" style={{ margin: 0 }}>
-                    No public booking windows are live right now. Add an active weekly rule or clear a blackout date to reopen the calendar.
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        <VendorAvailabilityAgenda
+          availabilityForm={availabilityForm}
+          blackoutDatesText={blackoutDatesText}
+          dashboard={dashboard}
+          user={user}
+          onDashboardResponse={refreshFromResponse}
+          onStatusChange={setStatus}
+          setAvailabilityForm={setAvailabilityForm}
+        />
       ) : null}
 
       {activeSection === "bookings" ? (
@@ -1432,14 +1782,28 @@ export default function VendorDashboardManager({ user, initialData }) {
                 </Link>
               </div>
               <div className="timeline-item">
-                <button type="button" className="vendor-inline-link" onClick={() => setActiveSection("messages")}>
+                <button type="button" className="vendor-inline-link" onClick={() => handleSectionSelect("messages")}>
                   Open booking inbox
                 </button>
               </div>
             </div>
           </div>
+
+          <div className="dashboard-card">
+            <div className="eyebrow">Danger zone</div>
+            <h3 style={{ margin: "12px 0 16px", fontFamily: "var(--font-display)", fontSize: "2rem" }}>
+              Delete stylist account
+            </h3>
+            <p className="muted tiny" style={{ margin: "0 0 16px" }}>
+              Delete this stylist account only when you want this Google email to stop belonging to the vendor side so it can be used for a client account instead.
+            </p>
+            <SiteButton type="button" variant="secondary" onClick={handleDeleteAccount} disabled={loading.deleteAccount}>
+              {loading.deleteAccount ? "Deleting..." : "Delete stylist account"}
+            </SiteButton>
+          </div>
         </div>
       ) : null}
+      </div>
     </div>
   );
 }

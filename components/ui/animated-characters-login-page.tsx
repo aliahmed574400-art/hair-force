@@ -204,8 +204,40 @@ function isProviderError(message: string) {
   );
 }
 
-function AnimatedCharactersLoginPage() {
+interface ProviderStatus {
+  loading: boolean;
+  message: string;
+  tone?: "error" | "info";
+}
+
+interface AnimatedCharactersLoginPageProps {
+  audience?: "client" | "vendor";
+}
+
+const VENDOR_ALLOWED_ROLES = ["vendor", "admin"];
+
+function AnimatedCharactersLoginPage({
+  audience = "client"
+}: AnimatedCharactersLoginPageProps) {
   const router = useRouter();
+  const isVendorAudience = audience === "vendor";
+  const allowedRoles = isVendorAudience ? VENDOR_ALLOWED_ROLES : undefined;
+  const googleAccountRole = isVendorAudience ? "vendor" : "client";
+  const badgeText = isVendorAudience ? "Stylist sign in" : "Sign in";
+  const pageTitle = isVendorAudience ? "Open your stylist dashboard" : "Welcome back";
+  const pageDescription = isVendorAudience
+    ? "Sign in to manage services, availability, bookings, and your Hair Force vendor dashboard."
+    : "Open your Hair Force account to manage bookings, favorites, rebooks, and dashboard access.";
+  const emailPlaceholder = isVendorAudience ? "vendor@hairforce.app" : "client@hairforce.app";
+  const signUpPrompt = isVendorAudience ? "Need a stylist account?" : "Don't have an account?";
+  const signUpHref = isVendorAudience ? "/join" : "/signup";
+  const signUpLabel = isVendorAudience ? "Create stylist account" : "Sign Up";
+  const altPrompt = isVendorAudience ? "Need client access?" : "Are you a stylist?";
+  const altHref = isVendorAudience ? "/signin" : "/join";
+  const altLabel = isVendorAudience ? "Sign in as client" : "Join as stylist";
+  const heroLinkHref = isVendorAudience ? "/signin" : "/join";
+  const heroLinkLabel = isVendorAudience ? "Client sign in" : "Join as stylist";
+  const successNameFallback = isVendorAudience ? "stylist" : "client";
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -310,12 +342,18 @@ function AnimatedCharactersLoginPage() {
   const yellowPos = getCharacterPosition(yellowRef, mouseX, mouseY);
   const orangePos = getCharacterPosition(orangeRef, mouseX, mouseY);
 
-  function handleProviderStatus(nextStatus: { loading: boolean; message: string }) {
+  function handleProviderStatus(nextStatus: ProviderStatus) {
+    if (nextStatus.loading && !nextStatus.message) {
+      setError("");
+      setStatusMessage("");
+      return;
+    }
+
     if (!nextStatus.message) {
       return;
     }
 
-    if (isProviderError(nextStatus.message)) {
+    if (nextStatus.tone === "error" || isProviderError(nextStatus.message)) {
       setError(nextStatus.message);
       setStatusMessage("");
       return;
@@ -338,7 +376,8 @@ function AnimatedCharactersLoginPage() {
         body: JSON.stringify({
           email,
           password,
-          rememberFor30Days
+          rememberFor30Days,
+          allowedRoles
         })
       });
       const data = await response.json();
@@ -347,7 +386,7 @@ function AnimatedCharactersLoginPage() {
         throw new Error(data.error || "Invalid email or password. Please try again.");
       }
 
-      setStatusMessage(`Welcome back, ${data.user?.name || "client"}. Redirecting now...`);
+      setStatusMessage(`Welcome back, ${data.user?.name || successNameFallback}. Redirecting now...`);
 
       const nextHref = data.user?.role === "admin" ? "/admin" : "/dashboard";
       router.push(nextHref);
@@ -659,8 +698,8 @@ function AnimatedCharactersLoginPage() {
           <Link href="/" className="transition-colors hover:text-white">
             Terms of Service
           </Link>
-          <Link href="/join" className="transition-colors hover:text-white">
-            Join as stylist
+          <Link href={heroLinkHref} className="transition-colors hover:text-white">
+            {heroLinkLabel}
           </Link>
         </div>
 
@@ -681,14 +720,13 @@ function AnimatedCharactersLoginPage() {
           <div className="mb-6 rounded-none border-0 bg-transparent p-0 shadow-none backdrop-blur-none">
             <div className="mb-6 text-center">
               <span className="inline-flex items-center gap-2 rounded-full border border-primary/10 bg-primary/5 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.32em] text-primary">
-                Sign in
+                {badgeText}
               </span>
               <h1 className="mt-5 text-3xl font-semibold tracking-[-0.04em] text-foreground">
-                Welcome back
+                {pageTitle}
               </h1>
               <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                Open your Hair Force account to manage bookings, favorites, rebooks, and dashboard
-                access.
+                {pageDescription}
               </p>
             </div>
 
@@ -700,7 +738,7 @@ function AnimatedCharactersLoginPage() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="client@hairforce.app"
+                  placeholder={emailPlaceholder}
                   value={email}
                   autoComplete="email"
                   onChange={(event) => setEmail(event.target.value)}
@@ -799,6 +837,8 @@ function AnimatedCharactersLoginPage() {
               <div className="space-y-3">
                 <GoogleAuthButton
                   mode="signin"
+                  accountRole={googleAccountRole}
+                  allowedRoles={allowedRoles}
                   onStatusChange={handleProviderStatus}
                   showDivider={false}
                   showHelperText={false}
@@ -806,25 +846,29 @@ function AnimatedCharactersLoginPage() {
                   className="google-auth-shell-wide"
                 />
 
-                <PhoneSigninPanel className="phone-auth-shell-tight" />
+                <PhoneSigninPanel
+                  allowedRoles={allowedRoles}
+                  className="phone-auth-shell-tight"
+                  successNameFallback={successNameFallback}
+                />
               </div>
             </div>
 
             <div className="mt-6 text-center text-sm text-muted-foreground">
-              Don&apos;t have an account?{" "}
-              <Link href="/signup" className="font-medium text-foreground hover:underline">
-                Sign Up
+              {signUpPrompt}{" "}
+              <Link href={signUpHref} className="font-medium text-foreground hover:underline">
+                {signUpLabel}
               </Link>
             </div>
           </div>
 
           <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-            <span>Are you a stylist?</span>
+            <span>{altPrompt}</span>
             <Link
-              href="/join"
+              href={altHref}
               className="inline-flex items-center gap-1 font-medium text-foreground transition-colors hover:text-primary"
             >
-              Join as stylist
+              {altLabel}
               <ArrowRight className="h-4 w-4" />
             </Link>
           </div>

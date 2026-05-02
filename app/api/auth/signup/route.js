@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { signupUser } from "@/lib/postgres-repositories";
 import { applySessionCookie } from "@/lib/session";
+import { checkRateLimit } from "@/lib/security-middleware";
 
 export async function POST(request) {
   try {
@@ -14,6 +15,14 @@ export async function POST(request) {
     if (!name || !email || !password) {
       return NextResponse.json(
         { error: "Name, email, and password are required." },
+        { status: 400 }
+      );
+    }
+
+    // SECURITY: Validate password strength
+    if (password.length < 8) {
+      return NextResponse.json(
+        { error: "Password must be at least 8 characters." },
         { status: 400 }
       );
     }
@@ -32,6 +41,15 @@ export async function POST(request) {
       );
     }
 
+    // SECURITY: Rate limit sign-up attempts (5 per hour per email)
+    const rateLimitKey = `signup:${email}`;
+    if (!checkRateLimit(rateLimitKey, 5, 3600000)) {
+      return NextResponse.json(
+        { error: "Too many sign-up attempts. Please try again later." },
+        { status: 429 }
+      );
+    }
+
     const user = await signupUser({
       ...payload,
       name,
@@ -42,6 +60,6 @@ export async function POST(request) {
     await applySessionCookie(response, user, request);
     return response;
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    return NextResponse.json({ error: "Failed to create account." }, { status: 400 });
   }
 }

@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
-import { markClientNotificationRead } from "@/lib/postgres-repositories";
+import {
+  markClientNotificationRead,
+  markVendorNotificationRead
+} from "@/lib/postgres-repositories";
 import { getSessionFromRequest } from "@/lib/session";
 
 export async function PATCH(request, { params }) {
@@ -10,7 +13,10 @@ export async function PATCH(request, { params }) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
 
-    const notification = await markClientNotificationRead(user, params.id);
+    const notification =
+      user.role === "vendor"
+        ? await markVendorNotificationRead(user, params.id)
+        : await markClientNotificationRead(user, params.id);
     return NextResponse.json({ notification });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });

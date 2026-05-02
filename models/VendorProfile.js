@@ -79,6 +79,20 @@ const VendorProfileSchema = new Schema(
         active: Boolean
       }
     ],
+    availabilityOverrides: [
+      {
+        id: String,
+        type: String,
+        startDate: String,
+        endDate: String,
+        startTime: String,
+        endTime: String,
+        slotMinutes: Number,
+        note: String,
+        createdAt: String,
+        updatedAt: String
+      }
+    ],
     blackoutDates: [{ type: String }],
     status: {
       type: String,

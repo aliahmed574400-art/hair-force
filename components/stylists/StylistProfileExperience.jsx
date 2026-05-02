@@ -10,6 +10,7 @@ import { calculateDeposit, formatCurrency } from "@/lib/utils";
 const LOCATION_LABELS = {
   studio: "Studio visit",
   home: "Home service",
+  mobile: "Mobile service",
   both: "Studio + home service"
 };
 

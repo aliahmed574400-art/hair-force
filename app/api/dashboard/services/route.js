@@ -3,14 +3,18 @@ import { createVendorService, getDashboardDataForUser } from "@/lib/postgres-rep
 import { getSessionFromRequest } from "@/lib/session";
 
 export async function GET(request) {
-  const user = await getSessionFromRequest(request);
+  try {
+    const user = await getSessionFromRequest(request);
 
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    }
+
+    const dashboard = await getDashboardDataForUser(user);
+    return NextResponse.json(dashboard);
+  } catch (error) {
+    return NextResponse.json({ error: "Failed to fetch dashboard." }, { status: 400 });
   }
-
-  const dashboard = await getDashboardDataForUser(user);
-  return NextResponse.json(dashboard);
 }
 
 export async function POST(request) {
@@ -21,10 +25,15 @@ export async function POST(request) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
 
+    // SECURITY: Only vendors can create services
+    if (user.role !== "vendor") {
+      return NextResponse.json({ error: "Only vendors can create services." }, { status: 403 });
+    }
+
     const payload = await request.json();
     const dashboard = await createVendorService(user, payload);
     return NextResponse.json(dashboard, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    return NextResponse.json({ error: "Failed to create service." }, { status: 400 });
   }
 }

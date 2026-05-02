@@ -10,10 +10,15 @@ export async function PUT(request, { params }) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
 
+    // CRITICAL: Verify user is admin - this endpoint is admin-only
+    if (user.role !== "admin") {
+      return NextResponse.json({ error: "Only administrators can moderate vendors." }, { status: 403 });
+    }
+
     const payload = await request.json();
     const data = await updateVendorModeration(user, params.slug, payload);
     return NextResponse.json(data);
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 403 });
+    return NextResponse.json({ error: "Failed to update vendor moderation status." }, { status: 403 });
   }
 }

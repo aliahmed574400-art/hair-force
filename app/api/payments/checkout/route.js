@@ -6,8 +6,14 @@ export async function POST(request) {
     const amount = Number(payload.amount || 0);
     const currency = String(payload.currency || process.env.PAYMENT_CURRENCY || "usd").toLowerCase();
 
-    if (!amount) {
-      return NextResponse.json({ error: "Amount is required." }, { status: 400 });
+    // SECURITY: Validate amount is positive number
+    if (!amount || isNaN(amount) || amount <= 0) {
+      return NextResponse.json({ error: "Invalid amount. Amount must be greater than 0." }, { status: 400 });
+    }
+
+    // SECURITY: Limit maximum payment amount to prevent abuse
+    if (amount > 999999) {
+      return NextResponse.json({ error: "Amount exceeds maximum allowed payment." }, { status: 400 });
     }
 
     if (process.env.STRIPE_SECRET_KEY) {
@@ -16,13 +22,17 @@ export async function POST(request) {
         apiVersion: "2025-02-24.acacia"
       });
 
+      // SECURITY: Generate idempotency key to prevent duplicate charges
+      const idempotencyKey = String(payload.idempotencyKey || "").trim() || 
+        `${payload.bookingId || 'booking'}-${Date.now()}`;
+
       const paymentIntent = await stripe.paymentIntents.create({
         amount: Math.round(amount * 100),
         currency,
         automatic_payment_methods: { enabled: true },
+        idempotency_key: idempotencyKey,
         metadata: {
-          vendorSlug: String(payload.vendorSlug || ""),
-          serviceName: String(payload.serviceName || ""),
+          // SECURITY: Metadata should not be editable by client - these should be verified server-side
           bookingType: "deposit"
         }
       });

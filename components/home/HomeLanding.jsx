@@ -1,12 +1,16 @@
+import DriftingOrbs from "@/components/animated/DriftingOrbs";
 import Reveal from "@/components/animated/Reveal";
 import RevealText from "@/components/animated/RevealText";
 import AppPreviewSection from "@/components/home/AppPreviewSection";
+import BeforeAfterGallery from "@/components/home/BeforeAfterGallery";
 import BusinessGrowthPromo from "@/components/home/BusinessGrowthPromo";
 import CategoryCarousel from "@/components/home/CategoryCarousel";
 import FaqAccordion from "@/components/home/FaqAccordion";
 import FeaturedStylistCarousel from "@/components/home/FeaturedStylistCarousel";
 import HeroBanner from "@/components/home/HeroBanner";
 import HowItWorksTimeline from "@/components/home/HowItWorksTimeline";
+import LiveBookingTicker from "@/components/home/LiveBookingTicker";
+import NearbyStylistsMap from "@/components/home/NearbyStylistsMap";
 import StickySearchBar from "@/components/home/StickySearchBar";
 import TestimonialCarousel from "@/components/home/TestimonialCarousel";
 import WhyHairForceRail from "@/components/home/WhyHairForceRail";
@@ -16,6 +20,7 @@ import {
   howItWorks,
   testimonials
 } from "@/lib/data";
+import { getFeaturedStylists } from "@/lib/postgres-repositories";
 
 function HomeIcon({ name }) {
   switch (name) {
@@ -263,6 +268,13 @@ function HomeSectionShell({ children, className = "", panelClassName = "" }) {
 }
 
 export default async function HomeLanding() {
+  let featuredStylists = [];
+  try {
+    featuredStylists = await getFeaturedStylists();
+  } catch (error) {
+    console.error("Failed to load featured stylists for landing page:", error);
+  }
+
   return (
     <main className="home-page">
       <section className="section page-intro home-hero-section">
@@ -292,7 +304,15 @@ export default async function HomeLanding() {
               description="Browse professionals, compare styles, and book with confidence"
               center
             />
-            <FeaturedStylistCarousel />
+            <FeaturedStylistCarousel stylists={featuredStylists} />
+          </HomeSectionShell>
+        </div>
+      </section>
+
+      <section className="section nearby-map-section">
+        <div className="container">
+          <HomeSectionShell className="nearby-map-section-shell" panelClassName="nearby-map-section-panel">
+            <NearbyStylistsMap />
           </HomeSectionShell>
         </div>
       </section>
@@ -301,6 +321,14 @@ export default async function HomeLanding() {
         <div className="container">
           <HomeSectionShell className="process-section-shell">
             <HowItWorksTimeline steps={howItWorks} />
+          </HomeSectionShell>
+        </div>
+      </section>
+
+      <section className="section before-after-section">
+        <div className="container">
+          <HomeSectionShell className="before-after-section-shell" panelClassName="before-after-section-panel">
+            <BeforeAfterGallery />
           </HomeSectionShell>
         </div>
       </section>
@@ -331,8 +359,9 @@ export default async function HomeLanding() {
         <div className="container">
           <HomeSectionShell
             className="testimonial-section-shell"
-            panelClassName="testimonial-section-panel"
+            panelClassName="testimonial-section-panel testimonial-section-with-orbs"
           >
+            <DriftingOrbs />
             <TestimonialCarousel testimonials={testimonials} />
           </HomeSectionShell>
         </div>
@@ -357,12 +386,15 @@ export default async function HomeLanding() {
         <div className="container">
           <HomeSectionShell
             className="business-promo-section-shell"
-            panelClassName="business-promo-section-panel"
+            panelClassName="business-promo-section-panel business-promo-section-with-orbs"
           >
+            <DriftingOrbs />
             <BusinessGrowthPromo />
           </HomeSectionShell>
         </div>
       </section>
+
+      <LiveBookingTicker />
     </main>
   );
 }

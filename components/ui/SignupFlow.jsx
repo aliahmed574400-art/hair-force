@@ -233,6 +233,7 @@ export default function SignupFlow() {
         <div className="signup-method-stack">
           <GoogleAuthButton
             mode="signup"
+            accountRole="client"
             onStatusChange={setStatus}
             showDivider={false}
             showHelperText={false}
@@ -369,7 +370,7 @@ export default function SignupFlow() {
         <div className="signup-flow-copy signup-flow-copy-left">
           <span className="eyebrow">Sign up with phone</span>
           <h2>Verify your number</h2>
-          <p>We'll text you a one-time code so you can finish creating your Hair Force account.</p>
+          <p>We&apos;ll text you a one-time code so you can finish creating your Hair Force account.</p>
         </div>
 
         <form

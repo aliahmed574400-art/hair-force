@@ -122,3 +122,120 @@
  GET /api/stylists?page=1&limit=12&sort=highest_rated 200 in 615ms
  GET /api/stylists?page=1&limit=12&sort=highest_rated 200 in 2298ms
  GET /api/stylists?page=1&limit=12&sort=highest_rated 200 in 610ms
+  ▲ Next.js 14.2.24
+  - Local:        http://127.0.0.1:3000
+  - Network:      http://127.0.0.1:3000
+  - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 3.3s
+ ○ Compiling / ...
+ ✓ Compiled / in 5.1s (1352 modules)
+ GET / 200 in 6014ms
+ GET / 200 in 180ms
+ ○ Compiling /discover ...
+ ✓ Compiled /discover in 1337ms (1373 modules)
+ GET /discover 200 in 25008ms
+ ✓ Compiled in 2.1s (1387 modules)
+ ✓ Compiled in 489ms (673 modules)
+ GET / 200 in 455ms
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 720ms (1599 modules)
+ GET /discover 200 in 4651ms
+ GET / 200 in 461ms
+ GET / 200 in 225ms
+ GET / 200 in 147ms
+ GET / 200 in 231ms
+ GET / 200 in 175ms
+ ○ Compiling /vendor/signin ...
+ ✓ Compiled /vendor/signin in 2.4s (1664 modules)
+ ✓ Compiled in 1948ms (888 modules)
+ ✓ Compiled in 1023ms (888 modules)
+ ✓ Compiled in 717ms (888 modules)
+ ✓ Compiled in 896ms (888 modules)
+ ✓ Compiled in 1961ms (888 modules)
+ ✓ Compiled in 1737ms (888 modules)
+ ✓ Compiled in 791ms (888 modules)
+ ✓ Compiled in 2.2s (1664 modules)
+ ✓ Compiled in 2.5s (1664 modules)
+ ✓ Compiled in 1658ms (1664 modules)
+ ✓ Compiled in 1951ms (1664 modules)
+ ✓ Compiled in 1586ms (1664 modules)
+ ✓ Compiled in 1518ms (1664 modules)
+ ✓ Compiled in 2.7s (1664 modules)
+ ✓ Compiled in 1423ms (888 modules)
+ ✓ Compiled in 1093ms (888 modules)
+ ✓ Compiled in 1947ms (888 modules)
+ ✓ Compiled in 1614ms (888 modules)
+ ✓ Compiled in 1095ms (888 modules)
+ ✓ Compiled in 1871ms (888 modules)
+ ✓ Compiled in 1125ms (888 modules)
+ ✓ Compiled in 3.2s (1664 modules)
+ ✓ Compiled in 1178ms (888 modules)
+ ✓ Compiled in 1830ms (888 modules)
+ ✓ Compiled in 1875ms (888 modules)
+ ✓ Compiled in 1436ms (888 modules)
+ ○ Compiling /join ...
+ ✓ Compiled /join in 7s (1718 modules)
+ GET /join 200 in 7943ms
+ GET /dashboard?section=profile 200 in 7958ms
+ ✓ Compiled in 2.8s (1732 modules)
+ ✓ Compiled in 1860ms (1694 modules)
+ ✓ Compiled in 2.6s (918 modules)
+ ✓ Compiled in 3.2s (918 modules)
+ ○ Compiling /join ...
+ ✓ Compiled /join in 929ms (802 modules)
+ ✓ Compiled (814 modules)
+ GET /join 200 in 2351ms
+ GET /dashboard?section=profile 200 in 2405ms
+ GET /vendor/signin 200 in 499ms
+ GET / 200 in 763ms
+ ○ Compiling /signin ...
+ ✓ Compiled /signin in 2.4s (1696 modules)
+ ✓ Compiled in 4.5s (1696 modules)
+ ○ Compiling /join ...
+ GET / 200 in 702ms
+ ✓ Compiled /join in 1030ms (791 modules)
+ GET /join 200 in 1805ms
+ ○ Compiling /_not-found ...
+ GET / 200 in 2604ms
+ ✓ Compiled /_not-found in 4.4s (1685 modules)
+ GET /login 404 in 5723ms
+ GET /vendor/signin 200 in 1306ms
+ GET / 200 in 345ms
+ ○ Compiling /join ...
+ ✓ Compiled /join in 775ms (791 modules)
+ ○ Compiling /api/vendors ...
+ ✓ Compiled /api/vendors in 1203ms (820 modules)
+ POST /api/vendors 400 in 4321ms
+ POST /api/vendors 400 in 3721ms
+ POST /api/vendors 400 in 3399ms
+ ✓ Compiled in 4.2s (918 modules)
+ ✓ Compiled in 3.6s (1709 modules)
+ ○ Compiling /api/vendors ...
+ ✓ Compiled /api/vendors in 679ms (820 modules)
+ POST /api/vendors 201 in 53155ms
+ ✓ Compiled in 8.2s (1709 modules)
+ ✓ Compiled in 5.7s (1709 modules)
+ ✓ Compiled in 1935ms (918 modules)
+ ✓ Compiled in 1638ms (918 modules)
+ ✓ Compiled in 2.5s (918 modules)
+ ✓ Compiled in 1604ms (918 modules)
+ ✓ Compiled in 1869ms (918 modules)
+ ✓ Compiled in 1359ms (918 modules)
+ ✓ Compiled in 2.3s (918 modules)
+ ✓ Compiled in 5.6s (918 modules)
+ ✓ Compiled in 1768ms (918 modules)
+ ✓ Compiled in 1328ms (918 modules)
+ ✓ Compiled in 4.7s (1709 modules)
+ ✓ Compiled in 1827ms (1709 modules)
+ ✓ Compiled in 2.2s (918 modules)
+ ✓ Compiled in 1247ms (918 modules)
+ ✓ Compiled in 904ms (918 modules)
+ ✓ Compiled in 1309ms (918 modules)
+ ✓ Compiled in 1046ms (918 modules)
+ ✓ Compiled in 899ms (918 modules)
+ ✓ Compiled in 705ms (918 modules)
+ ✓ Compiled in 938ms (918 modules)
+ ✓ Compiled in 812ms (918 modules)
+ ✓ Compiled in 1167ms (918 modules)

@@ -145,7 +145,7 @@ export default function AuthPanel({ mode = "signup" }) {
         </SiteButton>
       </form>
 
-      <GoogleAuthButton mode={mode} onStatusChange={setStatus} />
+      <GoogleAuthButton mode={mode} accountRole="client" onStatusChange={setStatus} />
 
       {!isSignup ? <PhoneSigninPanel /> : null}
 

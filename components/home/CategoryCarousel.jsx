@@ -2,30 +2,39 @@
 
 import { useEffect, useMemo, useRef } from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 const AUTOPLAY_PIXELS_PER_SECOND = 28;
 const LOOP_COPY_COUNT = 3;
 const ORIGINAL_COPY_INDEX = 1;
+const DRAG_CLICK_THRESHOLD = 6;
 
-function CategoryCarouselCard({ category }) {
+function CategoryCarouselCard({ category, onClickGuard }) {
   return (
-    <article className="category-card">
-      <div className="category-card-body">
-        <div className="category-card-media">
-          <Image
-            src={category.image}
-            alt={category.label}
-            draggable={false}
-            fill
-            sizes="(max-width: 760px) 25vw, 150px"
-            style={{ objectFit: "cover" }}
-          />
+    <Link
+      href={`/discover?query=${encodeURIComponent(category.label)}`}
+      className="category-card-link"
+      onClick={onClickGuard}
+      draggable={false}
+    >
+      <article className="category-card">
+        <div className="category-card-body">
+          <div className="category-card-media">
+            <Image
+              src={category.image}
+              alt={category.label}
+              draggable={false}
+              fill
+              sizes="(max-width: 760px) 25vw, 150px"
+              style={{ objectFit: "cover" }}
+            />
+          </div>
+          <div className="category-card-copy">
+            <h3>{category.label}</h3>
+          </div>
         </div>
-        <div className="category-card-copy">
-          <h3>{category.label}</h3>
-        </div>
-      </div>
     </article>
+    </Link>
   );
 }
 
@@ -38,7 +47,8 @@ export default function CategoryCarousel({ categories }) {
     active: false,
     pointerId: null,
     startX: 0,
-    startScrollLeft: 0
+    startScrollLeft: 0,
+    distance: 0
   });
 
   const loopedCategories = useMemo(
@@ -131,7 +141,8 @@ export default function CategoryCarousel({ categories }) {
       active: true,
       pointerId: event.pointerId,
       startX: event.clientX,
-      startScrollLeft: viewport.scrollLeft
+      startScrollLeft: viewport.scrollLeft,
+      distance: 0
     };
 
     viewport.dataset.dragging = "true";
@@ -146,8 +157,10 @@ export default function CategoryCarousel({ categories }) {
       return;
     }
 
+    const deltaX = event.clientX - dragState.startX;
+    dragState.distance = Math.max(dragState.distance, Math.abs(deltaX));
     event.preventDefault();
-    viewport.scrollLeft = dragState.startScrollLeft - (event.clientX - dragState.startX);
+    viewport.scrollLeft = dragState.startScrollLeft - deltaX;
   }
 
   function endDrag(event) {
@@ -181,6 +194,12 @@ export default function CategoryCarousel({ categories }) {
     endDrag(event);
   }
 
+  function preventClickIfDragged(event) {
+    if (dragStateRef.current.distance > DRAG_CLICK_THRESHOLD) {
+      event.preventDefault();
+    }
+  }
+
   return (
     <div className="category-carousel">
       <div
@@ -201,7 +220,7 @@ export default function CategoryCarousel({ categories }) {
               aria-hidden={!category.isOriginal}
               className="category-carousel-slide"
             >
-              <CategoryCarouselCard category={category} />
+              <CategoryCarouselCard category={category} onClickGuard={preventClickIfDragged} />
             </div>
           ))}
         </div>

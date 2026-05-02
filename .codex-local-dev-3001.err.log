@@ -154,3 +154,180 @@ Import trace for requested module:
 ./components/home/HomeLanding.jsx
 ./app/page.jsx
  ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+Skipping strict bookings slot index because legacy duplicate active slots already exist. App-level availability checks remain enabled.
+ ⨯ ./components/dashboard/VendorDashboardManager.jsx
+Error: 
+  [31mx[0m Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+      ,-[[36;1;4mE:\My business\Projects\hairforce\components\dashboard\VendorDashboardManager.jsx[0m:1852:1]
+ [2m1852[0m |       ) : null}
+ [2m1853[0m |     </div>
+ [2m1854[0m |   );
+ [2m1855[0m | }
+      : [31;1m^[0m
+      `----
+
+  [31mx[0m Unexpected eof
+      ,-[[36;1;4mE:\My business\Projects\hairforce\components\dashboard\VendorDashboardManager.jsx[0m:1853:1]
+ [2m1853[0m |     </div>
+ [2m1854[0m |   );
+ [2m1855[0m | }
+      `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./components/dashboard/VendorDashboardManager.jsx
+./app/dashboard/page.jsx
+ ⨯ ./components/dashboard/VendorDashboardManager.jsx
+Error: 
+  [31mx[0m Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+      ,-[[36;1;4mE:\My business\Projects\hairforce\components\dashboard\VendorDashboardManager.jsx[0m:1852:1]
+ [2m1852[0m |       ) : null}
+ [2m1853[0m |     </div>
+ [2m1854[0m |   );
+ [2m1855[0m | }
+      : [31;1m^[0m
+      `----
+
+  [31mx[0m Unexpected eof
+      ,-[[36;1;4mE:\My business\Projects\hairforce\components\dashboard\VendorDashboardManager.jsx[0m:1853:1]
+ [2m1853[0m |     </div>
+ [2m1854[0m |   );
+ [2m1855[0m | }
+      `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./components/dashboard/VendorDashboardManager.jsx
+./app/dashboard/page.jsx
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⨯ ./components/dashboard/VendorDashboardManager.jsx
+Error: 
+  [31mx[0m Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+      ,-[[36;1;4mE:\My business\Projects\hairforce\components\dashboard\VendorDashboardManager.jsx[0m:1866:1]
+ [2m1866[0m |       ) : null}
+ [2m1867[0m |     </div>
+ [2m1868[0m |   );
+ [2m1869[0m | }
+      : [31;1m^[0m
+      `----
+
+  [31mx[0m Unexpected eof
+      ,-[[36;1;4mE:\My business\Projects\hairforce\components\dashboard\VendorDashboardManager.jsx[0m:1867:1]
+ [2m1867[0m |     </div>
+ [2m1868[0m |   );
+ [2m1869[0m | }
+      `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./components/dashboard/VendorDashboardManager.jsx
+./app/dashboard/page.jsx
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⨯ ./components/dashboard/VendorDashboardManager.jsx
+Error: 
+  [31mx[0m Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+      ,-[[36;1;4mE:\My business\Projects\hairforce\components\dashboard\VendorDashboardManager.jsx[0m:1876:1]
+ [2m1876[0m |       ) : null}
+ [2m1877[0m |     </div>
+ [2m1878[0m |   );
+ [2m1879[0m | }
+      : [31;1m^[0m
+      `----
+
+  [31mx[0m Unexpected eof
+      ,-[[36;1;4mE:\My business\Projects\hairforce\components\dashboard\VendorDashboardManager.jsx[0m:1877:1]
+ [2m1877[0m |     </div>
+ [2m1878[0m |   );
+ [2m1879[0m | }
+      `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./components/dashboard/VendorDashboardManager.jsx
+./app/dashboard/page.jsx
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⨯ ./components/dashboard/VendorDashboardManager.jsx
+Error: 
+  [31mx[0m Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+      ,-[[36;1;4mE:\My business\Projects\hairforce\components\dashboard\VendorDashboardManager.jsx[0m:1879:1]
+ [2m1879[0m |       ) : null}
+ [2m1880[0m |     </div>
+ [2m1881[0m |   );
+ [2m1882[0m | }
+      : [31;1m^[0m
+      `----
+
+  [31mx[0m Unexpected eof
+      ,-[[36;1;4mE:\My business\Projects\hairforce\components\dashboard\VendorDashboardManager.jsx[0m:1880:1]
+ [2m1880[0m |     </div>
+ [2m1881[0m |   );
+ [2m1882[0m | }
+      `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./components/dashboard/VendorDashboardManager.jsx
+./app/dashboard/page.jsx
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⨯ components\dashboard\VendorDashboardManager.jsx (392:28) @ getAppointmentDateTime
+ ⨯ ReferenceError: getAppointmentDateTime is not defined
+    at eval (./components/dashboard/VendorDashboardManager.jsx:452:30)
+    at Array.sort (<anonymous>)
+    at eval (./components/dashboard/VendorDashboardManager.jsx:451:41)
+    at VendorDashboardManager (./components/dashboard/VendorDashboardManager.jsx:445:74)
+digest: "1229670777"
+[0m [90m 390 |[39m         [33m.[39mfilter((booking) [33m=>[39m [33m![39m[[32m"cancelled"[39m[33m,[39m [32m"declined"[39m][33m.[39mincludes(booking[33m.[39mstatus))[0m
+[0m [90m 391 |[39m         [33m.[39msort((left[33m,[39m right) [33m=>[39m {[0m
+[0m[31m[1m>[22m[39m[90m 392 |[39m           [36mconst[39m leftTime [33m=[39m getAppointmentDateTime(left[33m.[39mappointmentDate[33m,[39m left[33m.[39mappointmentSlot)[33m?[39m[33m.[39mgetTime() [33m||[39m [35m0[39m[33m;[39m[0m
+[0m [90m     |[39m                            [31m[1m^[22m[39m[0m
+[0m [90m 393 |[39m           [36mconst[39m rightTime [33m=[39m getAppointmentDateTime(right[33m.[39mappointmentDate[33m,[39m right[33m.[39mappointmentSlot)[33m?[39m[33m.[39mgetTime() [33m||[39m [35m0[39m[33m;[39m[0m
+[0m [90m 394 |[39m           [36mreturn[39m leftTime [33m-[39m rightTime[33m;[39m[0m
+[0m [90m 395 |[39m         })[33m;[39m[0m
+ ⨯ components\dashboard\VendorDashboardManager.jsx (392:28) @ getAppointmentDateTime
+ ⨯ ReferenceError: getAppointmentDateTime is not defined
+    at eval (./components/dashboard/VendorDashboardManager.jsx:452:30)
+    at Array.sort (<anonymous>)
+    at eval (./components/dashboard/VendorDashboardManager.jsx:451:41)
+    at VendorDashboardManager (./components/dashboard/VendorDashboardManager.jsx:445:74)
+digest: "1229670777"
+[0m [90m 390 |[39m         [33m.[39mfilter((booking) [33m=>[39m [33m![39m[[32m"cancelled"[39m[33m,[39m [32m"declined"[39m][33m.[39mincludes(booking[33m.[39mstatus))[0m
+[0m [90m 391 |[39m         [33m.[39msort((left[33m,[39m right) [33m=>[39m {[0m
+[0m[31m[1m>[22m[39m[90m 392 |[39m           [36mconst[39m leftTime [33m=[39m getAppointmentDateTime(left[33m.[39mappointmentDate[33m,[39m left[33m.[39mappointmentSlot)[33m?[39m[33m.[39mgetTime() [33m||[39m [35m0[39m[33m;[39m[0m
+[0m [90m     |[39m                            [31m[1m^[22m[39m[0m
+[0m [90m 393 |[39m           [36mconst[39m rightTime [33m=[39m getAppointmentDateTime(right[33m.[39mappointmentDate[33m,[39m right[33m.[39mappointmentSlot)[33m?[39m[33m.[39mgetTime() [33m||[39m [35m0[39m[33m;[39m[0m
+[0m [90m 394 |[39m           [36mreturn[39m leftTime [33m-[39m rightTime[33m;[39m[0m
+[0m [90m 395 |[39m         })[33m;[39m[0m
+Skipping strict bookings slot index because legacy duplicate active slots already exist. App-level availability checks remain enabled.
+ ⨯ ./components/dashboard/VendorAvailabilityAgenda.jsx
+Error: Failed to read source code from E:\My business\Projects\hairforce\components\dashboard\VendorAvailabilityAgenda.jsx
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./components/dashboard/VendorAvailabilityAgenda.jsx
+./components/dashboard/VendorDashboardManager.jsx
+ ⨯ ./components/dashboard/VendorAvailabilityAgenda.jsx
+Error: Failed to read source code from E:\My business\Projects\hairforce\components\dashboard\VendorAvailabilityAgenda.jsx
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Import trace for requested module:
+./components/dashboard/VendorAvailabilityAgenda.jsx
+./components/dashboard/VendorDashboardManager.jsx
+Skipping strict bookings slot index because legacy duplicate active slots already exist. App-level availability checks remain enabled.

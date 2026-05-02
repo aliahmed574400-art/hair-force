@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { verifyPasswordResetOtp } from "@/lib/postgres-repositories";
+import { checkEmailRateLimit } from "@/lib/security-middleware";
 
 export async function POST(request) {
   try {
@@ -14,9 +15,25 @@ export async function POST(request) {
       );
     }
 
+    // SECURITY: Rate limit verification attempts (10 per hour)
+    if (!checkEmailRateLimit(email, 10)) {
+      return NextResponse.json(
+        { error: "Too many verification attempts. Please try again later." },
+        { status: 429 }
+      );
+    }
+
     const resetState = await verifyPasswordResetOtp({ email, code });
-    return NextResponse.json(resetState);
+    
+    // SECURITY: Do not expose sensitive reset tokens in response
+    // Only return whether verification was successful
+    return NextResponse.json({
+      verified: true,
+      email: resetState.email,
+      expiresIn: resetState.expiresIn
+      // Note: Do NOT return resetState.token or resetState.verifier here
+    });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    return NextResponse.json({ error: "Invalid or expired verification code." }, { status: 400 });
   }
 }

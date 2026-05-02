@@ -13,8 +13,12 @@ export async function GET(request) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
-  const dashboard = await getDashboardDataForUser(user);
-  return NextResponse.json(dashboard);
+  try {
+    const dashboard = await getDashboardDataForUser(user);
+    return NextResponse.json(dashboard);
+  } catch (error) {
+    return NextResponse.json({ error: "Failed to fetch profile." }, { status: 400 });
+  }
 }
 
 export async function PUT(request) {
@@ -32,9 +36,13 @@ export async function PUT(request) {
       return NextResponse.json({ user: updatedUser });
     }
 
-    const dashboard = await updateVendorProfile(user, payload);
-    return NextResponse.json(dashboard);
+    if (user.role === "vendor") {
+      const dashboard = await updateVendorProfile(user, payload);
+      return NextResponse.json(dashboard);
+    }
+
+    return NextResponse.json({ error: "Invalid user role." }, { status: 400 });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    return NextResponse.json({ error: "Failed to update profile." }, { status: 400 });
   }
 }

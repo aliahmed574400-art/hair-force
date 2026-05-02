@@ -3,7 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { MessageSquareText } from "lucide-react";
 import Logo from "@/components/brand/Logo";
+import VendorNotificationsPopover from "@/components/dashboard/VendorNotificationsPopover";
 import SiteButton from "@/components/ui/SiteButton";
 import SignOutButton from "@/components/ui/SignOutButton";
 
@@ -27,6 +29,15 @@ function getDashboardLabel(sessionUser) {
   return "My dashboard";
 }
 
+function getUserInitials(sessionUser) {
+  return String(sessionUser?.name || sessionUser?.email || "HF")
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("");
+}
+
 export default function NavbarClient({ sessionUser, links }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -34,11 +45,17 @@ export default function NavbarClient({ sessionUser, links }) {
   const isHomePage = pathname === "/";
   const dashboardHref = getDashboardHref(sessionUser);
   const dashboardLabel = getDashboardLabel(sessionUser);
+  const isVendorDashboardView = sessionUser?.role === "vendor" && pathname === "/dashboard";
 
   const mobileLinks = useMemo(
     () =>
       links.filter((link) => {
-        if (link.href === "/signin" || link.href === "/join" || link.href === "/dashboard") {
+        if (
+          link.href === "/signin" ||
+          link.href === "/join" ||
+          link.href === "/vendor/signin" ||
+          link.href === "/dashboard"
+        ) {
           return false;
         }
 
@@ -94,10 +111,30 @@ export default function NavbarClient({ sessionUser, links }) {
           <div className="nav-actions">
             {sessionUser ? (
               <>
-                <SiteButton href={dashboardHref} variant="secondary" size="sm">
-                  {dashboardLabel}
-                </SiteButton>
-                <SignOutButton size="sm" />
+                {isVendorDashboardView ? (
+                  <div className="topbar-vendor-tools" aria-label="Vendor dashboard shortcuts">
+                    <VendorNotificationsPopover className="topbar-vendor-icon-link" />
+                    <Link href="/dashboard?section=messages" className="topbar-vendor-icon-link" aria-label="Messages">
+                      <MessageSquareText size={18} />
+                    </Link>
+                    <Link href="/dashboard?section=profile" className="topbar-vendor-avatar-link" aria-label="Profile">
+                      {sessionUser.avatar ? (
+                        <img
+                          src={sessionUser.avatar}
+                          alt={`${sessionUser.name || sessionUser.email || "Vendor"} avatar`}
+                          className="topbar-vendor-avatar-image"
+                        />
+                      ) : (
+                        <span className="topbar-vendor-avatar-fallback">{getUserInitials(sessionUser)}</span>
+                      )}
+                    </Link>
+                  </div>
+                ) : (
+                  <SiteButton href={dashboardHref} variant="secondary" size="sm">
+                    {dashboardLabel}
+                  </SiteButton>
+                )}
+                {!isVendorDashboardView ? <SignOutButton size="sm" /> : null}
               </>
             ) : (
               <>
@@ -144,10 +181,30 @@ export default function NavbarClient({ sessionUser, links }) {
             <div className="mobile-nav-actions">
               {sessionUser ? (
                 <>
-                  <SiteButton href={dashboardHref} variant="secondary" fullWidth>
-                    {dashboardLabel}
-                  </SiteButton>
-                  <SignOutButton fullWidth />
+                  {isVendorDashboardView ? (
+                    <div className="mobile-vendor-tools">
+                      <VendorNotificationsPopover className="topbar-vendor-icon-link" />
+                      <Link href="/dashboard?section=messages" className="topbar-vendor-icon-link" aria-label="Messages">
+                        <MessageSquareText size={18} />
+                      </Link>
+                      <Link href="/dashboard?section=profile" className="topbar-vendor-avatar-link" aria-label="Profile">
+                        {sessionUser.avatar ? (
+                          <img
+                            src={sessionUser.avatar}
+                            alt={`${sessionUser.name || sessionUser.email || "Vendor"} avatar`}
+                            className="topbar-vendor-avatar-image"
+                          />
+                        ) : (
+                          <span className="topbar-vendor-avatar-fallback">{getUserInitials(sessionUser)}</span>
+                        )}
+                      </Link>
+                    </div>
+                  ) : (
+                    <SiteButton href={dashboardHref} variant="secondary" fullWidth>
+                      {dashboardLabel}
+                    </SiteButton>
+                  )}
+                  {!isVendorDashboardView ? <SignOutButton fullWidth /> : null}
                 </>
               ) : (
                 <>

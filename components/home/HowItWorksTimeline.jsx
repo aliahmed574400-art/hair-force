@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { CalendarDays, Check, Clock3, MapPin, Scissors, Search, Sparkles, Star } from "lucide-react";
 import { motion, useMotionValueEvent, useScroll, useSpring, useTransform } from "framer-motion";
@@ -53,6 +54,58 @@ function StepIcon({ name }) {
   return <Icon strokeWidth={1.9} aria-hidden="true" />;
 }
 
+function SearchSceneMap() {
+  const pins = [
+    { id: "a", x: 22, y: 32, accent: "#2856f8" },
+    { id: "b", x: 44, y: 58, accent: "#c084fc" },
+    { id: "c", x: 68, y: 30, accent: "#ff6b9d" },
+    { id: "d", x: 80, y: 64, accent: "#54b6ff" },
+    { id: "e", x: 32, y: 76, accent: "#6dffb0" }
+  ];
+
+  return (
+    <div className="how-story-map-mock" aria-hidden="true">
+      <svg viewBox="0 0 400 260" preserveAspectRatio="none" className="how-story-map-svg">
+        <defs>
+          <pattern id="howGrid" width="20" height="20" patternUnits="userSpaceOnUse">
+            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(40, 86, 248, 0.07)" strokeWidth="1" />
+          </pattern>
+        </defs>
+        <rect width="400" height="260" fill="url(#howGrid)" />
+        <g stroke="rgba(40, 86, 248, 0.22)" strokeWidth="2" fill="none" strokeLinecap="round">
+          <path d="M0 70 Q 100 60 200 90 T 400 110" />
+          <path d="M0 160 Q 90 180 180 160 T 400 180" />
+          <path d="M70 0 Q 90 90 110 200 T 130 260" />
+          <path d="M260 0 Q 240 90 280 200 T 290 260" />
+        </g>
+        <g fill="rgba(40, 86, 248, 0.08)">
+          <path d="M50 30 L 110 30 L 124 70 L 90 100 L 40 80 Z" />
+          <path d="M230 20 L 290 50 L 296 100 L 240 116 L 220 70 Z" />
+          <path d="M300 150 L 360 150 L 372 210 L 320 230 L 286 196 Z" />
+          <path d="M120 180 L 180 174 L 196 230 L 144 246 L 110 222 Z" />
+        </g>
+      </svg>
+
+      <div className="how-story-map-self">
+        <span />
+      </div>
+
+      {pins.map((pin, index) => (
+        <motion.span
+          key={pin.id}
+          className="how-story-map-pin"
+          style={{ left: `${pin.x}%`, top: `${pin.y}%`, "--pin-accent": pin.accent }}
+          animate={{ scale: [0.85, 1.1, 0.95] }}
+          transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut", delay: index * 0.18 }}
+        >
+          <span className="how-story-map-pin-dot" />
+          <span className="how-story-map-pin-pulse" />
+        </motion.span>
+      ))}
+    </div>
+  );
+}
+
 function SearchScene({ active }) {
   return (
     <div className="how-story-scene how-story-scene-search">
@@ -65,15 +118,9 @@ function SearchScene({ active }) {
         <div className="how-story-map-filter">Open now</div>
       </div>
 
-      <div className="how-story-map-canvas" aria-label="Interactive stylist discovery map">
+      <div className="how-story-map-canvas" aria-label="Stylist discovery map preview">
         <div className="how-story-map-live">
-          <iframe
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d50485.652103384586!2d-122.51686092481643!3d37.734855997932215!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x808f7e1b5370cb91%3A0xedb84052fc4cfd91!2sLouie&#39;s%20Barbershop%20SF!5e0!3m2!1sen!2s!4v1776714285088!5m2!1sen!2s"
-            title="Louie's Barbershop San Francisco map"
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-            allowFullScreen
-          />
+          <SearchSceneMap />
         </div>
         <div className="how-story-map-overlay" aria-hidden="true" />
       </div>
@@ -86,7 +133,6 @@ function SearchScene({ active }) {
         <MapPin strokeWidth={1.8} />
         <span>5 salons nearby</span>
       </motion.div>
-
     </div>
   );
 }
@@ -218,6 +264,31 @@ function StyledScene({ active }) {
             priority={false}
           />
         </div>
+
+        <motion.div
+          className="how-story-style-rating"
+          animate={active ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 14, scale: 0.92 }}
+          transition={{ duration: 0.5, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <span className="how-story-style-rating-stars" aria-hidden="true">
+            <Star fill="currentColor" strokeWidth={0} />
+            <Star fill="currentColor" strokeWidth={0} />
+            <Star fill="currentColor" strokeWidth={0} />
+            <Star fill="currentColor" strokeWidth={0} />
+            <Star fill="currentColor" strokeWidth={0} />
+          </span>
+          <strong>5.0</strong>
+          <span className="how-story-style-rating-meta">Rebooked</span>
+        </motion.div>
+
+        <motion.div
+          className="how-story-style-rebook"
+          animate={active ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
+          transition={{ duration: 0.5, delay: 0.45, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <Sparkles strokeWidth={1.8} />
+          <span>Tap to rebook in 2 weeks</span>
+        </motion.div>
       </motion.div>
     </div>
   );
@@ -287,7 +358,6 @@ function DesktopCard({ step, isActive, cardWidth }) {
         </div>
 
         <h3>{step.title}</h3>
-        <p>{step.text}</p>
       </div>
 
       <div className="how-story-card-visual">
@@ -316,7 +386,6 @@ function MobileCard({ step, index }) {
 
       <div className="how-story-mobile-copy">
         <h3>{step.title}</h3>
-        <p>{step.text}</p>
       </div>
 
       <div className="how-story-mobile-scene">
@@ -430,7 +499,7 @@ export default function HowItWorksTimeline({ steps }) {
             </div>
 
             <h2>How Hair Force Works</h2>
-            <p>Book your perfect style in 4 simple steps</p>
+            <p>Book your perfect style in 4 simple steps — no calls, no waiting.</p>
 
             <div className="how-story-progress">
               <div className="how-story-progress-rail" aria-hidden="true">
@@ -448,12 +517,18 @@ export default function HowItWorksTimeline({ steps }) {
                     <span className="how-story-progress-number">{step.step}</span>
                     <div>
                       <strong>{step.title}</strong>
-                      <span>{step.text}</span>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
+
+            <Link href="/discover" className="how-story-cta">
+              Find your stylist now
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M5 12h14M13 6l6 6-6 6" />
+              </svg>
+            </Link>
           </div>
         </div>
 

@@ -38,6 +38,8 @@ export default function GoogleAuthButton({
   showDivider = true,
   showHelperText = true,
   buttonWidth = 320,
+  accountRole = "client",
+  allowedRoles,
   className = ""
 }) {
   const shellRef = useRef(null);
@@ -98,13 +100,17 @@ export default function GoogleAuthButton({
 
       setLoading(true);
       setError("");
-      onStatusChange?.({ loading: true, message: "" });
+      onStatusChange?.({ loading: true, message: "", tone: "info" });
 
       try {
         const response = await fetch("/api/auth/google", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ credential: googleResponse.credential })
+          body: JSON.stringify({
+            credential: googleResponse.credential,
+            allowedRoles,
+            accountRole
+          })
         });
         const data = await response.json();
 
@@ -116,6 +122,7 @@ export default function GoogleAuthButton({
 
         onStatusChange?.({
           loading: false,
+          tone: "info",
           message: isSignup
             ? "Google account connected. Redirecting to your dashboard..."
             : `Welcome back, ${data.user.name || "client"}.`
@@ -126,7 +133,7 @@ export default function GoogleAuthButton({
       } catch (nextError) {
         const message = nextError.message || "Google sign in failed.";
         setError(message);
-        onStatusChange?.({ loading: false, message });
+        onStatusChange?.({ loading: false, message, tone: "error" });
       } finally {
         setLoading(false);
       }
@@ -150,7 +157,7 @@ export default function GoogleAuthButton({
       width: resolvedButtonWidth,
       logo_alignment: "left"
     });
-  }, [isScriptReady, isSignup, onStatusChange, resolvedButtonWidth, router]);
+  }, [accountRole, allowedRoles, isScriptReady, isSignup, onStatusChange, resolvedButtonWidth, router]);
 
   return (
     <>
@@ -190,7 +197,9 @@ export default function GoogleAuthButton({
       {showHelperText ? (
         <p className="tiny muted" style={{ margin: "10px 0 0" }}>
           {GOOGLE_CLIENT_ID
-            ? "We'll create or reopen your Hair Force account using your verified Google email."
+            ? accountRole === "vendor"
+              ? "We'll create or reopen your stylist account using your verified Google email."
+              : "We'll create or reopen your client account using your verified Google email."
             : "Add GOOGLE_CLIENT_ID and NEXT_PUBLIC_GOOGLE_CLIENT_ID to enable Google authentication."}
         </p>
       ) : null}

@@ -17,7 +17,11 @@ function formatTimer(secondsLeft) {
   return `${minutes}:${String(seconds).padStart(2, "0")}`;
 }
 
-export default function PhoneSigninPanel({ className = "" }) {
+export default function PhoneSigninPanel({
+  allowedRoles,
+  className = "",
+  successNameFallback = "client"
+}) {
   const router = useRouter();
   const otpRefs = useRef([]);
   const [step, setStep] = useState("idle");
@@ -28,7 +32,7 @@ export default function PhoneSigninPanel({ className = "" }) {
     secondsLeft: DEFAULT_OTP_TTL_SECONDS,
     devCode: ""
   });
-  const [status, setStatus] = useState({ loading: false, message: "" });
+  const [status, setStatus] = useState({ loading: false, message: "", tone: "info" });
 
   useEffect(() => {
     if (step !== "verify") {
@@ -54,7 +58,7 @@ export default function PhoneSigninPanel({ className = "" }) {
       secondsLeft: DEFAULT_OTP_TTL_SECONDS,
       devCode: ""
     });
-    setStatus({ loading: false, message: "" });
+    setStatus({ loading: false, message: "", tone: "info" });
   }
 
   function applyOtpDigits(rawValue, startIndex) {
@@ -91,17 +95,20 @@ export default function PhoneSigninPanel({ className = "" }) {
     const nextPhone = String(phone || "").trim();
 
     if (!nextPhone) {
-      setStatus({ loading: false, message: "Enter your phone number first." });
+      setStatus({ loading: false, message: "Enter your phone number first.", tone: "error" });
       return;
     }
 
-    setStatus({ loading: true, message: "" });
+    setStatus({ loading: true, message: "", tone: "info" });
 
     try {
       const response = await fetch("/api/auth/phone/signin/request-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: nextPhone })
+        body: JSON.stringify({
+          phone: nextPhone,
+          allowedRoles
+        })
       });
       const data = await response.json();
 
@@ -118,11 +125,12 @@ export default function PhoneSigninPanel({ className = "" }) {
       setStep("verify");
       setStatus({
         loading: false,
-        message: isResend ? "A fresh verification code is ready." : "Enter the code to sign in."
+        message: isResend ? "A fresh verification code is ready." : "Enter the code to sign in.",
+        tone: "info"
       });
       window.setTimeout(() => otpRefs.current[0]?.focus(), 0);
     } catch (error) {
-      setStatus({ loading: false, message: error.message });
+      setStatus({ loading: false, message: error.message, tone: "error" });
     }
   }
 
@@ -132,11 +140,15 @@ export default function PhoneSigninPanel({ className = "" }) {
     const code = otpDigits.join("");
 
     if (code.length !== OTP_LENGTH) {
-      setStatus({ loading: false, message: `Enter the ${OTP_LENGTH}-digit code to continue.` });
+      setStatus({
+        loading: false,
+        message: `Enter the ${OTP_LENGTH}-digit code to continue.`,
+        tone: "error"
+      });
       return;
     }
 
-    setStatus({ loading: true, message: "" });
+    setStatus({ loading: true, message: "", tone: "info" });
 
     try {
       const response = await fetch("/api/auth/phone/signin/verify-otp", {
@@ -144,7 +156,8 @@ export default function PhoneSigninPanel({ className = "" }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           phone: otpMeta.phone || phone,
-          code
+          code,
+          allowedRoles
         })
       });
       const data = await response.json();
@@ -155,14 +168,15 @@ export default function PhoneSigninPanel({ className = "" }) {
 
       setStatus({
         loading: false,
-        message: `Welcome back, ${data.user.name || "client"}.`
+        message: `Welcome back, ${data.user.name || successNameFallback}.`,
+        tone: "info"
       });
 
       const nextHref = data.user?.role === "admin" ? "/admin" : "/dashboard";
       router.push(nextHref);
       router.refresh();
     } catch (error) {
-      setStatus({ loading: false, message: error.message });
+      setStatus({ loading: false, message: error.message, tone: "error" });
     }
   }
 
@@ -279,9 +293,15 @@ export default function PhoneSigninPanel({ className = "" }) {
       )}
 
       {status.message ? (
-        <div className="booking-confirm">
-          <span className="muted">{status.message}</span>
-        </div>
+        status.tone === "error" ? (
+          <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+            {status.message}
+          </div>
+        ) : (
+          <div className="booking-confirm">
+            <span className="muted">{status.message}</span>
+          </div>
+        )
       ) : null}
     </div>
   );

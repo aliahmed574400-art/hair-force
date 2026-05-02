@@ -599,7 +599,8 @@ export default function ClientDashboard({ user, initialData }) {
     addPaymentMethod: false,
     password: false,
     preferences: false,
-    signout: false
+    signout: false,
+    deleteAccount: false
   });
 
   useEffect(() => {
@@ -883,6 +884,31 @@ export default function ClientDashboard({ user, initialData }) {
       router.refresh();
     } finally {
       setLoading((current) => ({ ...current, signout: false }));
+    }
+  }
+
+  async function handleDeleteAccount() {
+    if (typeof window !== "undefined") {
+      const confirmed = window.confirm(
+        "Delete your client account permanently? This removes your client profile and frees this Google login for a stylist account."
+      );
+
+      if (!confirmed) {
+        return;
+      }
+    }
+
+    setLoading((current) => ({ ...current, deleteAccount: true }));
+    setFeedback({ type: "", message: "" });
+
+    try {
+      await fetchJson("/api/dashboard/account", { method: "DELETE" });
+      router.push("/");
+      router.refresh();
+    } catch (error) {
+      setFeedback({ type: "error", message: error.message });
+    } finally {
+      setLoading((current) => ({ ...current, deleteAccount: false }));
     }
   }
 
@@ -2845,7 +2871,7 @@ export default function ClientDashboard({ user, initialData }) {
                 <div className="client-admin-panel-head">
                   <div>
                     <h2>Security & Linked Methods</h2>
-                    <p>Review what is connected to this account and sign out when needed</p>
+                    <p>Review what is connected to this account, sign out when needed, or delete the client profile to free this Google login for a stylist account.</p>
                   </div>
                 </div>
 
@@ -2877,6 +2903,18 @@ export default function ClientDashboard({ user, initialData }) {
                   </div>
                 </div>
 
+                <div
+                  className="client-admin-highlight compact"
+                  style={{ borderColor: "#fecaca", background: "#fef2f2" }}
+                >
+                  <div>
+                    <strong>Delete client account</strong>
+                    <p>
+                      Use this only if you want this Google email to stop belonging to the client side so it can be used for a stylist account instead.
+                    </p>
+                  </div>
+                </div>
+
                 <div className="client-admin-action-row">
                   <Button
                     type="button"
@@ -2886,6 +2924,15 @@ export default function ClientDashboard({ user, initialData }) {
                     disabled={loading.signout}
                   >
                     {loading.signout ? "Signing out..." : "Sign out"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="client-admin-button client-admin-button-secondary"
+                    onClick={handleDeleteAccount}
+                    disabled={loading.deleteAccount}
+                  >
+                    {loading.deleteAccount ? "Deleting..." : "Delete client account"}
                   </Button>
                 </div>
               </Card>
