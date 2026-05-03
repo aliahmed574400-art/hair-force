@@ -1180,6 +1180,7 @@ export default function JoinForm({ initialUser = null, initialDashboard = null }
               }`}
               onClick={() => toggleSpecialty(option)}
             >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={SPECIALTY_IMAGES[index % SPECIALTY_IMAGES.length]} alt={option} />
               <div className="vendor-join-specialty-meta">
                 <strong>{option}</strong>
@@ -1309,6 +1310,7 @@ export default function JoinForm({ initialUser = null, initialDashboard = null }
     <div className="vendor-join-shell">
       <header className="vendor-join-header">
         <Link href="/" className="vendor-join-brand" aria-label="Hair Force home">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo.png" alt="Hair Force" />
         </Link>
       </header>
@@ -1331,6 +1333,7 @@ export default function JoinForm({ initialUser = null, initialDashboard = null }
 
         <aside className="vendor-join-media">
           <div className="vendor-join-media-card">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={stepMedia.image} alt={stepMedia.title} className="vendor-join-media-image" />
             <div className="vendor-join-media-overlay" />
 

@@ -119,6 +119,7 @@ export default function NavbarClient({ sessionUser, links }) {
                     </Link>
                     <Link href="/dashboard?section=profile" className="topbar-vendor-avatar-link" aria-label="Profile">
                       {sessionUser.avatar ? (
+                        // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={sessionUser.avatar}
                           alt={`${sessionUser.name || sessionUser.email || "Vendor"} avatar`}
@@ -189,6 +190,7 @@ export default function NavbarClient({ sessionUser, links }) {
                       </Link>
                       <Link href="/dashboard?section=profile" className="topbar-vendor-avatar-link" aria-label="Profile">
                         {sessionUser.avatar ? (
+                          // eslint-disable-next-line @next/next/no-img-element
                           <img
                             src={sessionUser.avatar}
                             alt={`${sessionUser.name || sessionUser.email || "Vendor"} avatar`}
