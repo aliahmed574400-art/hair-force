@@ -893,7 +893,7 @@ export default function JoinForm({ initialUser = null, initialDashboard = null }
       <>
         <div className="vendor-join-copy-block">
           <span className="vendor-join-step-label">Step 2 of 6</span>
-          <h2 className="vendor-join-title">Introduce yourself</h2>
+          <h2 className="vendor-join-title">Introduce Yourself</h2>
           <p className="vendor-join-copy">
             Clients love to know who they are booking with. Add a face and a business name theyll recognize.
           </p>
