@@ -761,7 +761,7 @@ export default function JoinForm({ initialUser = null, initialDashboard = null }
           <span className="vendor-join-badge">{stepMedia.badge}</span>
           <h1 className="vendor-join-title">Clients near you are looking for you</h1>
           <p className="vendor-join-copy">
-            Set up your Hair Force vendor account first. Once you&apos;re in, the remaining setup steps can be
+            Set up your Hair Force vendor account first. Once youre in, the remaining setup steps can be
             completed now or later.
           </p>
         </div>
@@ -895,7 +895,7 @@ export default function JoinForm({ initialUser = null, initialDashboard = null }
           <span className="vendor-join-step-label">Step 2 of 6</span>
           <h2 className="vendor-join-title">Introduce yourself</h2>
           <p className="vendor-join-copy">
-            Clients love to know who they&apos;re booking with. Add a face and a business name they&apos;ll recognize.
+            Clients love to know who they are booking with. Add a face and a business name theyll recognize.
           </p>
         </div>
 
@@ -1003,7 +1003,7 @@ export default function JoinForm({ initialUser = null, initialDashboard = null }
       <>
         <div className="vendor-join-copy-block">
           <span className="vendor-join-step-label">Step 4 of 6</span>
-          <h2 className="vendor-join-title">What&apos;s your availability?</h2>
+          <h2 className="vendor-join-title">What is your availability?</h2>
           <p className="vendor-join-copy">
             Pick the days you work most often, then decide whether you want one shared schedule or custom hours by
             day.
