@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils"
 type AsChildElementProps = {
   className?: string
   children?: React.ReactNode
+  "data-slot"?: string
 }
 
 const buttonVariants = cva(

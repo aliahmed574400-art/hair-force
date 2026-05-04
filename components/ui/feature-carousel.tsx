@@ -1,14 +1,21 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useState } from "react";
+import { forwardRef, useCallback, useEffect, useState } from "react";
+import type { ComponentPropsWithoutRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const AUTO_PLAY_INTERVAL = 3200;
 const ITEM_HEIGHT = 68;
-const MotionDiv = motion.create("div");
+const MotionDivBase = forwardRef<HTMLDivElement, ComponentPropsWithoutRef<"div">>(function MotionDivBase(
+  props,
+  ref
+) {
+  return <div ref={ref} {...props} />;
+});
+const MotionDiv = motion.create(MotionDivBase);
 
 const wrap = (min: number, max: number, value: number) => {
   const rangeSize = max - min;
