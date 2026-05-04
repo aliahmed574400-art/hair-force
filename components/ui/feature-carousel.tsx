@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 
 const AUTO_PLAY_INTERVAL = 3200;
 const ITEM_HEIGHT = 68;
+const MotionDiv = motion.create("div");
 
 const wrap = (min: number, max: number, value: number) => {
   const rangeSize = max - min;
@@ -95,7 +96,7 @@ export function FeatureCarousel({ features }: FeatureCarouselProps) {
                 const wrappedDistance = wrap(-(featureCount / 2), featureCount / 2, distance);
 
                 return (
-                  <motion.div
+                  <MotionDiv
                     key={feature.id}
                     style={{ height: ITEM_HEIGHT, width: "fit-content" }}
                     animate={{
@@ -135,7 +136,7 @@ export function FeatureCarousel({ features }: FeatureCarouselProps) {
                         {feature.label}
                       </span>
                     </button>
-                  </motion.div>
+                  </MotionDiv>
                 );
               })}
             </div>
@@ -154,7 +155,7 @@ export function FeatureCarousel({ features }: FeatureCarouselProps) {
                 const Icon = feature.icon;
 
                 return (
-                  <motion.div
+                  <MotionDiv
                     key={feature.id}
                     initial={false}
                     animate={{
@@ -188,7 +189,7 @@ export function FeatureCarousel({ features }: FeatureCarouselProps) {
 
                     <AnimatePresence>
                       {isActive ? (
-                        <motion.div
+                        <MotionDiv
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: 10 }}
@@ -201,7 +202,7 @@ export function FeatureCarousel({ features }: FeatureCarouselProps) {
                           <p className="max-w-[18ch] text-xl font-medium leading-tight tracking-tight text-white drop-shadow-md md:text-2xl">
                             {feature.description}
                           </p>
-                        </motion.div>
+                        </MotionDiv>
                       ) : null}
                     </AnimatePresence>
 
@@ -216,7 +217,7 @@ export function FeatureCarousel({ features }: FeatureCarouselProps) {
                         {feature.liveLabel || "Hairforce preview"}
                       </span>
                     </div>
-                  </motion.div>
+                  </MotionDiv>
                 );
               })}
             </div>
