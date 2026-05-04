@@ -204,3 +204,4 @@ Import trace for requested module:
 ./lib/postgres-repositories.js
 ./app/page.jsx
 Skipping strict bookings slot index because legacy duplicate active slots already exist. App-level availability checks remain enabled.
+Skipping strict bookings slot index because legacy duplicate active slots already exist. App-level availability checks remain enabled.

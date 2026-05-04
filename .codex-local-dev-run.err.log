@@ -1,38 +1,13 @@
- ⨯ Error: getaddrinfo EAI_AGAIN aws-1-us-west-1.pooler.supabase.com
-    at async queryPostgres (./lib/postgres.js:564:16)
-    at async getUserRowById (./lib/postgres-repositories.js:677:20)
-    at async getUserById (./lib/postgres-repositories.js:1422:23)
-    at async buildClientDashboardPayload (./lib/postgres-repositories.js:908:24)
-    at async DashboardPage (./app/dashboard/page.jsx:190:27)
-digest: "4273895778"
- ⨯ ./lib/session.js
-Error: Failed to read source code from E:\My business\Projects\hairforce\lib\session.js
-
-Caused by:
-    The system cannot find the file specified. (os error 2)
-
-Import trace for requested module:
-./lib/session.js
-./app/dashboard/page.jsx
- ⨯ ./lib/session.js
-Error: Failed to read source code from E:\My business\Projects\hairforce\lib\session.js
-
-Caused by:
-    The system cannot find the file specified. (os error 2)
-
-Import trace for requested module:
-./lib/session.js
-./app/dashboard/page.jsx
-Warning: React.jsx: type is invalid -- expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.
- ⨯ Error: Unsupported Server Component type: undefined
-    at stringify (<anonymous>)
-    at stringify (<anonymous>)
-    at AsyncLocalStorage.run (node:async_hooks:346:14)
-digest: "1538960240"
- ⨯ error: null value in column "user_id" of relation "client_notification_preferences" violates not-null constraint
-    at async queryPostgres (./lib/postgres.js:624:16)
-    at async ensureNotificationPreferencesRow (./lib/postgres-repositories.js:963:22)
-    at async Promise.all (index 5)
-    at async buildClientDashboardPayload (./lib/postgres-repositories.js:1137:164)
-    at async DashboardPage (./app/dashboard/page.jsx:190:27)
-digest: "4039875451"
+Error: spawn EPERM
+    at ChildProcess.spawn (node:internal/child_process:421:11)
+    at spawn (node:child_process:761:9)
+    at fork (node:child_process:172:10)
+    at E:\My business\Projects\hairforce\node_modules\next\dist\cli\next-dev.js:213:45
+    at new Promise (<anonymous>)
+    at startServer (E:\My business\Projects\hairforce\node_modules\next\dist\cli\next-dev.js:199:16)
+    at runDevServer (E:\My business\Projects\hairforce\node_modules\next\dist\cli\next-dev.js:280:23)
+    at Module.nextDev (E:\My business\Projects\hairforce\node_modules\next\dist\cli\next-dev.js:288:11) {
+  errno: -4048,
+  code: 'EPERM',
+  syscall: 'spawn'
+}

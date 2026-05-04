@@ -239,3 +239,19 @@
  ✓ Compiled in 938ms (918 modules)
  ✓ Compiled in 812ms (918 modules)
  ✓ Compiled in 1167ms (918 modules)
+  ▲ Next.js 14.2.24
+  - Local:        http://127.0.0.1:3000
+  - Network:      http://127.0.0.1:3000
+  - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 5.3s
+ ○ Compiling / ...
+ ✓ Compiled / in 9.8s (1512 modules)
+ GET / 200 in 31205ms
+ GET / 200 in 9230ms
+ GET / 200 in 8204ms
+ GET / 200 in 2201ms
+ ✓ Compiled in 4.5s (1477 modules)
+ ✓ Compiled in 1321ms (719 modules)
+ ✓ Compiled in 3.5s (1477 modules)
