@@ -95,7 +95,7 @@ export function FeatureCarousel({ features }: FeatureCarouselProps) {
                 const wrappedDistance = wrap(-(featureCount / 2), featureCount / 2, distance);
 
                 return (
-                  <motion.div
+                  <motion.div<HTMLDivElement>
                     key={feature.id}
                     style={{ height: ITEM_HEIGHT, width: "fit-content" }}
                     animate={{
@@ -154,7 +154,7 @@ export function FeatureCarousel({ features }: FeatureCarouselProps) {
                 const Icon = feature.icon;
 
                 return (
-                  <motion.div
+                  <motion.div<HTMLDivElement>
                     key={feature.id}
                     initial={false}
                     animate={{
@@ -188,7 +188,7 @@ export function FeatureCarousel({ features }: FeatureCarouselProps) {
 
                     <AnimatePresence>
                       {isActive ? (
-                        <motion.div
+                        <motion.div<HTMLDivElement>
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: 10 }}
