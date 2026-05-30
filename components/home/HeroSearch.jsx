@@ -82,13 +82,12 @@ function useTypewriter(phrases, isActive) {
 export default function HeroSearch() {
   const [query, setQuery] = useState("");
   const [location, setLocation] = useState("");
-  const [date, setDate] = useState("");
   const [focused, setFocused] = useState(false);
   const queryRef = useRef(null);
 
   const typingActive = !focused && query.length === 0;
   const typed = useTypewriter(PLACEHOLDER_PHRASES, typingActive);
-  const placeholder = typingActive ? `Try “${typed}|”` : "Service, salon, or stylist";
+  const placeholder = typingActive ? `Try "${typed}|"` : "Service, salon, or stylist";
 
   return (
     <form className="hero-search" action="/discover">
@@ -135,23 +134,6 @@ export default function HeroSearch() {
             onChange={(event) => setLocation(event.target.value)}
             placeholder="City or zip"
             autoComplete="off"
-          />
-        </label>
-
-        <span className="hero-search-divider" aria-hidden="true" />
-
-        <label className="hero-search-field hero-search-field-date">
-          <span className="hero-search-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-              <rect x="3.5" y="5.5" width="17" height="15" rx="3" />
-              <path d="M7.5 3.8v3.4M16.5 3.8v3.4M3.8 9.5h16.4" />
-            </svg>
-          </span>
-          <input
-            type="date"
-            name="date"
-            value={date}
-            onChange={(event) => setDate(event.target.value)}
           />
         </label>
 

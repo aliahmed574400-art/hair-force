@@ -221,7 +221,7 @@ export default function PhoneSigninPanel({
                   id="signin-phone-number"
                   className="form-control"
                   type="tel"
-                  placeholder="+92 300 1234567"
+                  placeholder="+1 (555) 123-4567"
                   value={phone}
                   onChange={(event) => setPhone(event.target.value)}
                   required

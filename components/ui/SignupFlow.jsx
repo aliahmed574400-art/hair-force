@@ -260,7 +260,7 @@ export default function SignupFlow() {
             Already have an account? <Link href="/signin">Log in</Link>
           </p>
           <p>
-            Are you a stylist? <Link href="/join">Join as stylist</Link>
+            Are you a stylist? <Link href="/vendor/signin">Stylist sign in</Link>
           </p>
         </div>
       </>
@@ -388,7 +388,7 @@ export default function SignupFlow() {
               id="signup-phone"
               className="form-control"
               type="tel"
-              placeholder="+92 300 1234567"
+              placeholder="+1 (555) 123-4567"
               value={phoneForm.phone}
               onChange={(event) => setPhoneForm({ phone: event.target.value })}
               required

@@ -29,13 +29,12 @@ export default function Footer() {
           <div className="footer-shell-planet" aria-hidden="true" />
 
           <div className="footer-cta-block">
-            <h2>Become a Stylist</h2>
+            <h2>Stylist Dashboard</h2>
             <p>
-              Grow your business with Hair Force. Join now and connect with more clients in your
-              area.
+              Sign in to manage your Hair Force services, bookings, and client relationships.
             </p>
-            <SiteButton href="/join" className="footer-cta-button">
-              Get Started
+            <SiteButton href="/vendor/signin" className="footer-cta-button">
+              Stylist sign in
             </SiteButton>
           </div>
 

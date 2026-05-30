@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import {
-  removeClientPaymentMethod,
-  setDefaultClientPaymentMethod
+  removeDashboardPaymentMethod,
+  setDefaultDashboardPaymentMethod
 } from "@/lib/postgres-repositories";
 import { getSessionFromRequest } from "@/lib/session";
 
@@ -19,7 +19,7 @@ export async function PATCH(request, { params }) {
       return NextResponse.json({ error: "Unsupported payment method action." }, { status: 400 });
     }
 
-    const dashboard = await setDefaultClientPaymentMethod(user, params.id);
+    const dashboard = await setDefaultDashboardPaymentMethod(user, params.id);
     return NextResponse.json(dashboard);
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });
@@ -34,7 +34,7 @@ export async function DELETE(request, { params }) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
 
-    const dashboard = await removeClientPaymentMethod(user, params.id);
+    const dashboard = await removeDashboardPaymentMethod(user, params.id);
     return NextResponse.json(dashboard);
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });

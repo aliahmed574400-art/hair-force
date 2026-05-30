@@ -16,7 +16,7 @@ export async function POST(request) {
     }
 
     // SECURITY: Rate limit verification attempts (10 per hour)
-    if (!checkEmailRateLimit(email, 10)) {
+    if (!(await checkEmailRateLimit(email, 10))) {
       return NextResponse.json(
         { error: "Too many verification attempts. Please try again later." },
         { status: 429 }

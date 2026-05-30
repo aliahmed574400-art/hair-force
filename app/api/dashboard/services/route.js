@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { AUDIT_ACTIONS, auditFromRequest } from "@/lib/audit-logging";
 import { createVendorService, getDashboardDataForUser } from "@/lib/postgres-repositories";
 import { getSessionFromRequest } from "@/lib/session";
 
@@ -32,6 +33,14 @@ export async function POST(request) {
 
     const payload = await request.json();
     const dashboard = await createVendorService(user, payload);
+
+    await auditFromRequest(request, {
+      userId: user.id,
+      action: AUDIT_ACTIONS.VENDOR_SERVICE_CREATED,
+      resourceType: "service",
+      resourceId: user.vendorSlug || user.id
+    });
+
     return NextResponse.json(dashboard, { status: 201 });
   } catch (error) {
     return NextResponse.json({ error: "Failed to create service." }, { status: 400 });

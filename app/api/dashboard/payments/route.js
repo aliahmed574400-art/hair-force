@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import {
-  addClientPaymentMethod,
+  addDashboardPaymentMethod,
   getDashboardDataForUser
 } from "@/lib/postgres-repositories";
 import { getSessionFromRequest } from "@/lib/session";
@@ -25,7 +25,7 @@ export async function POST(request) {
     }
 
     const payload = await request.json();
-    const dashboard = await addClientPaymentMethod(user, payload);
+    const dashboard = await addDashboardPaymentMethod(user, payload);
     return NextResponse.json(dashboard);
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });

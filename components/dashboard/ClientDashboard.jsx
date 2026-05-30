@@ -273,7 +273,7 @@ function formatAppointmentDate(value) {
     return value;
   }
 
-  return parsed.toLocaleDateString("en-PK", {
+  return parsed.toLocaleDateString("en-US", {
     weekday: "short",
     day: "numeric",
     month: "short",
@@ -292,7 +292,7 @@ function formatNotificationDate(value) {
     return "";
   }
 
-  return parsed.toLocaleDateString("en-PK", {
+  return parsed.toLocaleDateString("en-US", {
     day: "numeric",
     month: "short"
   });
@@ -309,7 +309,7 @@ function formatPaymentDate(value) {
     return "";
   }
 
-  return parsed.toLocaleDateString("en-PK", {
+  return parsed.toLocaleDateString("en-US", {
     day: "numeric",
     month: "short",
     year: "numeric"

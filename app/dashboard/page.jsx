@@ -16,7 +16,7 @@ export default async function DashboardPage() {
               <span className="eyebrow">Protected dashboard</span>
               <h1 style={{ fontSize: "clamp(2.6rem, 6vw, 4.8rem)" }}>Sign in to access your workspace</h1>
               <p>
-                Vendor and client dashboards are session-aware. Use the demo accounts below or create a vendor account to open your own workspace.
+                Vendor and client dashboards are session-aware. Use the demo accounts below or sign in to open your workspace.
               </p>
             </div>
             <div className="two-grid">
@@ -33,8 +33,8 @@ export default async function DashboardPage() {
             </div>
             <div className="hero-actions" style={{ marginTop: 20 }}>
               <SiteButton href="/signin">Sign in</SiteButton>
-              <SiteButton href="/join" variant="secondary">
-                Create vendor account
+              <SiteButton href="/vendor/signin" variant="secondary">
+                Stylist sign in
               </SiteButton>
             </div>
           </div>

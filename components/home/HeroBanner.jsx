@@ -125,13 +125,13 @@ export default function HeroBanner() {
               check live availability, and lock in your appointment in a single tap.
             </motion.p>
 
-            <motion.div variants={fadeUp}>
+            <motion.div variants={fadeUp} className="hero-banner-search">
               <HeroSearch />
             </motion.div>
           </motion.div>
         </div>
       </HeroParallax>
-      <CursorCompanion scopeRef={heroRef} label="Search →" />
+      <CursorCompanion scopeRef={heroRef} label="Explore now" />
     </div>
   );
 }

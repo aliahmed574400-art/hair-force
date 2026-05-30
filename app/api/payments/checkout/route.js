@@ -1,4 +1,21 @@
 import { NextResponse } from "next/server";
+import Stripe from "stripe";
+
+let stripeClient = null;
+
+function getStripeClient() {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return null;
+  }
+
+  if (!stripeClient) {
+    stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: "2025-02-24.acacia"
+    });
+  }
+
+  return stripeClient;
+}
 
 export async function POST(request) {
   try {
@@ -16,12 +33,8 @@ export async function POST(request) {
       return NextResponse.json({ error: "Amount exceeds maximum allowed payment." }, { status: 400 });
     }
 
-    if (process.env.STRIPE_SECRET_KEY) {
-      const Stripe = (await import("stripe")).default;
-      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-        apiVersion: "2025-02-24.acacia"
-      });
-
+    const stripe = getStripeClient();
+    if (stripe) {
       // SECURITY: Generate idempotency key to prevent duplicate charges
       const idempotencyKey = String(payload.idempotencyKey || "").trim() || 
         `${payload.bookingId || 'booking'}-${Date.now()}`;
@@ -61,6 +74,7 @@ export async function POST(request) {
       }
     });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    // SECURITY: Generic error message - don't leak Stripe internals to clients
+    return NextResponse.json({ error: "Unable to start checkout." }, { status: 400 });
   }
 }

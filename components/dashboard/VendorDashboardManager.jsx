@@ -1,28 +1,98 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
+  Bell,
   CalendarDays,
+  Check,
   ChevronLeft,
   ChevronRight,
   ClipboardList,
+  CreditCard,
+  Edit3,
+  GripVertical,
+  HelpCircle,
+  Image,
+  Image as ImageIcon,
+  Info,
+  KeyRound,
   LayoutDashboard,
+  Layers2,
   LogOut,
+  Mail,
   MessageSquareText,
+  Package,
+  Plus,
   Scissors,
+  Search,
+  ShieldAlert,
   Settings,
   Sparkles,
+  Tag,
+  Trash2,
+  Upload,
+  Video,
+  X,
   UserRound
 } from "lucide-react";
 import SiteButton from "@/components/ui/SiteButton";
 import VendorAvailabilityAgenda from "@/components/dashboard/VendorAvailabilityAgenda";
+import MessengerWidget from "@/components/ui/MessengerWidget";
 import { formatCurrency } from "@/lib/utils";
+import {
+  CALENDAR_WEEKDAYS,
+  DURATION_OPTIONS,
+  OVERVIEW_BOOKING_FILTERS,
+  PRODUCT_CATEGORIES,
+  PROFESSION_OPTIONS,
+  PROFILE_TABS,
+  PRONOUN_OPTIONS,
+  SERVICE_CATALOG_GROUPS,
+  SERVICE_MENU_TABS,
+  TIME_OPTIONS,
+  VENDOR_NOTIFICATION_OPTIONS
+} from "@/components/dashboard/vendorDashboard.constants";
+import {
+  bookingStatusTone,
+  buildCalendarMonth,
+  createAvailabilityForm,
+  createClientId,
+  createNotificationPreferenceForm,
+  createPasswordForm,
+  createPaymentMethodForm,
+  createPortfolioItems,
+  createProfileForm,
+  defaultProductForm,
+  defaultServiceForm,
+  formatBillingDate,
+  formatDashboardNumber,
+  formatDateLabel,
+  formatDurationLabel,
+  formatLineupDate,
+  getAppointmentDateTime,
+  getAvatarSwatch,
+  getInitials,
+  getServiceType,
+  initialThreadState,
+  isBookableMenuService,
+  isPastBooking,
+  normalizeAppointmentTime,
+  paymentMethodLabel,
+  resolveProfileTab,
+  resolveSettingsTab,
+  resolveVendorSection,
+  sanitizePortfolioImages,
+  sortBookings
+} from "@/components/dashboard/vendorDashboard.helpers";
 
+// Icon-bearing collections stay here because they reference lucide-react
+// components. The string-only set forms used by helpers live in
+// vendorDashboard.tabIds.js so the helpers file stays React-free.
 const SECTION_OPTIONS = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "profile", label: "Profile", icon: UserRound },
+  { id: "gallery", label: "Gallery", icon: Image },
   { id: "services", label: "Services", icon: Scissors },
   { id: "availability", label: "Availability", icon: CalendarDays },
   { id: "bookings", label: "Bookings", icon: ClipboardList },
@@ -30,318 +100,62 @@ const SECTION_OPTIONS = [
   { id: "settings", label: "Settings", icon: Settings }
 ];
 
-const CALENDAR_WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const OVERVIEW_BOOKING_FILTERS = [
-  { id: "upcoming", label: "Upcoming" },
-  { id: "today", label: "Ongoing" },
-  { id: "past", label: "Past appointments" }
+const SETTINGS_TABS = [
+  { id: "notification", label: "Notification", icon: Bell },
+  { id: "billing", label: "Plan & Billings", icon: CreditCard },
+  { id: "email", label: "Change login email", icon: Mail },
+  { id: "password", label: "Change password", icon: KeyRound },
+  { id: "delete", label: "Delete stylist account", icon: ShieldAlert }
 ];
-const AVATAR_SWATCHES = [
-  ["#d9ecff", "#1d4ed8"],
-  ["#dff7f4", "#0f766e"],
-  ["#efe4ff", "#6d28d9"],
-  ["#fee7db", "#c2410c"],
-  ["#e7ecff", "#3730a3"],
-  ["#dbeafe", "#1e3a8a"]
-];
-
-const VENDOR_SECTION_IDS = new Set(SECTION_OPTIONS.map((section) => section.id));
-
-function resolveVendorSection(value) {
-  const nextSection = String(value || "").trim().toLowerCase();
-  if (nextSection === "portfolio") {
-    return "profile";
-  }
-  return VENDOR_SECTION_IDS.has(nextSection) ? nextSection : "";
-}
-
-function defaultServiceForm() {
-  return {
-    title: "",
-    duration: "",
-    price: "",
-    description: "",
-    depositType: "percentage",
-    depositValue: 20,
-    imageUrl: "",
-    featured: false,
-    bookingMethod: "instant",
-    isActive: true
-  };
-}
-
-function createProfileForm(vendor) {
-  return {
-    name: vendor.name || "",
-    owner: vendor.owner || "",
-    category: vendor.category || "",
-    state: vendor.state || "",
-    city: vendor.city || "",
-    area: vendor.area || "",
-    location: vendor.location || "",
-    heroTag: vendor.heroTag || "",
-    tagline: vendor.tagline || "",
-    bio: vendor.bio || "",
-    coverImage: vendor.coverImage || "",
-    avatar: vendor.avatar || "",
-    specialties: (vendor.specialties || []).join(", "),
-    amenities: (vendor.amenities || []).join(", "),
-    serviceLocationType: vendor.serviceLocationType ?? "",
-    portfolioImages: vendor.portfolioImages || [],
-    policies: {
-      deposit: vendor.policies?.deposit || "",
-      cancellation: vendor.policies?.cancellation || "",
-      lateArrival: vendor.policies?.lateArrival || "",
-      prepInstructions: vendor.policies?.prepInstructions || ""
-    },
-    socialLinks: {
-      instagram: vendor.socialLinks?.instagram || "",
-      website: vendor.socialLinks?.website || "",
-      tiktok: vendor.socialLinks?.tiktok || "",
-      facebook: vendor.socialLinks?.facebook || ""
-    }
-  };
-}
-
-function createAvailabilityForm(vendor) {
-  return (vendor.availabilityRules || []).map((item) => ({
-    dayOfWeek: String(item.dayOfWeek ?? 1),
-    startTime: item.startTime || "10:00",
-    endTime: item.endTime || "18:00",
-    slotMinutes: String(item.slotMinutes || 120),
-    active: item.active !== false
-  }));
-}
-
-function bookingStatusTone(status) {
-  if (status === "pending_approval") {
-    return "warning";
-  }
-
-  if (status === "confirmed") {
-    return "success";
-  }
-
-  if (status === "completed") {
-    return "muted";
-  }
-
-  return "muted";
-}
-
-function formatDateLabel(value) {
-  if (!value) {
-    return "Date pending";
-  }
-
-  const parsed = new Date(`${String(value).slice(0, 10)}T12:00:00`);
-
-  if (Number.isNaN(parsed.getTime())) {
-    return value;
-  }
-
-  return parsed.toLocaleDateString("en-PK", {
-    weekday: "short",
-    day: "numeric",
-    month: "short"
-  });
-}
-
-function sortBookings(bookings) {
-  return [...bookings].sort((left, right) => {
-    const leftTime = new Date(`${left.appointmentDate}T12:00:00`).getTime();
-    const rightTime = new Date(`${right.appointmentDate}T12:00:00`).getTime();
-    return rightTime - leftTime;
-  });
-}
-
-function initialThreadState() {
-  return {
-    loading: false,
-    sending: false,
-    error: "",
-    messages: [],
-    draft: ""
-  };
-}
-
-function sanitizePortfolioImages(images) {
-  return [...new Set((images || []).map((item) => String(item || "").trim()).filter(Boolean))];
-}
-
-function getInitials(value) {
-  return String(value || "HF")
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((item) => item.charAt(0).toUpperCase())
-    .join("");
-}
-
-function getAvatarSwatch(value) {
-  const source = String(value || "");
-  const index = source.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0) % AVATAR_SWATCHES.length;
-  return AVATAR_SWATCHES[index];
-}
-
-function formatDashboardNumber(value) {
-  return new Intl.NumberFormat("en-US").format(Number(value || 0));
-}
-
-function formatMonthLabel(date) {
-  return date.toLocaleDateString("en-US", {
-    month: "long",
-    year: "numeric"
-  });
-}
-
-function formatLineupDate(value) {
-  if (!value) {
-    return "Date pending";
-  }
-
-  const parsed = new Date(`${String(value).slice(0, 10)}T12:00:00`);
-
-  if (Number.isNaN(parsed.getTime())) {
-    return value;
-  }
-
-  return parsed.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric"
-  });
-}
-
-function normalizeAppointmentTime(value) {
-  const input = String(value || "").trim();
-
-  if (!input) {
-    return "12:00";
-  }
-
-  if (/^\d{2}:\d{2}$/.test(input)) {
-    return input;
-  }
-
-  const match = input.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
-
-  if (!match) {
-    return "12:00";
-  }
-
-  let hours = Number(match[1]);
-  const minutes = Number(match[2]);
-  const period = match[3].toUpperCase();
-
-  if (period === "PM" && hours < 12) {
-    hours += 12;
-  }
-
-  if (period === "AM" && hours === 12) {
-    hours = 0;
-  }
-
-  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
-}
-
-function getAppointmentDateTime(dateValue, slotValue) {
-  const normalizedDate = String(dateValue || "").slice(0, 10);
-
-  if (!normalizedDate) {
-    return null;
-  }
-
-  const parsed = new Date(`${normalizedDate}T${normalizeAppointmentTime(slotValue)}:00`);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
-}
-
-function isPastBooking(booking) {
-  const appointment = getAppointmentDateTime(booking?.appointmentDate, booking?.appointmentSlot);
-
-  if (!appointment) {
-    return false;
-  }
-
-  return appointment.getTime() < Date.now();
-}
-
-function buildCalendarMonth(referenceDate, bookings = []) {
-  const monthStart = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), 1);
-  const gridStart = new Date(monthStart);
-  const mondayOffset = (monthStart.getDay() + 6) % 7;
-  gridStart.setDate(monthStart.getDate() - mondayOffset);
-  const todayKey = new Date().toISOString().slice(0, 10);
-  const bookingMap = bookings.reduce((map, booking) => {
-    const key = String(booking.appointmentDate || "").slice(0, 10);
-
-    if (!key) {
-      return map;
-    }
-
-    if (!map[key]) {
-      map[key] = [];
-    }
-
-    map[key].push(booking);
-    return map;
-  }, {});
-
-  const weeks = Array.from({ length: 6 }, (_, weekIndex) =>
-    Array.from({ length: 7 }, (_, dayIndex) => {
-      const date = new Date(gridStart);
-      date.setDate(gridStart.getDate() + weekIndex * 7 + dayIndex);
-      const dateKey = date.toISOString().slice(0, 10);
-      const dayBookings = bookingMap[dateKey] || [];
-      let tone = "";
-
-      if (dayBookings.length) {
-        if (dayBookings.some((booking) => booking.status === "pending_approval")) {
-          tone = "pending";
-        } else if (dayBookings.some((booking) => booking.status === "completed")) {
-          tone = "completed";
-        } else if (dayBookings.some((booking) => ["cancelled", "declined"].includes(booking.status))) {
-          tone = "cancelled";
-        } else {
-          tone = "booked";
-        }
-      }
-
-      return {
-        dayLabel: date.getDate(),
-        dateKey,
-        currentMonth: date.getMonth() === referenceDate.getMonth(),
-        isToday: dateKey === todayKey,
-        tone,
-        count: dayBookings.length
-      };
-    })
-  );
-
-  return {
-    label: formatMonthLabel(referenceDate),
-    weeks
-  };
-}
 
 export default function VendorDashboardManager({ user, initialData }) {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
   const requestedSection = resolveVendorSection(searchParams.get("section"));
+  const requestedProfileTab = resolveProfileTab(searchParams.get("profileTab"));
+  const requestedSettingsTab = resolveSettingsTab(searchParams.get("settingsTab"));
   const [dashboard, setDashboard] = useState(initialData);
   const [activeSection, setActiveSection] = useState(requestedSection || "overview");
+  const [activeProfileTab, setActiveProfileTab] = useState(requestedProfileTab || "personal");
+  const [activeSettingsTab, setActiveSettingsTab] = useState(requestedSettingsTab || "notification");
   const [calendarCursor, setCalendarCursor] = useState(() => {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), 1);
   });
   const [overviewBookingFilter, setOverviewBookingFilter] = useState("upcoming");
-  const [profileForm, setProfileForm] = useState(createProfileForm(initialData.vendor));
+  const [profileForm, setProfileForm] = useState(createProfileForm(initialData.vendor, user));
   const [availabilityForm, setAvailabilityForm] = useState(createAvailabilityForm(initialData.vendor));
   const [blackoutDatesText, setBlackoutDatesText] = useState(
     (initialData.vendor.blackoutDates || []).join(", ")
   );
   const [serviceForm, setServiceForm] = useState(defaultServiceForm());
   const [editingServiceId, setEditingServiceId] = useState("");
+  const [serviceMenuTab, setServiceMenuTab] = useState("services");
+  const [serviceModal, setServiceModal] = useState({ view: "", mode: "create" });
+  const [serviceSearch, setServiceSearch] = useState("");
+  const [expandedCatalogGroups, setExpandedCatalogGroups] = useState(new Set());
+  const [combinedSelection, setCombinedSelection] = useState([]);
+  const [productForm, setProductForm] = useState(defaultProductForm());
+  const [editingProductId, setEditingProductId] = useState("");
+  const [productModalOpen, setProductModalOpen] = useState(false);
+  const [mediaModal, setMediaModal] = useState({ open: false, itemId: "" });
+  const [mediaForm, setMediaForm] = useState({
+    serviceId: "",
+    clientName: "",
+    caption: ""
+  });
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showMessages, setShowMessages] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [notificationForm, setNotificationForm] = useState(
+    createNotificationPreferenceForm(initialData.notificationPreferences)
+  );
+  const [paymentMethodForm, setPaymentMethodForm] = useState(createPaymentMethodForm());
+  const [emailForm, setEmailForm] = useState({
+    email: initialData.accountSecurity?.email || user?.email || ""
+  });
+  const [passwordForm, setPasswordForm] = useState(createPasswordForm());
   const [status, setStatus] = useState({ type: "", message: "" });
   const [activeConversationId, setActiveConversationId] = useState(initialData.conversations?.[0]?.id || "");
   const [threadState, setThreadState] = useState(initialThreadState());
@@ -363,11 +177,63 @@ export default function VendorDashboardManager({ user, initialData }) {
     serviceUpload: false,
     portfolioUpload: false,
     deleteAccount: false,
+    notificationPreferences: false,
+    addPaymentMethod: false,
+    paymentMethod: "",
+    loginEmail: false,
+    password: false,
+    subscribePlan: false,
     signout: false
   });
 
   const bookings = dashboard.bookings || [];
   const services = dashboard.services || [];
+  const notifications = dashboard.notifications || [];
+  const unreadNotificationCount = dashboard.unreadNotificationCount || 0;
+  const serviceCategories = useMemo(
+    () => services.filter((service) => getServiceType(service) === "category"),
+    [services]
+  );
+  const addOns = useMemo(
+    () => services.filter((service) => getServiceType(service) === "addon"),
+    [services]
+  );
+  const bookableServices = useMemo(
+    () => services.filter((service) => isBookableMenuService(service)),
+    [services]
+  );
+  const serviceSections = useMemo(() => {
+    const sections = [
+      {
+        id: "",
+        title: "Default",
+        services: bookableServices.filter((service) => !service.parentCategoryId)
+      },
+      ...serviceCategories.map((category) => ({
+        id: category.id || category._id || category.title,
+        title: category.title,
+        services: bookableServices.filter(
+          (service) => String(service.parentCategoryId || "") === String(category.id || category._id || category.title)
+        )
+      }))
+    ];
+
+    return sections.filter((section) => section.id || section.services.length || !serviceCategories.length);
+  }, [bookableServices, serviceCategories]);
+  const filteredServiceCatalog = useMemo(() => {
+    const query = serviceSearch.trim().toLowerCase();
+
+    if (!query) {
+      return SERVICE_CATALOG_GROUPS;
+    }
+
+    return SERVICE_CATALOG_GROUPS
+      .map((group) => ({
+        ...group,
+        items: group.items.filter((item) => item.toLowerCase().includes(query))
+      }))
+      .filter((group) => group.items.length);
+  }, [serviceSearch]);
   const conversations = dashboard.conversations || [];
   const unreadMessages = conversations.reduce(
     (sum, item) => sum + Number(item.vendorUnreadCount || 0),
@@ -474,10 +340,51 @@ export default function VendorDashboardManager({ user, initialData }) {
   }, [initialData]);
 
   useEffect(() => {
-    if (requestedSection && requestedSection !== activeSection) {
-      setActiveSection(requestedSection);
+    if (!showNotifications && !showMessages && !showUserMenu) return;
+
+    function handleClickOutside(event) {
+      const notificationContainer = document.querySelector(".vendor-notification-bell-container");
+      if (notificationContainer && !notificationContainer.contains(event.target)) {
+        setShowNotifications(false);
+      }
+      const messageContainer = document.querySelector(".vendor-message-bell-container");
+      if (messageContainer && !messageContainer.contains(event.target)) {
+        setShowMessages(false);
+      }
+      const userContainer = document.querySelector(".vendor-user-avatar-container");
+      if (userContainer && !userContainer.contains(event.target)) {
+        setShowUserMenu(false);
+      }
     }
-  }, [activeSection, requestedSection]);
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showNotifications, showMessages, showUserMenu]);
+
+  useEffect(() => {
+    const nextSection = requestedSection || "overview";
+
+    setActiveSection((currentSection) =>
+      currentSection === nextSection ? currentSection : nextSection
+    );
+  }, [requestedSection]);
+
+  useEffect(() => {
+    if (requestedProfileTab === "media") {
+      router.replace(`${pathname}?section=gallery`, { scroll: false });
+      return;
+    }
+
+    const nextTab = requestedProfileTab || "personal";
+
+    setActiveProfileTab((currentTab) => (currentTab === nextTab ? currentTab : nextTab));
+  }, [requestedProfileTab]);
+
+  useEffect(() => {
+    const nextTab = requestedSettingsTab || "notification";
+
+    setActiveSettingsTab((currentTab) => (currentTab === nextTab ? currentTab : nextTab));
+  }, [requestedSettingsTab]);
 
   function handleSectionSelect(nextSection) {
     const resolvedSection = resolveVendorSection(nextSection) || "overview";
@@ -491,15 +398,56 @@ export default function VendorDashboardManager({ user, initialData }) {
       params.set("section", resolvedSection);
     }
 
+    if (resolvedSection !== "profile") {
+      params.delete("profileTab");
+    }
+
+    if (resolvedSection !== "settings") {
+      params.delete("settingsTab");
+    }
+
     const nextQuery = params.toString();
     router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false });
   }
 
+  function handleProfileTabSelect(nextTab) {
+    const resolvedTab = resolveProfileTab(nextTab) || "personal";
+    const params = new URLSearchParams(searchParams.toString());
+
+    setActiveSection("profile");
+    setActiveProfileTab(resolvedTab);
+    params.set("section", "profile");
+    params.set("profileTab", resolvedTab);
+    params.delete("settingsTab");
+
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }
+
+  function handleSettingsTabSelect(nextTab) {
+    const resolvedTab = resolveSettingsTab(nextTab) || "notification";
+    const params = new URLSearchParams(searchParams.toString());
+
+    setActiveSection("settings");
+    setActiveSettingsTab(resolvedTab);
+    params.set("section", "settings");
+
+    if (resolvedTab === "notification") {
+      params.delete("settingsTab");
+    } else {
+      params.set("settingsTab", resolvedTab);
+    }
+
+    params.delete("profileTab");
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }
+
   useEffect(() => {
-    setProfileForm(createProfileForm(dashboard.vendor));
-    setAvailabilityForm(createAvailabilityForm(dashboard.vendor));
-    setBlackoutDatesText((dashboard.vendor.blackoutDates || []).join(", "));
-  }, [dashboard]);
+    setProfileForm(createProfileForm(initialData.vendor, user));
+    setAvailabilityForm(createAvailabilityForm(initialData.vendor));
+    setBlackoutDatesText((initialData.vendor.blackoutDates || []).join(", "));
+    setNotificationForm(createNotificationPreferenceForm(initialData.notificationPreferences));
+    setEmailForm({ email: initialData.accountSecurity?.email || user?.email || "" });
+  }, [initialData, user]);
 
   useEffect(() => {
     if (!activeConversationId && conversations.length) {
@@ -523,9 +471,26 @@ export default function VendorDashboardManager({ user, initialData }) {
     }
 
     setDashboard(data);
-    setProfileForm(createProfileForm(data.vendor));
+    setProfileForm(createProfileForm(data.vendor, user));
     setAvailabilityForm(createAvailabilityForm(data.vendor));
     setBlackoutDatesText((data.vendor.blackoutDates || []).join(", "));
+    return data;
+  }
+
+  async function fetchJson(url, options) {
+    const response = await fetch(url, {
+      headers: {
+        "Content-Type": "application/json",
+        ...(options?.headers || {})
+      },
+      ...options
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Request failed.");
+    }
+
     return data;
   }
 
@@ -549,25 +514,39 @@ export default function VendorDashboardManager({ user, initialData }) {
   }
 
   function profilePayload(formState = profileForm) {
+    const businessAddress = [
+      formState.businessInfo?.streetAddress,
+      formState.businessInfo?.suite,
+      formState.businessInfo?.city,
+      formState.businessInfo?.state,
+      formState.businessInfo?.zip
+    ]
+      .filter(Boolean)
+      .join(", ");
+
     return {
-      name: formState.name,
-      owner: formState.owner,
-      category: formState.category,
-      state: formState.state,
-      city: formState.city,
+      name: formState.personalInfo?.displayName || formState.name,
+      owner: formState.owner || formState.personalInfo?.displayName,
+      category: formState.personalInfo?.profession || formState.category,
+      state: formState.businessInfo?.state || formState.state,
+      city: formState.businessInfo?.city || formState.city,
       area: formState.area,
-      location: formState.location,
+      location: businessAddress || formState.location,
       heroTag: formState.heroTag,
       tagline: formState.tagline,
-      bio: formState.bio,
+      bio: formState.personalInfo?.about || formState.bio,
       coverImage: formState.coverImage,
       avatar: formState.avatar,
       specialties: formState.specialties,
       amenities: formState.amenities,
       serviceLocationType: formState.serviceLocationType,
       portfolioImages: sanitizePortfolioImages(formState.portfolioImages),
+      portfolioItems: formState.portfolioItems || [],
       policies: formState.policies,
-      socialLinks: formState.socialLinks
+      socialLinks: formState.socialLinks,
+      personalInfo: formState.personalInfo,
+      businessInfo: formState.businessInfo,
+      products: formState.products || []
     };
   }
 
@@ -616,26 +595,66 @@ export default function VendorDashboardManager({ user, initialData }) {
   }
 
   async function handlePortfolioUpload(event) {
-    const file = event.target.files?.[0];
+    const files = Array.from(event.target.files || []);
 
-    if (!file) {
+    if (!files.length) {
       return;
     }
 
     setLoading((current) => ({ ...current, portfolioUpload: true }));
     setStatus({ type: "", message: "" });
 
+    const nextItems = [];
+    const nextImageUrls = [];
+    let errorCount = 0;
+
     try {
-      const url = await uploadAsset(file, "portfolio");
-      setProfileForm((current) => ({
-        ...current,
-        portfolioImages: sanitizePortfolioImages([...(current.portfolioImages || []), url])
-      }));
-      setStatus({ type: "success", message: "Portfolio image uploaded. Save profile changes to publish it." });
+      for (const file of files) {
+        try {
+          const url = await uploadAsset(file, "gallery");
+          const type = file.type?.startsWith("video/") ? "video" : "image";
+          nextItems.push({
+            id: createClientId("media"),
+            url,
+            type,
+            serviceId: "",
+            clientName: "",
+            caption: "",
+            pinned: false
+          });
+          if (type === "image") {
+            nextImageUrls.push(url);
+          }
+        } catch (uploadError) {
+          errorCount += 1;
+        }
+      }
+
+      if (!nextItems.length) {
+        throw new Error("All uploads failed. Please check file types and sizes.");
+      }
+
+      const nextForm = {
+        ...profileForm,
+        portfolioItems: [...(profileForm.portfolioItems || []), ...nextItems],
+        portfolioImages: sanitizePortfolioImages([
+          ...(profileForm.portfolioImages || []),
+          ...nextImageUrls
+        ])
+      };
+      setProfileForm(nextForm);
+
+      const successMessage =
+        errorCount > 0
+          ? `${nextItems.length} uploaded, ${errorCount} failed. Save to publish.`
+          : `${nextItems.length} item${nextItems.length > 1 ? "s" : ""} uploaded. Save to publish.`;
+
+      await saveProfileChanges(nextForm, successMessage);
     } catch (error) {
       setStatus({ type: "error", message: error.message });
     } finally {
       setLoading((current) => ({ ...current, portfolioUpload: false }));
+      event.target.value = "";
     }
   }
 
@@ -659,6 +678,137 @@ export default function VendorDashboardManager({ user, initialData }) {
     }));
   }
 
+  function updatePersonalInfo(field, value) {
+    setProfileForm((current) => ({
+      ...current,
+      personalInfo: {
+        ...current.personalInfo,
+        [field]: value
+      },
+      ...(field === "displayName" ? { name: value } : {}),
+      ...(field === "profession" ? { category: value } : {}),
+      ...(field === "about" ? { bio: value } : {})
+    }));
+  }
+
+  function togglePronoun(value) {
+    setProfileForm((current) => {
+      const pronouns = current.personalInfo?.pronouns || [];
+      const hasValue = pronouns.includes(value);
+      return {
+        ...current,
+        personalInfo: {
+          ...current.personalInfo,
+          pronouns: hasValue ? pronouns.filter((item) => item !== value) : [...pronouns, value]
+        }
+      };
+    });
+  }
+
+  function updateBusinessInfo(field, value) {
+    setProfileForm((current) => ({
+      ...current,
+      businessInfo: {
+        ...current.businessInfo,
+        [field]: value
+      },
+      ...(field === "businessName" ? { name: value } : {}),
+      ...(field === "city" ? { city: value } : {}),
+      ...(field === "state" ? { state: value } : {})
+    }));
+  }
+
+  function updateSpecialtySelection(event) {
+    const selected = Array.from(event.target.selectedOptions).map((option) => option.value);
+    setProfileForm((current) => ({ ...current, specialties: selected.join(", ") }));
+  }
+
+  function openProductModal(product = null) {
+    if (product) {
+      setEditingProductId(product.id);
+      setProductForm({
+        name: product.name || "",
+        price: String(product.price ?? 0),
+        category: product.category || "Shampoo",
+        description: product.description || ""
+      });
+    } else {
+      setEditingProductId("");
+      setProductForm(defaultProductForm());
+    }
+
+    setProductModalOpen(true);
+  }
+
+  async function handleProductSubmit(event) {
+    event.preventDefault();
+
+    const nextProduct = {
+      id: editingProductId || createClientId("product"),
+      name: productForm.name,
+      price: Number(productForm.price || 0),
+      category: productForm.category,
+      description: productForm.description
+    };
+    const products = editingProductId
+      ? (profileForm.products || []).map((product) => (product.id === editingProductId ? nextProduct : product))
+      : [...(profileForm.products || []), nextProduct];
+    const nextForm = { ...profileForm, products };
+
+    setProfileForm(nextForm);
+    setProductModalOpen(false);
+    await saveProfileChanges(nextForm, editingProductId ? "Product updated." : "Product added.");
+    setEditingProductId("");
+    setProductForm(defaultProductForm());
+  }
+
+  async function deleteProduct(productId) {
+    const nextForm = {
+      ...profileForm,
+      products: (profileForm.products || []).filter((product) => product.id !== productId)
+    };
+
+    setProfileForm(nextForm);
+    await saveProfileChanges(nextForm, "Product removed.");
+  }
+
+  function openMediaEditor(item) {
+    setMediaForm({
+      serviceId: item.serviceId || "",
+      clientName: item.clientName || "",
+      caption: item.caption || ""
+    });
+    setMediaModal({ open: true, itemId: item.id });
+  }
+
+  async function saveMediaEditor(event) {
+    event.preventDefault();
+
+    const nextForm = {
+      ...profileForm,
+      portfolioItems: (profileForm.portfolioItems || []).map((item) =>
+        item.id === mediaModal.itemId ? { ...item, ...mediaForm } : item
+      )
+    };
+
+    setProfileForm(nextForm);
+    setMediaModal({ open: false, itemId: "" });
+    await saveProfileChanges(nextForm, "Gallery item updated.");
+  }
+
+  async function deleteMediaItem(itemId) {
+    const removedItem = (profileForm.portfolioItems || []).find((item) => item.id === itemId);
+    const nextForm = {
+      ...profileForm,
+      portfolioItems: (profileForm.portfolioItems || []).filter((item) => item.id !== itemId),
+      portfolioImages: (profileForm.portfolioImages || []).filter((url) => url !== removedItem?.url)
+    };
+
+    setProfileForm(nextForm);
+    setMediaModal({ open: false, itemId: "" });
+    await saveProfileChanges(nextForm, "Gallery item removed.");
+  }
+
   async function handleServiceImageUpload(event) {
     const file = event.target.files?.[0];
 
@@ -680,18 +830,117 @@ export default function VendorDashboardManager({ user, initialData }) {
     }
   }
 
-  async function handleServiceSubmit(event) {
-    event.preventDefault();
+  function openAddChooser() {
+    setEditingServiceId("");
+    setServiceForm(defaultServiceForm());
+    setCombinedSelection([]);
+    setServiceSearch("");
+    setServiceModal({ view: "chooser", mode: "create" });
+  }
+
+  function openServiceCatalog() {
+    setEditingServiceId("");
+    setServiceForm(defaultServiceForm({ serviceType: "service" }));
+    setServiceSearch("");
+    setServiceModal({ view: "catalog", mode: "create" });
+  }
+
+  function openServiceEditor(seed = {}, mode = "create") {
+    const nextForm = defaultServiceForm({
+      serviceType: seed.serviceType || "service",
+      title: seed.title || "",
+      duration: seed.duration || "45 Minutes",
+      price: seed.price ?? "",
+      description: seed.description || "",
+      parentCategoryId: seed.parentCategoryId || "",
+      includedServiceIds: seed.includedServiceIds || [],
+      metadata: seed.metadata || { priceIsStartingAt: true }
+    });
+
+    setServiceForm(nextForm);
+    setCombinedSelection(nextForm.includedServiceIds || []);
+    setServiceModal({ view: "serviceEditor", mode });
+  }
+
+  function openAddonEditor(addon = null) {
+    setEditingServiceId(addon ? addon.id || addon._id : "");
+    setServiceForm(
+      defaultServiceForm({
+        serviceType: "addon",
+        title: addon?.title || "",
+        duration: addon?.duration || "30 Minutes",
+        price: addon ? String(addon.price ?? 0) : "",
+        description: addon?.description || "",
+        metadata: addon?.metadata || {
+          timeAdded: "after",
+          limitedDays: false,
+          requireDeposit: false
+        }
+      })
+    );
+    setServiceModal({ view: "addonEditor", mode: addon ? "edit" : "create" });
+  }
+
+  function openCategoryEditor(category = null) {
+    setEditingServiceId(category ? category.id || category._id : "");
+    setServiceForm(
+      defaultServiceForm({
+        serviceType: "category",
+        title: category?.title || ""
+      })
+    );
+    setServiceModal({ view: "categoryEditor", mode: category ? "edit" : "create" });
+  }
+
+  function openCombinedSelector() {
+    setEditingServiceId("");
+    setCombinedSelection([]);
+    setServiceForm(defaultServiceForm({ serviceType: "combined", duration: "90 Minutes" }));
+    setServiceModal({ view: "combinedSelector", mode: "create" });
+  }
+
+  function toggleCombinedService(serviceId) {
+    setCombinedSelection((current) =>
+      current.includes(serviceId)
+        ? current.filter((item) => item !== serviceId)
+        : [...current, serviceId]
+    );
+  }
+
+  function continueCombinedService() {
+    const selectedServices = bookableServices.filter((service) =>
+      combinedSelection.includes(String(service.id || service._id))
+    );
+    const totalPrice = selectedServices.reduce((sum, service) => sum + Number(service.price || 0), 0);
+    const title = selectedServices.length
+      ? selectedServices.map((service) => service.title).join(" + ")
+      : "Combined Service";
+
+    setServiceForm(
+      defaultServiceForm({
+        serviceType: "combined",
+        title,
+        price: totalPrice ? String(totalPrice) : "",
+        duration: "90 Minutes",
+        includedServiceIds: combinedSelection,
+        metadata: { priceIsStartingAt: true }
+      })
+    );
+    setServiceModal({ view: "serviceEditor", mode: "create" });
+  }
+
+  async function saveServiceForm(nextForm = serviceForm, serviceIdOverride = editingServiceId) {
     setLoading((current) => ({ ...current, service: true }));
     setStatus({ type: "", message: "" });
 
     try {
+      const serviceId = serviceIdOverride;
       const response = await fetch(
-        editingServiceId ? `/api/dashboard/services/${editingServiceId}` : "/api/dashboard/services",
+        serviceId ? `/api/dashboard/services/${serviceId}` : "/api/dashboard/services",
         {
-          method: editingServiceId ? "PUT" : "POST",
+          method: serviceId ? "PUT" : "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(serviceForm)
+          body: JSON.stringify(nextForm)
         }
       );
 
@@ -704,12 +953,19 @@ export default function VendorDashboardManager({ user, initialData }) {
       setDashboard(data);
       setServiceForm(defaultServiceForm());
       setEditingServiceId("");
-      setStatus({ type: "success", message: editingServiceId ? "Service updated." : "Service added." });
+      setCombinedSelection([]);
+      setServiceModal({ view: "", mode: "create" });
+      setStatus({ type: "success", message: serviceId ? "Service menu updated." : "Service menu item added." });
     } catch (error) {
       setStatus({ type: "error", message: error.message });
     } finally {
       setLoading((current) => ({ ...current, service: false }));
     }
+  }
+
+  async function handleServiceSubmit(event) {
+    event.preventDefault();
+    await saveServiceForm(serviceForm);
   }
 
   async function handleDeleteService(serviceId) {
@@ -739,7 +995,8 @@ export default function VendorDashboardManager({ user, initialData }) {
 
   function startEditingService(service) {
     setEditingServiceId(service.id || service._id);
-    setServiceForm({
+    const nextForm = {
+      serviceType: getServiceType(service),
       title: service.title || "",
       duration: service.duration || "",
       price: service.price || "",
@@ -749,9 +1006,61 @@ export default function VendorDashboardManager({ user, initialData }) {
       imageUrl: service.imageUrl || "",
       featured: Boolean(service.featured),
       bookingMethod: service.bookingMethod || "instant",
-      isActive: service.isActive !== false
+      isActive: service.isActive !== false,
+      parentCategoryId: service.parentCategoryId || "",
+      includedServiceIds: service.includedServiceIds || [],
+      sortOrder: service.sortOrder || 0,
+      metadata: {
+        priceIsStartingAt: service.metadata?.priceIsStartingAt ?? true,
+        timeAdded: service.metadata?.timeAdded || "after",
+        limitedDays: Boolean(service.metadata?.limitedDays),
+        requireDeposit: Boolean(service.metadata?.requireDeposit)
+      }
+    };
+
+    setServiceForm(nextForm);
+    setCombinedSelection(nextForm.includedServiceIds || []);
+    setServiceModal({
+      view: getServiceType(service) === "addon" ? "addonEditor" : getServiceType(service) === "category" ? "categoryEditor" : "serviceEditor",
+      mode: "edit"
     });
     handleSectionSelect("services");
+  }
+
+  async function moveServiceToCategory(service, categoryId) {
+    const nextForm = {
+      serviceType: getServiceType(service),
+      title: service.title || "",
+      duration: service.duration || "",
+      price: String(service.price ?? 0),
+      description: service.description || "",
+      depositType: service.depositType || "percentage",
+      depositValue: service.depositValue ?? 0,
+      imageUrl: service.imageUrl || "",
+      featured: Boolean(service.featured),
+      bookingMethod: service.bookingMethod || "instant",
+      isActive: service.isActive !== false,
+      parentCategoryId: categoryId || "",
+      includedServiceIds: service.includedServiceIds || [],
+      sortOrder: service.sortOrder || 0,
+      metadata: service.metadata || {}
+    };
+
+    const serviceId = service.id || service._id;
+    setEditingServiceId(serviceId);
+    await saveServiceForm(nextForm, serviceId);
+  }
+
+  function handleServiceDrop(event, categoryId) {
+    event.preventDefault();
+    const serviceId = event.dataTransfer.getData("text/plain");
+    const service = bookableServices.find((item) => String(item.id || item._id) === String(serviceId));
+
+    if (!service) {
+      return;
+    }
+
+    moveServiceToCategory(service, categoryId);
   }
 
   async function performBookingAction(bookingId, payload, successMessage) {
@@ -845,6 +1154,31 @@ export default function VendorDashboardManager({ user, initialData }) {
     }
   }
 
+  async function handleNotificationClick(notification) {
+    if (!notification) return;
+
+    setShowNotifications(false);
+
+    try {
+      await fetch(`/api/dashboard/notifications/${notification.id}`, {
+        method: "PATCH"
+      });
+    } catch {
+      // Ignore mark-read errors
+    }
+
+    if (notification.conversationId) {
+      handleSectionSelect("messages");
+      setActiveConversationId(notification.conversationId);
+    }
+  }
+
+  function handleConversationClick(conversationId) {
+    setShowMessages(false);
+    handleSectionSelect("messages");
+    setActiveConversationId(conversationId);
+  }
+
   async function loadConversation(conversationId) {
     if (!conversationId) {
       return;
@@ -903,6 +1237,160 @@ export default function VendorDashboardManager({ user, initialData }) {
     }
   }
 
+  function toggleNotificationPreference(key) {
+    setNotificationForm((current) => ({
+      ...current,
+      [key]: !current[key]
+    }));
+  }
+
+  async function handleNotificationSubmit(event) {
+    event.preventDefault();
+    setLoading((current) => ({ ...current, notificationPreferences: true }));
+    setStatus({ type: "", message: "" });
+
+    try {
+      const data = await fetchJson("/api/dashboard/notifications/preferences", {
+        method: "PUT",
+        body: JSON.stringify(notificationForm)
+      });
+      setDashboard((current) => ({
+        ...current,
+        notificationPreferences: data.preferences
+      }));
+      setStatus({ type: "success", message: "Notification preferences saved." });
+    } catch (error) {
+      setStatus({ type: "error", message: error.message });
+    } finally {
+      setLoading((current) => ({ ...current, notificationPreferences: false }));
+    }
+  }
+
+  async function handleAddPaymentMethod(event) {
+    event.preventDefault();
+    setLoading((current) => ({ ...current, addPaymentMethod: true }));
+    setStatus({ type: "", message: "" });
+
+    try {
+      const data = await fetchJson("/api/dashboard/payments", {
+        method: "POST",
+        body: JSON.stringify({
+          ...paymentMethodForm,
+          expMonth: Number(paymentMethodForm.expMonth || 0),
+          expYear: Number(paymentMethodForm.expYear || 0)
+        })
+      });
+      setDashboard(data);
+      setPaymentMethodForm(createPaymentMethodForm());
+      setStatus({ type: "success", message: "Payment method saved for plan billing." });
+    } catch (error) {
+      setStatus({ type: "error", message: error.message });
+    } finally {
+      setLoading((current) => ({ ...current, addPaymentMethod: false }));
+    }
+  }
+
+  async function handleSetDefaultPaymentMethod(methodId) {
+    setLoading((current) => ({ ...current, paymentMethod: methodId }));
+    setStatus({ type: "", message: "" });
+
+    try {
+      const data = await fetchJson(`/api/dashboard/payments/methods/${methodId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ action: "setDefault" })
+      });
+      setDashboard(data);
+      setStatus({ type: "success", message: "Default billing card updated." });
+    } catch (error) {
+      setStatus({ type: "error", message: error.message });
+    } finally {
+      setLoading((current) => ({ ...current, paymentMethod: "" }));
+    }
+  }
+
+  async function handleRemovePaymentMethod(methodId) {
+    setLoading((current) => ({ ...current, paymentMethod: methodId }));
+    setStatus({ type: "", message: "" });
+
+    try {
+      const data = await fetchJson(`/api/dashboard/payments/methods/${methodId}`, {
+        method: "DELETE"
+      });
+      setDashboard(data);
+      setStatus({ type: "success", message: "Payment method removed." });
+    } catch (error) {
+      setStatus({ type: "error", message: error.message });
+    } finally {
+      setLoading((current) => ({ ...current, paymentMethod: "" }));
+    }
+  }
+
+  async function handleSubscribePlan() {
+    const defaultMethod =
+      dashboard.billing?.defaultPaymentMethod ||
+      dashboard.billing?.paymentMethods?.[0] ||
+      null;
+
+    if (!defaultMethod) {
+      setStatus({ type: "error", message: "Add a payment method before subscribing." });
+      return;
+    }
+
+    setLoading((current) => ({ ...current, subscribePlan: true }));
+
+    window.setTimeout(() => {
+      setStatus({
+        type: "success",
+        message: `${paymentMethodLabel(defaultMethod)} is ready for Premium Plan billing.`
+      });
+      setLoading((current) => ({ ...current, subscribePlan: false }));
+    }, 250);
+  }
+
+  async function handleEmailSubmit(event) {
+    event.preventDefault();
+    setLoading((current) => ({ ...current, loginEmail: true }));
+    setStatus({ type: "", message: "" });
+
+    try {
+      const data = await fetchJson("/api/dashboard/security/email", {
+        method: "PUT",
+        body: JSON.stringify(emailForm)
+      });
+      setDashboard((current) => ({
+        ...current,
+        accountSecurity: {
+          ...(current.accountSecurity || {}),
+          email: data.user?.email || emailForm.email
+        }
+      }));
+      setStatus({ type: "success", message: "Login email updated." });
+    } catch (error) {
+      setStatus({ type: "error", message: error.message });
+    } finally {
+      setLoading((current) => ({ ...current, loginEmail: false }));
+    }
+  }
+
+  async function handlePasswordSubmit(event) {
+    event.preventDefault();
+    setLoading((current) => ({ ...current, password: true }));
+    setStatus({ type: "", message: "" });
+
+    try {
+      await fetchJson("/api/dashboard/security/password", {
+        method: "POST",
+        body: JSON.stringify(passwordForm)
+      });
+      setPasswordForm(createPasswordForm());
+      setStatus({ type: "success", message: "Password updated." });
+    } catch (error) {
+      setStatus({ type: "error", message: error.message });
+    } finally {
+      setLoading((current) => ({ ...current, password: false }));
+    }
+  }
+
   async function openConversationForBooking(bookingId) {
     handleSectionSelect("messages");
 
@@ -931,10 +1419,14 @@ export default function VendorDashboardManager({ user, initialData }) {
     }
   }
 
-  async function sendMessage(event) {
-    event.preventDefault();
+  async function sendMessage(eventOrBody) {
+    if (eventOrBody?.preventDefault) {
+      eventOrBody.preventDefault();
+    }
 
-    if (!activeConversationId || !threadState.draft.trim()) {
+    const bodyText = typeof eventOrBody === "string" ? eventOrBody : threadState.draft;
+
+    if (!activeConversationId || !bodyText.trim()) {
       return;
     }
 
@@ -944,7 +1436,7 @@ export default function VendorDashboardManager({ user, initialData }) {
       const response = await fetch(`/api/dashboard/messages/${activeConversationId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ body: threadState.draft })
+        body: JSON.stringify({ body: bodyText.trim() })
       });
       const data = await response.json();
 
@@ -964,6 +1456,37 @@ export default function VendorDashboardManager({ user, initialData }) {
       setThreadState((current) => ({ ...current, sending: false, error: error.message }));
     }
   }
+
+  const selectedSpecialties = String(profileForm.specialties || "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+  const activeMediaItem = (profileForm.portfolioItems || []).find((item) => item.id === mediaModal.itemId) || null;
+  const shownPhoneNumber =
+    profileForm.businessInfo?.numberShownOnProfile === "personalPhoneNumber"
+      ? profileForm.businessInfo?.personalPhoneNumber
+      : profileForm.businessInfo?.salonNumber;
+  const accountSecurity = dashboard.accountSecurity || {
+    email: user?.email || "",
+    authProvider: user?.googleId ? "google" : user?.appleId ? "apple" : "email",
+    canChangeLoginEmail: Boolean(user?.email && !user?.googleId && !user?.appleId),
+    canChangePassword: Boolean(user?.email && !user?.googleId && !user?.appleId)
+  };
+  const billing = dashboard.billing || {
+    plan: { name: "Premium Plan", priceMonthly: 35, currency: "USD", features: [] },
+    paymentMethods: [],
+    defaultPaymentMethod: null
+  };
+  const billingPlan = billing.plan || {};
+  const billingPaymentMethods = billing.paymentMethods || [];
+  const defaultBillingMethod =
+    billing.defaultPaymentMethod ||
+    billingPaymentMethods.find((method) => method.isDefault) ||
+    billingPaymentMethods[0] ||
+    null;
+  const canUseEmailLogin = Boolean(
+    accountSecurity.canChangeLoginEmail && accountSecurity.canChangePassword
+  );
 
   return (
     <div className="vendor-reference-shell">
@@ -1012,6 +1535,367 @@ export default function VendorDashboardManager({ user, initialData }) {
       </aside>
 
       <div className="vendor-reference-main">
+        <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 8, padding: "14px 18px 0" }}>
+          {/* Notification Bell */}
+          <div className="vendor-notification-bell-container" style={{ position: "relative" }}>
+            <button
+              type="button"
+              onClick={() => {
+                setShowNotifications((c) => !c);
+                setShowMessages(false);
+                setShowUserMenu(false);
+              }}
+              style={{
+                position: "relative",
+                background: "transparent",
+                border: "none",
+                cursor: "pointer",
+                padding: 8,
+                borderRadius: "50%",
+                color: "#64748b",
+                width: 40,
+                height: 40,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transition: "background 0.2s"
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "#f1f5f9"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+              title="Notifications"
+            >
+              <Bell size={20} />
+              {unreadNotificationCount > 0 ? (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: 2,
+                    right: 2,
+                    minWidth: 16,
+                    height: 16,
+                    borderRadius: "50%",
+                    background: "#ef4444",
+                    color: "#fff",
+                    fontSize: 10,
+                    fontWeight: 600,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: "0 4px"
+                  }}
+                >
+                  {unreadNotificationCount}
+                </span>
+              ) : null}
+            </button>
+
+            {showNotifications ? (
+              <div
+                style={{
+                  position: "absolute",
+                  top: 48,
+                  right: 0,
+                  width: 340,
+                  maxHeight: 420,
+                  overflow: "auto",
+                  background: "#fff",
+                  borderRadius: 12,
+                  boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+                  border: "1px solid #e5e5e5",
+                  zIndex: 100
+                }}
+              >
+                <div style={{ padding: "12px 16px", borderBottom: "1px solid #e5e5e5" }}>
+                  <strong style={{ fontSize: 14, color: "#0f172a" }}>Notifications</strong>
+                </div>
+                {notifications.length === 0 ? (
+                  <div style={{ padding: 20, textAlign: "center", color: "#94a3b8", fontSize: 13 }}>
+                    No notifications yet.
+                  </div>
+                ) : (
+                  notifications.map((notification) => (
+                    <button
+                      key={notification.id}
+                      type="button"
+                      onClick={() => handleNotificationClick(notification)}
+                      style={{
+                        width: "100%",
+                        textAlign: "left",
+                        padding: "12px 16px",
+                        border: "none",
+                        borderBottom: "1px solid #f1f5f9",
+                        background: notification.readAt ? "#fff" : "#f0f7ff",
+                        cursor: "pointer",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 4
+                      }}
+                    >
+                      <strong style={{ fontSize: 13, color: "#0f172a" }}>{notification.title}</strong>
+                      <span style={{ fontSize: 12, color: "#64748b", lineHeight: 1.4 }}>{notification.message}</span>
+                      {notification.metadata?.preview ? (
+                        <span style={{ fontSize: 11, color: "#94a3b8", fontStyle: "italic" }}>
+                          "{notification.metadata.preview}"
+                        </span>
+                      ) : null}
+                    </button>
+                  ))
+                )}
+              </div>
+            ) : null}
+          </div>
+
+          {/* Message Icon */}
+          <div className="vendor-message-bell-container" style={{ position: "relative" }}>
+            <button
+              type="button"
+              onClick={() => {
+                setShowMessages((c) => !c);
+                setShowNotifications(false);
+                setShowUserMenu(false);
+              }}
+              style={{
+                position: "relative",
+                background: "transparent",
+                border: "none",
+                cursor: "pointer",
+                padding: 8,
+                borderRadius: "50%",
+                color: "#64748b",
+                width: 40,
+                height: 40,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transition: "background 0.2s"
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "#f1f5f9"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+              title="Messages"
+            >
+              <MessageSquareText size={20} />
+              {unreadMessages > 0 ? (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: 2,
+                    right: 2,
+                    minWidth: 16,
+                    height: 16,
+                    borderRadius: "50%",
+                    background: "#ef4444",
+                    color: "#fff",
+                    fontSize: 10,
+                    fontWeight: 600,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: "0 4px"
+                  }}
+                >
+                  {unreadMessages}
+                </span>
+              ) : null}
+            </button>
+
+            {showMessages ? (
+              <div
+                style={{
+                  position: "absolute",
+                  top: 48,
+                  right: 0,
+                  width: 340,
+                  maxHeight: 420,
+                  overflow: "auto",
+                  background: "#fff",
+                  borderRadius: 12,
+                  boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+                  border: "1px solid #e5e5e5",
+                  zIndex: 100
+                }}
+              >
+                <div style={{ padding: "12px 16px", borderBottom: "1px solid #e5e5e5" }}>
+                  <strong style={{ fontSize: 14, color: "#0f172a" }}>Messages</strong>
+                </div>
+                {conversations.length === 0 ? (
+                  <div style={{ padding: 20, textAlign: "center", color: "#94a3b8", fontSize: 13 }}>
+                    No conversations yet.
+                  </div>
+                ) : (
+                  conversations.map((conversation) => (
+                    <button
+                      key={conversation.id}
+                      type="button"
+                      onClick={() => handleConversationClick(conversation.id)}
+                      style={{
+                        width: "100%",
+                        textAlign: "left",
+                        padding: "12px 16px",
+                        border: "none",
+                        borderBottom: "1px solid #f1f5f9",
+                        background: conversation.vendorUnreadCount > 0 ? "#f0f7ff" : "#fff",
+                        cursor: "pointer",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 4
+                      }}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <strong style={{ fontSize: 13, color: "#0f172a" }}>{conversation.customerName || "Client"}</strong>
+                        {conversation.vendorUnreadCount > 0 ? (
+                          <span
+                            style={{
+                              minWidth: 18,
+                              height: 18,
+                              borderRadius: "50%",
+                              background: "#0070f3",
+                              color: "#fff",
+                              fontSize: 10,
+                              fontWeight: 600,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              padding: "0 5px"
+                            }}
+                          >
+                            {conversation.vendorUnreadCount}
+                          </span>
+                        ) : null}
+                      </div>
+                      <span style={{ fontSize: 12, color: "#64748b", lineHeight: 1.4 }}>
+                        {conversation.lastMessagePreview || "No messages yet"}
+                      </span>
+                    </button>
+                  ))
+                )}
+              </div>
+            ) : null}
+          </div>
+
+          {/* User Avatar */}
+          <div className="vendor-user-avatar-container" style={{ position: "relative" }}>
+            <button
+              type="button"
+              onClick={() => {
+                setShowUserMenu((c) => !c);
+                setShowNotifications(false);
+                setShowMessages(false);
+              }}
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: "50%",
+                border: "none",
+                overflow: "hidden",
+                cursor: "pointer",
+                padding: 0,
+                background: "#e2e8f0",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center"
+              }}
+              title="Account"
+            >
+              {profileForm.avatar ? (
+                <img src={profileForm.avatar} alt="Profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              ) : (
+                <div
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 14,
+                    fontWeight: 600,
+                    color: "#64748b",
+                    background: "linear-gradient(135deg, #2856f8, #54b6ff)",
+                    color: "#fff"
+                  }}
+                >
+                  {getInitials(profileForm.personalInfo.displayName || profileForm.name || user?.name || "Vendor")}
+                </div>
+              )}
+            </button>
+
+            {showUserMenu ? (
+              <div
+                style={{
+                  position: "absolute",
+                  top: 48,
+                  right: 0,
+                  width: 220,
+                  background: "#fff",
+                  borderRadius: 12,
+                  boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+                  border: "1px solid #e5e5e5",
+                  zIndex: 100,
+                  overflow: "hidden"
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => { setShowUserMenu(false); handleSectionSelect("profile"); }}
+                  style={{
+                    width: "100%",
+                    textAlign: "left",
+                    padding: "12px 16px",
+                    border: "none",
+                    borderBottom: "1px solid #f1f5f9",
+                    background: "#fff",
+                    cursor: "pointer",
+                    fontSize: 13,
+                    color: "#0f172a"
+                  }}
+                >
+                  Profile
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setShowUserMenu(false); handleSectionSelect("settings"); }}
+                  style={{
+                    width: "100%",
+                    textAlign: "left",
+                    padding: "12px 16px",
+                    border: "none",
+                    borderBottom: "1px solid #f1f5f9",
+                    background: "#fff",
+                    cursor: "pointer",
+                    fontSize: 13,
+                    color: "#0f172a"
+                  }}
+                >
+                  Settings
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setShowUserMenu(false); handleSignOut(); }}
+                  style={{
+                    width: "100%",
+                    textAlign: "left",
+                    padding: "12px 16px",
+                    border: "none",
+                    background: "#fff",
+                    cursor: "pointer",
+                    fontSize: 13,
+                    color: "#dc2626"
+                  }}
+                >
+                  Sign out
+                </button>
+              </div>
+            ) : null}
+          </div>
+        </div>
+
+        {status.message ? (
+          <div
+            className={`vendor-reference-alert ${status.type === "error" ? "error" : ""}`}
+            style={{ margin: "12px 18px 0" }}
+          >
+            {status.message}
+          </div>
+        ) : null}
         {activeSection === "overview" ? (
           <div className="vendor-reference-overview">
             <div className="vendor-reference-stat-grid">
@@ -1135,265 +2019,789 @@ export default function VendorDashboardManager({ user, initialData }) {
               </section>
             </div>
 
-            <section className="vendor-reference-panel vendor-reference-bookings-panel">
-              <div className="vendor-reference-panel-head vendor-reference-panel-head-wrap">
-                <div>
-                  <h2>Booking list</h2>
-                </div>
-                <div className="vendor-reference-filter-group">
-                  {OVERVIEW_BOOKING_FILTERS.map((option) => (
-                    <button
-                      key={option.id}
-                      type="button"
-                      className={`vendor-reference-filter-button ${overviewBookingFilter === option.id ? "active" : ""}`}
-                      onClick={() => setOverviewBookingFilter(option.id)}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
 
-              <div className="vendor-reference-table-wrap">
-                <table className="vendor-reference-table">
-                  <thead>
-                    <tr>
-                      <th>Customer Name</th>
-                      <th>Order no</th>
-                      <th>Service</th>
-                      <th>Date</th>
-                      <th>Time</th>
-                      <th>Status</th>
-                      <th>Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {overviewBookings.length ? (
-                      overviewBookings.map((booking) => {
-                        const [backgroundColor, color] = getAvatarSwatch(
-                          booking.customerEmail || booking.customerName
-                        );
-
-                        return (
-                          <tr key={booking.id}>
-                            <td>
-                              <div className="vendor-reference-customer-cell">
-                                <span
-                                  className="vendor-reference-table-avatar"
-                                  style={{ backgroundColor, color }}
-                                >
-                                  {getInitials(booking.customerName)}
-                                </span>
-                                <span>{booking.customerName}</span>
-                              </div>
-                            </td>
-                            <td>#{String(booking.id || "").replace(/[^\d]/g, "").slice(-5) || "00001"}</td>
-                            <td>{booking.serviceName}</td>
-                            <td>{formatLineupDate(booking.appointmentDate)}</td>
-                            <td>{booking.appointmentSlot}</td>
-                            <td>
-                              <span className={`vendor-reference-status-pill ${bookingStatusTone(booking.status)}`}>
-                                {booking.status === "pending_approval"
-                                  ? "Pending"
-                                  : booking.status === "confirmed"
-                                    ? "Confirmed"
-                                    : booking.status === "completed"
-                                      ? "Completed"
-                                      : booking.status}
-                              </span>
-                            </td>
-                            <td>{formatCurrency(booking.total)}</td>
-                          </tr>
-                        );
-                      })
-                    ) : (
-                      <tr>
-                        <td colSpan="7">
-                          <div className="vendor-reference-empty-state">No bookings in this view yet.</div>
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </section>
           </div>
         ) : null}
 
       {activeSection === "profile" ? (
-        <div className="dashboard-card vendor-dashboard-panel" style={{ marginTop: 18 }}>
-          <div className="row-between" style={{ marginBottom: 18 }}>
+        <div className="vendor-profile-workspace" style={{ marginTop: 18 }}>
+          <div className="vendor-profile-header">
             <div>
-              <div className="eyebrow">Public profile manager</div>
-              <h3 style={{ margin: "10px 0 0", fontFamily: "var(--font-display)", fontSize: "2rem" }}>
-                Update storefront content
-              </h3>
+              <div className="eyebrow">Profile</div>
+              <h3>Update storefront content</h3>
             </div>
             <SiteButton href={`/stylists/${dashboard.vendor.slug}`} variant="secondary">
               View live profile
             </SiteButton>
           </div>
 
-          <form className="form-grid" onSubmit={handleProfileSubmit}>
-            <div className="surface form-span-2" style={{ padding: "16px 18px", display: "grid", gap: 12 }}>
-              <strong>Account details</strong>
-              <div className="two-grid" style={{ gap: 12 }}>
-                <div>
-                  <span className="muted tiny">Account owner</span>
-                  <div>{user?.name || dashboard.vendor.owner || "Not set"}</div>
-                </div>
-                <div>
-                  <span className="muted tiny">Email</span>
-                  <div>{user?.email || "Not set"}</div>
-                </div>
-                <div>
-                  <span className="muted tiny">Phone</span>
-                  <div>{user?.phone || "Not set"}</div>
-                </div>
-                <div>
-                  <span className="muted tiny">SMS updates</span>
-                  <div>{user?.smsOptIn ? "Enabled" : "Off"}</div>
-                </div>
-              </div>
-              {user?.promoCode ? (
-                <div>
-                  <span className="muted tiny">Promo code</span>
-                  <div>{user.promoCode}</div>
-                </div>
-              ) : null}
-            </div>
-            <input className="form-control" placeholder="Business name" value={profileForm.name} onChange={(event) => setProfileForm({ ...profileForm, name: event.target.value })} />
-            <input className="form-control" placeholder="Owner name" value={profileForm.owner} onChange={(event) => setProfileForm({ ...profileForm, owner: event.target.value })} />
-            <input className="form-control" placeholder="Category" value={profileForm.category} onChange={(event) => setProfileForm({ ...profileForm, category: event.target.value })} />
-            <input className="form-control" placeholder="State (for example, New York)" value={profileForm.state} onChange={(event) => setProfileForm({ ...profileForm, state: event.target.value })} />
-            <input className="form-control" placeholder="City (for example, Brooklyn)" value={profileForm.city} onChange={(event) => setProfileForm({ ...profileForm, city: event.target.value })} />
-            <input className="form-control" placeholder="Area or neighborhood" value={profileForm.area} onChange={(event) => setProfileForm({ ...profileForm, area: event.target.value })} />
-            <input className="form-control form-span-2" placeholder="Store location or address" value={profileForm.location} onChange={(event) => setProfileForm({ ...profileForm, location: event.target.value })} />
-            <div className="surface form-span-2" style={{ padding: "16px 18px", display: "grid", gap: 10 }}>
-              <strong>Discovery map pin</strong>
-              <span className="muted tiny">
-                Just type your store location and save. Hair Force will geocode it on save and use that saved pin on the discovery map.
-              </span>
-              {dashboard.vendor.latitude !== null && dashboard.vendor.latitude !== undefined ? (
-                <span className="badge">
-                  Saved pin: {dashboard.vendor.latitude}, {dashboard.vendor.longitude}
-                </span>
-              ) : (
-                <span className="muted tiny">
-                  No saved map pin yet. Add your location and save this profile to place it on discover.
-                </span>
-              )}
-            </div>
-            <input className="form-control form-span-2" placeholder="Hero tag" value={profileForm.heroTag} onChange={(event) => setProfileForm({ ...profileForm, heroTag: event.target.value })} />
-            <input className="form-control form-span-2" placeholder="Tagline" value={profileForm.tagline} onChange={(event) => setProfileForm({ ...profileForm, tagline: event.target.value })} />
-            <textarea className="form-control form-span-2" rows="4" placeholder="Bio" value={profileForm.bio} onChange={(event) => setProfileForm({ ...profileForm, bio: event.target.value })} />
-            <input className="form-control form-span-2" placeholder="Specialties, comma separated" value={profileForm.specialties} onChange={(event) => setProfileForm({ ...profileForm, specialties: event.target.value })} />
-            <input className="form-control form-span-2" placeholder="Amenities, comma separated" value={profileForm.amenities} onChange={(event) => setProfileForm({ ...profileForm, amenities: event.target.value })} />
-            <select className="form-control form-span-2" value={profileForm.serviceLocationType} onChange={(event) => setProfileForm({ ...profileForm, serviceLocationType: event.target.value })}>
-              <option value="">Select location type</option>
-              <option value="studio">Studio visit</option>
-              <option value="home">Home service</option>
-              <option value="mobile">Mobile service</option>
-              <option value="both">Studio + home service</option>
-            </select>
-            <input className="form-control form-span-2" placeholder="Cover image URL or upload below" value={profileForm.coverImage} onChange={(event) => setProfileForm({ ...profileForm, coverImage: event.target.value })} />
-            <input className="form-control form-span-2" type="file" accept="image/*" onChange={(event) => handleImageUpload("coverImage", "covers", event.target.files?.[0], "coverUpload")} />
-            <input className="form-control form-span-2" placeholder="Profile image URL or upload below" value={profileForm.avatar} onChange={(event) => setProfileForm({ ...profileForm, avatar: event.target.value })} />
-            <input className="form-control form-span-2" type="file" accept="image/*" onChange={(event) => handleImageUpload("avatar", "avatars", event.target.files?.[0], "avatarUpload")} />
+          <div className="vendor-profile-tabs" role="tablist" aria-label="Profile sections">
+            {PROFILE_TABS.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                className={`vendor-profile-tab ${activeProfileTab === tab.id ? "active" : ""}`}
+                onClick={() => handleProfileTabSelect(tab.id)}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
 
-            <div className="surface form-span-2" style={{ padding: "16px 18px", display: "grid", gap: 14 }}>
-              <div className="row-between" style={{ gap: 16 }}>
-                <div>
-                  <strong>Portfolio</strong>
-                  <p className="muted tiny" style={{ margin: "6px 0 0" }}>
-                    Upload and reorder work samples directly from your profile manager.
-                  </p>
-                </div>
-                <input type="file" accept="image/*" onChange={handlePortfolioUpload} />
+          {activeProfileTab === "personal" ? (
+            <form className="vendor-profile-form" onSubmit={handleProfileSubmit}>
+              <div className="vendor-profile-form-head">
+                <h4>Personal Info</h4>
+                <SiteButton disabled={loading.profile} size="sm" type="submit">
+                  {loading.profile ? "Saving..." : "Save"}
+                </SiteButton>
               </div>
 
-              <div className="vendor-portfolio-grid">
-                {profileForm.portfolioImages.length ? (
-                  profileForm.portfolioImages.map((image, index) => (
-                    <div key={`${image}-${index}`} className="vendor-portfolio-item">
-                      <img src={image} alt={`Portfolio ${index + 1}`} className="vendor-portfolio-image" />
-                      <div className="hero-actions" style={{ marginTop: 12 }}>
-                        <SiteButton
-                          type="button"
-                          variant="secondary"
-                          size="sm"
-                          onClick={() =>
-                            setProfileForm((current) => {
-                              const next = [...current.portfolioImages];
-                              if (index > 0) {
-                                [next[index - 1], next[index]] = [next[index], next[index - 1]];
-                              }
-                              return { ...current, portfolioImages: next };
-                            })
-                          }
-                        >
-                          Up
-                        </SiteButton>
-                        <SiteButton
-                          type="button"
-                          variant="secondary"
-                          size="sm"
-                          onClick={() =>
-                            setProfileForm((current) => {
-                              const next = [...current.portfolioImages];
-                              if (index < next.length - 1) {
-                                [next[index], next[index + 1]] = [next[index + 1], next[index]];
-                              }
-                              return { ...current, portfolioImages: next };
-                            })
-                          }
-                        >
-                          Down
-                        </SiteButton>
-                        <SiteButton
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            setProfileForm((current) => ({
-                              ...current,
-                              portfolioImages: current.portfolioImages.filter((_, itemIndex) => itemIndex !== index)
-                            }))
-                          }
-                        >
-                          Remove
-                        </SiteButton>
+              <div className="vendor-profile-field">
+                <span>Profile Picture</span>
+                <div className="vendor-avatar-upload-row">
+                  <div className="vendor-avatar-preview">
+                    {profileForm.avatar ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img key={profileForm.avatar} src={profileForm.avatar} alt="Profile" />
+                    ) : (
+                      <div className="vendor-avatar-fallback">
+                        {getInitials(profileForm.personalInfo.displayName || profileForm.name || "Vendor")}
                       </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="timeline-item">
-                    <p className="muted" style={{ margin: 0 }}>
-                      Upload portfolio images here to feature your best work on the public profile.
-                    </p>
+                    )}
                   </div>
+                  <div className="vendor-avatar-actions">
+                    <button
+                      type="button"
+                      className="vendor-reference-icon-button"
+                      onClick={() => document.getElementById("vendor-avatar-input").click()}
+                      disabled={loading.avatarUpload}
+                      title="Upload profile photo"
+                    >
+                      {loading.avatarUpload ? (
+                        <span className="vendor-avatar-spinner" />
+                      ) : (
+                        <Upload size={16} />
+                      )}
+                    </button>
+                    {profileForm.avatar ? (
+                      <button
+                        type="button"
+                        className="vendor-reference-icon-button"
+                        onClick={() => setProfileForm((current) => ({ ...current, avatar: "" }))}
+                        title="Remove profile photo"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    ) : null}
+                    <input
+                      id="vendor-avatar-input"
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      className="sr-only"
+                      onChange={(event) => {
+                        const file = event.target.files?.[0];
+                        if (file) handleImageUpload("avatar", "avatars", file, "avatarUpload");
+                        event.target.value = "";
+                      }}
+                    />
+                  </div>
+                </div>
+                <small>Upload a portrait photo. This will be shown on your public stylist profile.</small>
+              </div>
+
+              <label className="vendor-profile-field">
+                <span>My Display Name</span>
+                
+                <input
+                  className="form-control"
+                  value={profileForm.personalInfo.displayName}
+                  onChange={(event) => updatePersonalInfo("displayName", event.target.value)}
+                  autoComplete="name"
+                />
+                <small>Your preferred name or however you would like people to refer to you on Hair Force.</small>
+              </label>
+
+              <div className="vendor-profile-field">
+                <span>My Pronouns <em>(Optional)</em></span>
+                <small>
+                  Selections: {profileForm.personalInfo.pronouns.length ? profileForm.personalInfo.pronouns.join(", ") : "none"}
+                </small>
+                <div className="vendor-pronoun-grid">
+                  {PRONOUN_OPTIONS.flat().map((pronoun) => (
+                    <label key={pronoun} className="vendor-check-row">
+                      <input
+                        type="checkbox"
+                        checked={profileForm.personalInfo.pronouns.includes(pronoun)}
+                        onChange={() => togglePronoun(pronoun)}
+                      />
+                      <span>{pronoun}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <label className="vendor-profile-field">
+                <span>My Profession</span>
+                <select
+                  className="form-control"
+                  value={profileForm.personalInfo.profession}
+                  onChange={(event) => updatePersonalInfo("profession", event.target.value)}
+                >
+                  {PROFESSION_OPTIONS.map((profession) => (
+                    <option key={profession} value={profession}>
+                      {profession}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="vendor-profile-field">
+                <span>My Specialty</span>
+                <select
+                  className="form-control vendor-multi-select"
+                  multiple
+                  size={Math.min(Math.max(services.length, 2), 6)}
+                  value={selectedSpecialties}
+                  onChange={updateSpecialtySelection}
+                >
+                  {services.length ? (
+                    services.map((service) => (
+                      <option key={service.id || service.title} value={service.title}>
+                        {service.title}
+                      </option>
+                    ))
+                  ) : (
+                    <option value="">Add services first to choose specialties</option>
+                  )}
+                </select>
+              </label>
+
+              <label className="vendor-profile-field">
+                <span>About Me</span>
+                <textarea
+                  className="form-control"
+                  rows="9"
+                  placeholder="About Me"
+                  value={profileForm.personalInfo.about}
+                  onChange={(event) => updatePersonalInfo("about", event.target.value)}
+                />
+              </label>
+
+              <div className="vendor-profile-two">
+                <label className="vendor-profile-field">
+                  <span>Email</span>
+                  <input
+                    className="form-control"
+                    type="email"
+                    value={profileForm.personalInfo.email}
+                    onChange={(event) => updatePersonalInfo("email", event.target.value)}
+                    autoComplete="email"
+                  />
+                </label>
+                <label className="vendor-profile-field">
+                  <span>Phone Number</span>
+                  <input
+                    className="form-control"
+                    type="tel"
+                    value={profileForm.personalInfo.phone}
+                    onChange={(event) => updatePersonalInfo("phone", event.target.value)}
+                    autoComplete="tel"
+                  />
+                </label>
+              </div>
+
+              <label className="vendor-profile-field">
+                <span>My Hair Force Website</span>
+                <div className="vendor-url-field">
+                  <span>hairforce.app /</span>
+                  <input
+                    value={profileForm.personalInfo.websitePath.replace(/^\/?stylists\//, "")}
+                    onChange={(event) => updatePersonalInfo("websitePath", `/stylists/${event.target.value}`)}
+                  />
+                </div>
+              </label>
+            </form>
+          ) : null}
+
+          {activeProfileTab === "business" ? (
+            <form className="vendor-profile-form" onSubmit={handleProfileSubmit}>
+              <div className="vendor-profile-form-head">
+                <h4>Edit Business Info</h4>
+                <SiteButton disabled={loading.profile} size="sm" type="submit">
+                  {loading.profile ? "Saving..." : "Save"}
+                </SiteButton>
+              </div>
+
+              <label className="vendor-profile-field">
+                <span>Business Name</span>
+                <input
+                  className="form-control"
+                  placeholder="e.g. Calvin's Salon"
+                  value={profileForm.businessInfo.businessName}
+                  onChange={(event) => updateBusinessInfo("businessName", event.target.value)}
+                  autoComplete="organization"
+                />
+              </label>
+
+              <div className="vendor-profile-two">
+                <label className="vendor-profile-field">
+                  <span>Salon Number</span>
+                  <input
+                    className="form-control"
+                    type="tel"
+                    placeholder="___-___-____"
+                    value={profileForm.businessInfo.salonNumber}
+                    onChange={(event) => updateBusinessInfo("salonNumber", event.target.value)}
+                    autoComplete="tel"
+                  />
+                </label>
+                <label className="vendor-profile-field">
+                  <span>Personal Phone Number</span>
+                  <input
+                    className="form-control"
+                    type="tel"
+                    value={profileForm.businessInfo.personalPhoneNumber}
+                    onChange={(event) => updateBusinessInfo("personalPhoneNumber", event.target.value)}
+                    autoComplete="tel"
+                  />
+                </label>
+              </div>
+
+              <div className="vendor-profile-field">
+                <span>Number Shown on Profile</span>
+                <label className="vendor-radio-row">
+                  <input
+                    type="radio"
+                    checked={profileForm.businessInfo.numberShownOnProfile === "salonNumber"}
+                    onChange={() => updateBusinessInfo("numberShownOnProfile", "salonNumber")}
+                  />
+                  <span>Salon Number</span>
+                </label>
+                <label className="vendor-radio-row">
+                  <input
+                    type="radio"
+                    checked={profileForm.businessInfo.numberShownOnProfile === "personalPhoneNumber"}
+                    onChange={() => updateBusinessInfo("numberShownOnProfile", "personalPhoneNumber")}
+                  />
+                  <span>Personal Phone Number</span>
+                </label>
+                {shownPhoneNumber ? <small>Visible phone: {shownPhoneNumber}</small> : null}
+              </div>
+
+              <label className="vendor-profile-field">
+                <span>SMS Notifications Phone Number</span>
+                <input
+                  className="form-control"
+                  type="tel"
+                  value={profileForm.businessInfo.smsNotificationsPhoneNumber}
+                  onChange={(event) => updateBusinessInfo("smsNotificationsPhoneNumber", event.target.value)}
+                  autoComplete="tel"
+                />
+                <small>You can control SMS timing in text settings.</small>
+              </label>
+
+              <div className="vendor-business-location-head">
+                <div>
+                  <h4>Business Location</h4>
+                  <strong>Mobile business</strong>
+                  <small>Turn on if you travel to meet your clients</small>
+                </div>
+                <label className="vendor-toggle">
+                  <input
+                    type="checkbox"
+                    checked={profileForm.businessInfo.mobileBusiness}
+                    onChange={(event) => {
+                      updateBusinessInfo("mobileBusiness", event.target.checked);
+                      setProfileForm((current) => ({
+                        ...current,
+                        serviceLocationType: event.target.checked ? "mobile" : current.serviceLocationType || "studio"
+                      }));
+                    }}
+                  />
+                  <span />
+                </label>
+              </div>
+
+              <label className="vendor-profile-field">
+                <span>Street Address</span>
+                <input
+                  className="form-control"
+                  placeholder="e.g. 111 South Ave"
+                  value={profileForm.businessInfo.streetAddress}
+                  onChange={(event) => updateBusinessInfo("streetAddress", event.target.value)}
+                  autoComplete="street-address"
+                />
+              </label>
+              <label className="vendor-profile-field">
+                <span>Suite, Apt, etc. (optional)</span>
+                <input
+                  className="form-control"
+                  placeholder="e.g. Suite 201"
+                  value={profileForm.businessInfo.suite}
+                  onChange={(event) => updateBusinessInfo("suite", event.target.value)}
+                />
+              </label>
+
+              <div className="vendor-profile-three">
+                <label className="vendor-profile-field">
+                  <span>City</span>
+                  <input
+                    className="form-control"
+                    placeholder="e.g. San Francisco"
+                    value={profileForm.businessInfo.city}
+                    onChange={(event) => updateBusinessInfo("city", event.target.value)}
+                    autoComplete="address-level2"
+                  />
+                </label>
+                <label className="vendor-profile-field">
+                  <span>State</span>
+                  <input
+                    className="form-control"
+                    placeholder="e.g. CA"
+                    value={profileForm.businessInfo.state}
+                    onChange={(event) => updateBusinessInfo("state", event.target.value)}
+                    autoComplete="address-level1"
+                  />
+                </label>
+                <label className="vendor-profile-field">
+                  <span>Zip</span>
+                  <input
+                    className="form-control"
+                    placeholder="e.g. 94104"
+                    value={profileForm.businessInfo.zip}
+                    onChange={(event) => updateBusinessInfo("zip", event.target.value)}
+                    autoComplete="postal-code"
+                  />
+                </label>
+              </div>
+
+              <label className="vendor-profile-field">
+                <span>Location Instructions</span>
+                <textarea
+                  className="form-control"
+                  rows="6"
+                  maxLength={500}
+                  placeholder="e.g. Add details like landmarks, parking instructions, or any information that will help clients find your business"
+                  value={profileForm.businessInfo.locationInstructions}
+                  onChange={(event) => updateBusinessInfo("locationInstructions", event.target.value)}
+                />
+                <small>Max 500 characters. Instructions show after a client has booked with you.</small>
+              </label>
+
+              <div className="surface" style={{ padding: "16px 18px", display: "grid", gap: 10 }}>
+                <strong>Discovery map pin</strong>
+                <span className="muted tiny">
+                  Save the address to refresh the public profile and discovery map location.
+                </span>
+                {dashboard.vendor.latitude !== null && dashboard.vendor.latitude !== undefined ? (
+                  <span className="badge">
+                    Saved pin: {dashboard.vendor.latitude}, {dashboard.vendor.longitude}
+                  </span>
+                ) : (
+                  <span className="muted tiny">No saved map pin yet.</span>
                 )}
               </div>
+            </form>
+          ) : null}
+
+          {activeProfileTab === "social" ? (
+            <form className="vendor-profile-form" onSubmit={handleProfileSubmit}>
+              <div className="vendor-profile-form-head">
+                <h4>Edit Social Media Info</h4>
+                <SiteButton disabled={loading.profile} size="sm" type="submit">
+                  {loading.profile ? "Saving..." : "Save"}
+                </SiteButton>
+              </div>
+
+              <label className="vendor-profile-field">
+                <span>Instagram Username</span>
+                <input
+                  className="form-control"
+                  value={profileForm.socialLinks.instagram}
+                  onChange={(event) => updateSocialLink("instagram", event.target.value)}
+                  autoComplete="off"
+                />
+              </label>
+              <label className="vendor-profile-field">
+                <span>Facebook URL</span>
+                <input
+                  className="form-control"
+                  type="url"
+                  value={profileForm.socialLinks.facebook}
+                  onChange={(event) => updateSocialLink("facebook", event.target.value)}
+                />
+              </label>
+              <label className="vendor-profile-field">
+                <span>Twitter Username</span>
+                <input
+                  className="form-control"
+                  value={profileForm.socialLinks.twitter}
+                  onChange={(event) => updateSocialLink("twitter", event.target.value)}
+                />
+              </label>
+              <label className="vendor-profile-field">
+                <span>Business Website</span>
+                <input
+                  className="form-control"
+                  type="url"
+                  value={profileForm.socialLinks.website}
+                  onChange={(event) => updateSocialLink("website", event.target.value)}
+                />
+              </label>
+              <label className="vendor-profile-field">
+                <span>Yelp URL</span>
+                <input
+                  className="form-control"
+                  type="url"
+                  value={profileForm.socialLinks.yelp}
+                  onChange={(event) => updateSocialLink("yelp", event.target.value)}
+                />
+              </label>
+            </form>
+          ) : null}
+
+          
+
+          {activeProfileTab === "products" ? (
+            <div className="vendor-products-manager">
+              <div className="vendor-profile-form-head">
+                <div>
+                  <h4>Product Menu</h4>
+                  <p>Sell products to clients at the time of checkout.</p>
+                </div>
+                <button type="button" className="vendor-help-button" title="Product help">
+                  <HelpCircle size={18} />
+                </button>
+              </div>
+
+              {profileForm.products.length ? (
+                <div className="vendor-product-list">
+                  {profileForm.products.map((product) => (
+                    <article key={product.id} className="vendor-product-card">
+                      <Package size={22} />
+                      <div>
+                        <strong>{product.name}</strong>
+                        <p>{product.category} · {formatCurrency(product.price || 0)}</p>
+                        {product.description ? <span>{product.description}</span> : null}
+                      </div>
+                      <div className="vendor-product-actions">
+                        <button type="button" onClick={() => openProductModal(product)}>
+                          <Edit3 size={16} />
+                          Edit
+                        </button>
+                        <button type="button" onClick={() => deleteProduct(product.id)}>
+                          <Trash2 size={16} />
+                          Delete
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <div className="vendor-product-empty">
+                  <h4>Add a product to get started</h4>
+                  <p>Sell Products to clients at the time of checkout</p>
+                  <SiteButton type="button" onClick={() => openProductModal()}>
+                    <Plus size={18} />
+                    Add A Product
+                  </SiteButton>
+                </div>
+              )}
+
+              {profileForm.products.length ? (
+                <SiteButton type="button" onClick={() => openProductModal()}>
+                  <Plus size={18} />
+                  Add A Product
+                </SiteButton>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      {activeSection === "gallery" ? (
+        <div className="vendor-profile-workspace" style={{ marginTop: 18 }}>
+          <div className="vendor-profile-header">
+            <div>
+              <div className="eyebrow">Gallery</div>
+              <h3>Manage Photos and Videos</h3>
+            </div>
+            <SiteButton href={`/stylists/${dashboard.vendor.slug}`} variant="secondary">
+              View live profile
+            </SiteButton>
+          </div>
+
+          <div className="vendor-gallery-manager">
+            <div className="vendor-gallery-hero">
+              <div>
+                <h4>Gallery</h4>
+                <p>Add photos and videos to highlight your work. Tag them to services so clients know what you specialize in.</p>
+                <div className="vendor-gallery-video-note">
+                  <Video size={16} />
+                  <strong>New!</strong> Add videos into your gallery
+                </div>
+              </div>
+              <label className="vendor-icon-action" title="Add to gallery">
+                <Plus size={28} />
+                <input type="file" multiple accept="image/*,video/mp4,video/quicktime" onChange={handlePortfolioUpload} />
+              </label>
             </div>
 
-            <textarea className="form-control form-span-2" rows="3" placeholder="Deposit policy" value={profileForm.policies.deposit} onChange={(event) => updatePolicy("deposit", event.target.value)} />
-            <textarea className="form-control form-span-2" rows="3" placeholder="Cancellation policy" value={profileForm.policies.cancellation} onChange={(event) => updatePolicy("cancellation", event.target.value)} />
-            <textarea className="form-control form-span-2" rows="3" placeholder="Late arrival policy" value={profileForm.policies.lateArrival} onChange={(event) => updatePolicy("lateArrival", event.target.value)} />
-            <textarea className="form-control form-span-2" rows="3" placeholder="Prep instructions" value={profileForm.policies.prepInstructions} onChange={(event) => updatePolicy("prepInstructions", event.target.value)} />
+            <label className="vendor-gallery-upload">
+              <Upload size={24} />
+              <strong>{loading.portfolioUpload ? "Uploading..." : "Add to your gallery"}</strong>
+              <input type="file" multiple accept="image/*,video/mp4,video/quicktime" onChange={handlePortfolioUpload} />
+            </label>
 
-            <input className="form-control" placeholder="Instagram URL" value={profileForm.socialLinks.instagram} onChange={(event) => updateSocialLink("instagram", event.target.value)} />
-            <input className="form-control" placeholder="Website URL" value={profileForm.socialLinks.website} onChange={(event) => updateSocialLink("website", event.target.value)} />
-            <input className="form-control" placeholder="TikTok URL" value={profileForm.socialLinks.tiktok} onChange={(event) => updateSocialLink("tiktok", event.target.value)} />
-            <input className="form-control" placeholder="Facebook URL" value={profileForm.socialLinks.facebook} onChange={(event) => updateSocialLink("facebook", event.target.value)} />
+            <div className="vendor-gallery-section-head">
+              <div>
+                <h4>All Photos & Videos <span>({profileForm.portfolioItems.length})</span></h4>
+                <p>Tap the plus icon to tag a service to your photos.</p>
+              </div>
+              <SiteButton
+                type="button"
+                size="sm"
+                disabled={loading.profile}
+                onClick={() => saveProfileChanges(profileForm, "Gallery saved.")}
+              >
+                {loading.profile ? "Saving..." : "Save Gallery"}
+              </SiteButton>
+            </div>
 
-            <SiteButton className="form-span-2" disabled={loading.profile} fullWidth type="submit">
-              {loading.profile ? "Saving..." : "Save profile changes"}
-            </SiteButton>
-          </form>
+            <div className="vendor-gallery-grid">
+              {profileForm.portfolioItems.length ? (
+                profileForm.portfolioItems.map((item) => (
+                  <article key={item.id} className="vendor-gallery-card">
+                    <div className="vendor-gallery-card-actions">
+                      <button
+                        type="button"
+                        className={`vendor-tiny-icon ${item.pinned ? "active" : ""}`}
+                        title={item.pinned ? "Unpin media" : "Pin media"}
+                        onClick={() =>
+                          setProfileForm((current) => ({
+                            ...current,
+                            portfolioItems: current.portfolioItems.map((entry) =>
+                              entry.id === item.id ? { ...entry, pinned: !entry.pinned } : entry
+                            )
+                          }))
+                        }
+                      >
+                        <Plus size={13} />
+                      </button>
+                      <button
+                        type="button"
+                        className="vendor-tiny-icon"
+                        title="Edit media"
+                        onClick={() => openMediaEditor(item)}
+                      >
+                        <Edit3 size={13} />
+                      </button>
+                    </div>
+                    {item.type === "video" ? (
+                      <video src={item.url} className="vendor-gallery-media" controls />
+                    ) : (
+                      <img src={item.url} alt={item.caption || "Gallery media"} className="vendor-gallery-media" />
+                    )}
+                    <button type="button" className="vendor-tag-service-button" onClick={() => openMediaEditor(item)}>
+                      <Plus size={16} />
+                      {item.serviceId ? "Edit Service Tag" : "Tag Service"}
+                    </button>
+                  </article>
+                ))
+              ) : (
+                <div className="vendor-gallery-empty">
+                  <ImageIcon size={26} />
+                  <strong>No gallery media yet</strong>
+                  <span>Upload work samples to feature them on the public profile.</span>
+                </div>
+              )}
+            </div>
+
+            <div className="vendor-gallery-tips">
+              <h4>Tips for taking great photos!</h4>
+              {[
+                ["Keep your background clean and simple", "Use a plain wall or tidy station so your work stands out, not what's behind it."],
+                ["Keep your framing consistent", "Use the same angle and setup for each clip so your feed feels cohesive and professional."],
+                ["Shoot near natural light", "Face a window or doorway for the best light. Avoid overhead fixtures that wash out color and texture."]
+              ].map(([title, copy]) => (
+                <div key={title} className="vendor-tip-card">
+                  <Info size={18} />
+                  <div>
+                    <strong>{title}</strong>
+                    <p>{copy}</p>
+                  </div>
+                </div>
+              ))}
+
+              <h4>Simple videos that will bring your portfolio to life.</h4>
+              {[
+                ["Show the before and after", "Capture the before, spin the chair, then reveal the after."],
+                ["Film short clips of your process", "This builds client trust and highlights your technique."],
+                ["Show your finished looks in action", "Hair that moves, makeup that catches the light, nails from every angle."]
+              ].map(([title, copy]) => (
+                <div key={title} className="vendor-tip-card">
+                  <Info size={18} />
+                  <div>
+                    <strong>{title}</strong>
+                    <p>{copy}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       ) : null}
 
       {activeSection === "services" ? (
+        <div className="vendor-services-page">
+          <div className="vendor-services-head">
+            <div>
+              <h2>Services &amp; Add-ons</h2>
+              <div className="vendor-service-tabs" role="tablist" aria-label="Services and add-ons">
+                {SERVICE_MENU_TABS.map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    className={serviceMenuTab === tab.id ? "active" : ""}
+                    onClick={() => setServiceMenuTab(tab.id)}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <SiteButton
+              type="button"
+              size="sm"
+              onClick={serviceMenuTab === "addons" ? () => openAddonEditor() : openAddChooser}
+            >
+              <Plus size={18} />
+              {serviceMenuTab === "addons" ? "Create Add-On" : "Add"}
+            </SiteButton>
+          </div>
+
+          <div className="vendor-services-rule" />
+
+          {serviceMenuTab === "services" ? (
+            <div className="vendor-service-menu-list">
+              {serviceSections.map((section) => (
+                <section
+                  key={section.id || "default"}
+                  className={`vendor-service-category ${section.id ? "has-category" : ""}`}
+                  onDragOver={(event) => event.preventDefault()}
+                  onDrop={(event) => handleServiceDrop(event, section.id)}
+                >
+                  <div className="vendor-service-category-title">
+                    <h3>{section.title}</h3>
+                    {section.id ? (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          startEditingService(
+                            serviceCategories.find(
+                              (item) => String(item.id || item._id || item.title) === String(section.id)
+                            )
+                          )
+                        }
+                        aria-label={`Edit ${section.title}`}
+                      >
+                        <Edit3 size={16} />
+                      </button>
+                    ) : null}
+                  </div>
+
+                  {section.services.length ? (
+                    section.services.map((service) => (
+                      <article
+                        key={service.id || service._id}
+                        className="vendor-service-row"
+                        draggable
+                        onDragStart={(event) => event.dataTransfer.setData("text/plain", service.id || service._id)}
+                      >
+                        <GripVertical size={24} />
+                        <button type="button" onClick={() => startEditingService(service)}>
+                          <strong>{service.title}</strong>
+                          <span>
+                            {formatCurrency(service.price || 0)}
+                            {service.metadata?.priceIsStartingAt ? " and up" : ""} for {formatDurationLabel(service.duration)}
+                          </span>
+                          {getServiceType(service) === "combined" ? <em>Combined service</em> : null}
+                        </button>
+                        <ChevronRight size={30} />
+                      </article>
+                    ))
+                  ) : (
+                    <div className="vendor-service-drop-empty">
+                      Drop a service here or use Add to create one in this category.
+                    </div>
+                  )}
+                </section>
+              ))}
+
+              {!bookableServices.length && !serviceCategories.length ? (
+                <div className="vendor-service-empty-state">
+                  <Scissors size={34} />
+                  <h3>Add your first service</h3>
+                  <p>Choose from the service catalog, then set price, duration, deposit, and description.</p>
+                  <SiteButton type="button" onClick={openAddChooser}>
+                    <Plus size={18} />
+                    Add Service
+                  </SiteButton>
+                </div>
+              ) : null}
+            </div>
+          ) : (
+            <div className="vendor-addon-tab">
+              <div className="vendor-addon-info">
+                <Info size={24} />
+                <div>
+                  <strong>Add-ons just got easier</strong>
+                  <p>Clients can view add-ons after selecting a service.</p>
+                </div>
+              </div>
+
+              {addOns.length ? (
+                <div className="vendor-addon-list">
+                  {addOns.map((addon) => (
+                    <article key={addon.id || addon._id} className="vendor-addon-row">
+                      <div>
+                        <strong>{addon.title}</strong>
+                        <span>
+                          +{formatCurrency(addon.price || 0)} - {formatDurationLabel(addon.duration)} - {addon.metadata?.timeAdded === "before" ? "Before base service" : "After base service"}
+                        </span>
+                        {addon.description ? <p>{addon.description}</p> : null}
+                      </div>
+                      <div className="vendor-addon-actions">
+                        <button type="button" onClick={() => openAddonEditor(addon)}>
+                          <Edit3 size={16} />
+                          Edit
+                        </button>
+                        <button type="button" onClick={() => handleDeleteService(addon.id || addon._id)}>
+                          <Trash2 size={16} />
+                          Delete
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <div className="vendor-service-empty-state compact">
+                  <Layers2 size={34} />
+                  <h3>No add-ons yet</h3>
+                  <p>Add optional extras clients can pair with a base service.</p>
+                  <SiteButton type="button" onClick={() => openAddonEditor()}>
+                    <Plus size={18} />
+                    Create Add-On
+                  </SiteButton>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      ) : null}
+
+      {false && activeSection === "services" ? (
         <div className="dashboard-layout" style={{ marginTop: 18 }}>
           <div className="dashboard-card">
             <div className="eyebrow">Service manager</div>
@@ -1489,6 +2897,362 @@ export default function VendorDashboardManager({ user, initialData }) {
         </div>
       ) : null}
 
+      {serviceModal.view ? (
+        <div className="vendor-service-modal-backdrop" onClick={() => setServiceModal({ view: "", mode: "create" })}>
+          <div
+            className={`vendor-service-modal ${serviceModal.view === "chooser" ? "is-choice" : ""}`}
+            onClick={(event) => event.stopPropagation()}
+          >
+            {serviceModal.view === "chooser" ? (
+              <>
+                <div className="vendor-service-modal-title">
+                  <span />
+                  <h3>Add To The Service Menu</h3>
+                  <button type="button" onClick={() => setServiceModal({ view: "", mode: "create" })} aria-label="Close add menu">
+                    <X size={34} />
+                  </button>
+                </div>
+                <div className="vendor-service-choice-list">
+                  {[
+                    {
+                      title: "Service",
+                      text: "Services are the individual services you provide at your business",
+                      icon: Scissors,
+                      action: openServiceCatalog
+                    },
+                    {
+                      title: "Add-On",
+                      text: "Add-ons are optional extras that can be booked with any service",
+                      icon: Layers2,
+                      action: () => openAddonEditor()
+                    },
+                    {
+                      title: "Service Categories",
+                      text: "Categories allow you to organize your services into groups",
+                      icon: Tag,
+                      action: () => openCategoryEditor()
+                    },
+                    {
+                      title: "Combined Service",
+                      text: "Combined services include more than one service",
+                      icon: ClipboardList,
+                      action: openCombinedSelector
+                    }
+                  ].map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <button key={item.title} type="button" className="vendor-service-choice" onClick={item.action}>
+                        <div>
+                          <strong>{item.title}</strong>
+                          <span>{item.text}</span>
+                        </div>
+                        <Icon size={22} />
+                        <Plus size={28} />
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            ) : null}
+
+            {serviceModal.view === "catalog" ? (
+              <>
+                <div className="vendor-service-catalog-head">
+                  <button type="button" onClick={() => setServiceModal({ view: "chooser", mode: "create" })}>Cancel</button>
+                  <h3>Add Services</h3>
+                  <button type="button" disabled>Save</button>
+                </div>
+                <label className="vendor-service-search">
+                  <Search size={24} />
+                  <input
+                    value={serviceSearch}
+                    onChange={(event) => setServiceSearch(event.target.value)}
+                    placeholder="Search for a service..."
+                  />
+                </label>
+                <div className="vendor-service-catalog-list">
+                  <h4>Select a Service</h4>
+                  {filteredServiceCatalog.map((group) => (
+                    <div key={group.name} className="vendor-service-catalog-group">
+                      <button
+                        type="button"
+                        className="vendor-service-catalog-group-title"
+                        onClick={() =>
+                          setExpandedCatalogGroups((current) => {
+                            const next = new Set(current);
+                            if (next.has(group.name)) {
+                              next.delete(group.name);
+                            } else {
+                              next.add(group.name);
+                            }
+                            return next;
+                          })
+                        }
+                      >
+                        <strong>{group.name}</strong>
+                        <ChevronLeft
+                          size={22}
+                          style={{
+                            transform: expandedCatalogGroups.has(group.name) ? "rotate(-90deg)" : "rotate(-180deg)",
+                            transition: "transform 0.2s ease"
+                          }}
+                        />
+                      </button>
+                      {expandedCatalogGroups.has(group.name)
+                        ? group.items.map((item) => (
+                            <button
+                              key={`${group.name}-${item}`}
+                              type="button"
+                              className="vendor-service-catalog-item"
+                              onClick={() => openServiceEditor({ title: item, metadata: { priceIsStartingAt: true } })}
+                            >
+                              <span>{item}</span>
+                              <Plus size={24} />
+                            </button>
+                          ))
+                        : null}
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : null}
+
+            {serviceModal.view === "combinedSelector" ? (
+              <>
+                <div className="vendor-service-modal-title">
+                  <button type="button" onClick={() => setServiceModal({ view: "chooser", mode: "create" })} aria-label="Back to add menu">
+                    <ChevronLeft size={30} />
+                  </button>
+                  <h3>Combined Service</h3>
+                  <button type="button" onClick={() => setServiceModal({ view: "", mode: "create" })} aria-label="Close combined service">
+                    <X size={28} />
+                  </button>
+                </div>
+                <div className="vendor-combined-list">
+                  {bookableServices.length ? (
+                    bookableServices.map((service) => {
+                      const serviceId = String(service.id || service._id);
+                      return (
+                        <button
+                          key={serviceId}
+                          type="button"
+                          className={combinedSelection.includes(serviceId) ? "active" : ""}
+                          onClick={() => toggleCombinedService(serviceId)}
+                        >
+                          <span>
+                            <strong>{service.title}</strong>
+                            <em>{formatCurrency(service.price || 0)} - {formatDurationLabel(service.duration)}</em>
+                          </span>
+                          {combinedSelection.includes(serviceId) ? <Check size={22} /> : <Plus size={22} />}
+                        </button>
+                      );
+                    })
+                  ) : (
+                    <p className="muted">Add at least one service before creating a combined service.</p>
+                  )}
+                </div>
+                <SiteButton type="button" disabled={!combinedSelection.length} fullWidth onClick={continueCombinedService}>
+                  Continue
+                </SiteButton>
+              </>
+            ) : null}
+
+            {serviceModal.view === "serviceEditor" ? (
+              <form
+                className="vendor-service-editor"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  saveServiceForm({
+                    ...serviceForm,
+                    includedServiceIds: serviceForm.serviceType === "combined" ? combinedSelection : []
+                  });
+                }}
+              >
+                <div className="vendor-service-editor-head">
+                  <h3>{serviceForm.serviceType === "combined" ? "Add a Combined Service" : "Add a Service"}</h3>
+                  <button type="button" onClick={() => setServiceModal({ view: "", mode: "create" })} aria-label="Close service form">
+                    <X size={28} />
+                  </button>
+                </div>
+
+                <label className="vendor-profile-field">
+                  <span>Service Name</span>
+                  <input className="form-control" value={serviceForm.title} onChange={(event) => setServiceForm({ ...serviceForm, title: event.target.value })} required />
+                </label>
+                <div className="vendor-service-price-row">
+                  <label className="vendor-profile-field">
+                    <span>Price</span>
+                    <input className="form-control" type="number" min="0" step="0.01" value={serviceForm.price} onChange={(event) => setServiceForm({ ...serviceForm, price: event.target.value })} required />
+                  </label>
+                  <label className="vendor-switch-line">
+                    <span className="vendor-toggle">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(serviceForm.metadata?.priceIsStartingAt)}
+                        onChange={(event) => setServiceForm((current) => ({ ...current, metadata: { ...current.metadata, priceIsStartingAt: event.target.checked } }))}
+                      />
+                      <span />
+                    </span>
+                    And Up
+                  </label>
+                </div>
+                <label className="vendor-profile-field">
+                  <span>Duration</span>
+                  <select className="form-control" value={serviceForm.duration} onChange={(event) => setServiceForm({ ...serviceForm, duration: event.target.value })}>
+                    {DURATION_OPTIONS.map((duration) => (
+                      <option key={duration} value={duration}>{duration}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="vendor-profile-field">
+                  <span>Category</span>
+                  <select className="form-control" value={serviceForm.parentCategoryId} onChange={(event) => setServiceForm({ ...serviceForm, parentCategoryId: event.target.value })}>
+                    <option value="">Default</option>
+                    {serviceCategories.map((category) => (
+                      <option key={category.id || category._id || category.title} value={category.id || category._id || category.title}>
+                        {category.title}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="vendor-switch-line">
+                  <span>Require Deposit</span>
+                  <span className="vendor-toggle">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(serviceForm.metadata?.requireDeposit)}
+                      onChange={(event) => setServiceForm((current) => ({ ...current, metadata: { ...current.metadata, requireDeposit: event.target.checked } }))}
+                    />
+                    <span />
+                  </span>
+                </label>
+                {serviceForm.metadata?.requireDeposit ? (
+                  <label className="vendor-profile-field">
+                    <span>Deposit Percentage</span>
+                    <input className="form-control" type="number" min="0" max="100" value={serviceForm.depositValue} onChange={(event) => setServiceForm({ ...serviceForm, depositValue: event.target.value })} />
+                  </label>
+                ) : null}
+                <label className="vendor-switch-line">
+                  <span>This Service Is Only Available On Certain Days</span>
+                  <span className="vendor-toggle">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(serviceForm.metadata?.limitedDays)}
+                      onChange={(event) => setServiceForm((current) => ({ ...current, metadata: { ...current.metadata, limitedDays: event.target.checked } }))}
+                    />
+                    <span />
+                  </span>
+                </label>
+                <label className="vendor-profile-field">
+                  <span>Description</span>
+                  <textarea className="form-control" rows="6" value={serviceForm.description} onChange={(event) => setServiceForm({ ...serviceForm, description: event.target.value })} placeholder="Type Here..." />
+                  <small>Let clients know how to prepare, what to bring, and what this service entails.</small>
+                </label>
+                <div className="vendor-service-active-row">
+                  <label className="vendor-check-row">
+                    <input type="checkbox" checked={serviceForm.featured} onChange={(event) => setServiceForm({ ...serviceForm, featured: event.target.checked })} />
+                    Featured on public profile
+                  </label>
+                  <label className="vendor-check-row">
+                    <input type="checkbox" checked={serviceForm.isActive} onChange={(event) => setServiceForm({ ...serviceForm, isActive: event.target.checked })} />
+                    Visible
+                  </label>
+                </div>
+                <SiteButton disabled={loading.service} fullWidth type="submit">
+                  {loading.service ? "Saving..." : "Save"}
+                </SiteButton>
+              </form>
+            ) : null}
+
+            {serviceModal.view === "addonEditor" ? (
+              <form className="vendor-service-editor" onSubmit={handleServiceSubmit}>
+                <div className="vendor-service-editor-head">
+                  <button type="button" onClick={() => setServiceModal({ view: serviceMenuTab === "addons" ? "" : "chooser", mode: "create" })} aria-label="Back">
+                    <ChevronLeft size={30} />
+                  </button>
+                  <h3>New Add-On</h3>
+                  <span />
+                </div>
+                <label className="vendor-profile-field">
+                  <span>Add-On Name</span>
+                  <input className="form-control" placeholder="Ex: Bundles" value={serviceForm.title} onChange={(event) => setServiceForm({ ...serviceForm, title: event.target.value })} required />
+                </label>
+                <label className="vendor-profile-field">
+                  <span>Additional Price</span>
+                  <input className="form-control" type="number" min="0" step="0.01" value={serviceForm.price} onChange={(event) => setServiceForm({ ...serviceForm, price: event.target.value })} required />
+                </label>
+                <label className="vendor-profile-field">
+                  <span>Additional Duration</span>
+                  <select className="form-control" value={serviceForm.duration} onChange={(event) => setServiceForm({ ...serviceForm, duration: event.target.value })}>
+                    {DURATION_OPTIONS.map((duration) => (
+                      <option key={duration} value={duration}>{duration}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="vendor-profile-field">
+                  <span>Time is Added</span>
+                  <select
+                    className="form-control"
+                    value={serviceForm.metadata?.timeAdded || "after"}
+                    onChange={(event) => setServiceForm((current) => ({ ...current, metadata: { ...current.metadata, timeAdded: event.target.value } }))}
+                  >
+                    <option value="after">After base service</option>
+                    <option value="before">Before base service</option>
+                  </select>
+                </label>
+                <label className="vendor-profile-field">
+                  <span>Description</span>
+                  <textarea className="form-control" rows="6" placeholder="Type Here..." value={serviceForm.description} onChange={(event) => setServiceForm({ ...serviceForm, description: event.target.value })} />
+                </label>
+                <label className="vendor-switch-line">
+                  <span>This Add-On Is Only Available On Certain Days</span>
+                  <span className="vendor-toggle">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(serviceForm.metadata?.limitedDays)}
+                      onChange={(event) => setServiceForm((current) => ({ ...current, metadata: { ...current.metadata, limitedDays: event.target.checked } }))}
+                    />
+                    <span />
+                  </span>
+                </label>
+                <label className="vendor-switch-line">
+                  <span>Require Deposit</span>
+                  <span className="vendor-toggle">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(serviceForm.metadata?.requireDeposit)}
+                      onChange={(event) => setServiceForm((current) => ({ ...current, metadata: { ...current.metadata, requireDeposit: event.target.checked } }))}
+                    />
+                    <span />
+                  </span>
+                </label>
+                <SiteButton disabled={loading.service} fullWidth type="submit">
+                  {loading.service ? "Saving..." : "Save"}
+                </SiteButton>
+              </form>
+            ) : null}
+
+            {serviceModal.view === "categoryEditor" ? (
+              <form className="vendor-service-editor compact" onSubmit={handleServiceSubmit}>
+                <div className="vendor-service-editor-head">
+                  <h3>{editingServiceId ? "Edit Category" : "New Category"}</h3>
+                  <button type="button" onClick={() => setServiceModal({ view: "", mode: "create" })} aria-label="Close category form">
+                    <X size={28} />
+                  </button>
+                </div>
+                <label className="vendor-profile-field">
+                  <span>Category Name</span>
+                  <input className="form-control" placeholder="Ex: Natural Hair" value={serviceForm.title} onChange={(event) => setServiceForm({ ...serviceForm, title: event.target.value })} required />
+                </label>
+                <SiteButton disabled={loading.service} fullWidth type="submit">
+                  {loading.service ? "Saving..." : "Save"}
+                </SiteButton>
+              </form>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+
       {activeSection === "availability" ? (
         <VendorAvailabilityAgenda
           availabilityForm={availabilityForm}
@@ -1503,156 +3267,88 @@ export default function VendorDashboardManager({ user, initialData }) {
 
       {activeSection === "bookings" ? (
         <div className="vendor-dashboard-bookings" style={{ marginTop: 18 }}>
-          {[
-            ["Pending approvals", pendingBookings],
-            ["Confirmed bookings", confirmedBookings],
-            ["Completed bookings", completedBookings],
-            ["Closed bookings", closedBookings]
-          ].map(([label, group]) => (
-            <div key={label} className="dashboard-card vendor-dashboard-panel">
-              <div className="row-between" style={{ marginBottom: 14 }}>
-                <div>
-                  <div className="eyebrow">{label}</div>
-                  <h3 style={{ margin: "10px 0 0", fontFamily: "var(--font-display)", fontSize: "2rem" }}>
-                    {label}
-                  </h3>
-                </div>
-                <span className="badge badge-accent">{group.length}</span>
+          <section className="vendor-reference-panel vendor-reference-bookings-panel">
+            <div className="vendor-reference-panel-head vendor-reference-panel-head-wrap">
+              <div>
+                <h2>Booking list</h2>
               </div>
-
-              <div className="table-list">
-                {group.length ? (
-                  group.map((booking) => (
-                    <div key={booking.id} className="table-item">
-                      <div className="service-meta">
-                        <div>
-                          <strong>{booking.customerName}</strong>
-                          <p className="muted tiny" style={{ margin: "8px 0 0" }}>
-                            {booking.serviceName}
-                          </p>
-                        </div>
-                        <div style={{ textAlign: "right" }}>
-                          <strong>{booking.appointmentSlot}</strong>
-                          <p className="muted tiny" style={{ margin: "8px 0 0" }}>
-                            {formatDateLabel(booking.appointmentDate)}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="chip-row" style={{ marginTop: 12 }}>
-                        <span className={`chip vendor-status-chip ${bookingStatusTone(booking.status)}`}>{booking.status}</span>
-                        <span className="chip">Total {formatCurrency(booking.total)}</span>
-                        <span className="chip">Payment {booking.paymentStatus}</span>
-                      </div>
-
-                      <div className="hero-actions" style={{ marginTop: 14 }}>
-                        {booking.status === "pending_approval" ? (
-                          <>
-                            <SiteButton type="button" size="sm" onClick={() => performBookingAction(booking.id, { action: "approve" }, "Booking request approved.")}>
-                              Approve
-                            </SiteButton>
-                            <SiteButton type="button" size="sm" variant="secondary" onClick={() => performBookingAction(booking.id, { action: "decline", reason: "Unable to accommodate the requested time." }, "Booking request declined.")}>
-                              Decline
-                            </SiteButton>
-                          </>
-                        ) : null}
-
-                        {booking.status === "confirmed" ? (
-                          <>
-                            <SiteButton type="button" size="sm" variant="secondary" onClick={() => openReschedule(booking.id)}>
-                              Reschedule
-                            </SiteButton>
-                            <SiteButton type="button" size="sm" onClick={() => performBookingAction(booking.id, { action: "complete" }, "Booking marked as completed.")}>
-                              Complete
-                            </SiteButton>
-                            <SiteButton type="button" size="sm" variant="ghost" onClick={() => performBookingAction(booking.id, { action: "cancel", reason: "Cancelled by stylist." }, "Booking cancelled.")}>
-                              Cancel
-                            </SiteButton>
-                          </>
-                        ) : null}
-
-                        <SiteButton type="button" size="sm" variant="secondary" onClick={() => openConversationForBooking(booking.id)}>
-                          Message client
-                        </SiteButton>
-                      </div>
-
-                      {rescheduleState.bookingId === booking.id ? (
-                        <div className="vendor-reschedule-panel">
-                          {rescheduleState.loading ? <p className="muted tiny">Loading availability...</p> : null}
-                          {rescheduleState.error ? <p className="muted tiny">{rescheduleState.error}</p> : null}
-                          {rescheduleState.windows.length ? (
-                            <>
-                              <div className="slot-grid" style={{ marginTop: 12 }}>
-                                {rescheduleState.windows.map((window) => (
-                                  <button
-                                    key={window.date}
-                                    type="button"
-                                    className={`vendor-inline-pill ${rescheduleState.selectedDate === window.date ? "active" : ""}`}
-                                    onClick={() =>
-                                      setRescheduleState((current) => ({
-                                        ...current,
-                                        selectedDate: window.date,
-                                        selectedSlot: window.slots[0] || ""
-                                      }))
-                                    }
-                                  >
-                                    {window.label}
-                                  </button>
-                                ))}
-                              </div>
-                              <div className="slot-grid" style={{ marginTop: 12 }}>
-                                {(rescheduleState.windows.find((window) => window.date === rescheduleState.selectedDate)?.slots || []).map((slotItem) => (
-                                  <button
-                                    key={slotItem}
-                                    type="button"
-                                    className={`vendor-inline-pill ${rescheduleState.selectedSlot === slotItem ? "active" : ""}`}
-                                    onClick={() => setRescheduleState((current) => ({ ...current, selectedSlot: slotItem }))}
-                                  >
-                                    {slotItem}
-                                  </button>
-                                ))}
-                              </div>
-                              <div className="hero-actions" style={{ marginTop: 12 }}>
-                                <SiteButton
-                                  type="button"
-                                  size="sm"
-                                  onClick={() =>
-                                    performBookingAction(
-                                      booking.id,
-                                      {
-                                        action: "reschedule",
-                                        appointmentDate: rescheduleState.selectedDate,
-                                        appointmentSlot: rescheduleState.selectedSlot
-                                      },
-                                      "Booking rescheduled."
-                                    )
-                                  }
-                                >
-                                  Confirm new time
-                                </SiteButton>
-                                <SiteButton
-                                  type="button"
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => setRescheduleState({ bookingId: "", loading: false, error: "", windows: [], selectedDate: "", selectedSlot: "" })}
-                                >
-                                  Close
-                                </SiteButton>
-                              </div>
-                            </>
-                          ) : null}
-                        </div>
-                      ) : null}
-                    </div>
-                  ))
-                ) : (
-                  <div className="table-item">
-                    <p className="muted" style={{ margin: 0 }}>Nothing to show in this section yet.</p>
-                  </div>
-                )}
+              <div className="vendor-reference-filter-group">
+                {OVERVIEW_BOOKING_FILTERS.map((option) => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    className={`vendor-reference-filter-button ${overviewBookingFilter === option.id ? "active" : ""}`}
+                    onClick={() => setOverviewBookingFilter(option.id)}
+                  >
+                    {option.label}
+                  </button>
+                ))}
               </div>
             </div>
-          ))}
+
+            <div className="vendor-reference-table-wrap">
+              <table className="vendor-reference-table">
+                <thead>
+                  <tr>
+                    <th>Customer Name</th>
+                    <th>Order no</th>
+                    <th>Service</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Status</th>
+                    <th>Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {overviewBookings.length ? (
+                    overviewBookings.map((booking) => {
+                      const [backgroundColor, color] = getAvatarSwatch(
+                        booking.customerEmail || booking.customerName
+                      );
+
+                      return (
+                        <tr key={booking.id}>
+                          <td>
+                            <div className="vendor-reference-customer-cell">
+                              <span
+                                className="vendor-reference-table-avatar"
+                                style={{ backgroundColor, color }}
+                              >
+                                {getInitials(booking.customerName)}
+                              </span>
+                              <span>{booking.customerName}</span>
+                            </div>
+                          </td>
+                          <td>#{String(booking.id || "").replace(/[^\d]/g, "").slice(-5) || "00001"}</td>
+                          <td>{booking.serviceName}</td>
+                          <td>{formatLineupDate(booking.appointmentDate)}</td>
+                          <td>{booking.appointmentSlot}</td>
+                          <td>
+                            <span className={`vendor-reference-status-pill ${bookingStatusTone(booking.status)}`}>
+                              {booking.status === "pending_approval"
+                                ? "Pending"
+                                : booking.status === "confirmed"
+                                  ? "Confirmed"
+                                  : booking.status === "completed"
+                                    ? "Completed"
+                                    : booking.status}
+                            </span>
+                          </td>
+                          <td>{formatCurrency(booking.total)}</td>
+                        </tr>
+                      );
+                    })
+                  ) : (
+                    <tr>
+                      <td colSpan="7">
+                        <div className="vendor-reference-empty-state">No bookings in this view yet.</div>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
         </div>
       ) : null}
 
@@ -1737,73 +3433,561 @@ export default function VendorDashboardManager({ user, initialData }) {
       ) : null}
 
       {activeSection === "settings" ? (
-        <div className="dashboard-layout" style={{ marginTop: 18 }}>
-          <div className="dashboard-card">
-            <div className="eyebrow">Settings</div>
-            <h3 style={{ margin: "12px 0 16px", fontFamily: "var(--font-display)", fontSize: "2rem" }}>
-              Workspace controls
-            </h3>
-            <div className="timeline">
-              <div className="timeline-item">
-                <strong>Public profile</strong>
-                <p className="muted tiny" style={{ margin: "8px 0 0" }}>
-                  Your public profile is generated from this dashboard. Update your bio, policies, images, services, and availability here.
-                </p>
-              </div>
-              <div className="timeline-item">
-                <strong>Booking mode mix</strong>
-                <p className="muted tiny" style={{ margin: "8px 0 0" }}>
-                  Use instant booking for standard services and approval-required mode for appointments that need consultation or manual review.
-                </p>
-              </div>
-              <div className="timeline-item">
-                <strong>Messaging</strong>
-                <p className="muted tiny" style={{ margin: "8px 0 0" }}>
-                  Conversations are attached to bookings so only the stylist and booked client can access the thread.
-                </p>
-              </div>
+        <div className="vendor-settings-shell">
+          <aside className="dashboard-card vendor-settings-nav" aria-label="Account settings tabs">
+            <div>
+              <div className="eyebrow">Account</div>
+              <h3>Settings</h3>
             </div>
-          </div>
+            <div className="vendor-settings-tab-list" role="tablist" aria-label="Vendor settings">
+              {SETTINGS_TABS.map((tab) => {
+                const Icon = tab.icon;
 
-          <div className="dashboard-card">
-            <div className="eyebrow">Quick links</div>
-            <h3 style={{ margin: "12px 0 16px", fontFamily: "var(--font-display)", fontSize: "2rem" }}>
-              Jump to live flows
-            </h3>
-            <div className="timeline">
-              <div className="timeline-item">
-                <Link href={`/stylists/${dashboard.vendor.slug}`} className="muted tiny">
-                  Open public stylist profile
-                </Link>
-              </div>
-              <div className="timeline-item">
-                <Link href={`/book/${dashboard.vendor.slug}`} className="muted tiny">
-                  Open booking page
-                </Link>
-              </div>
-              <div className="timeline-item">
-                <button type="button" className="vendor-inline-link" onClick={() => handleSectionSelect("messages")}>
-                  Open booking inbox
-                </button>
-              </div>
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={activeSettingsTab === tab.id}
+                    className={`vendor-settings-tab ${activeSettingsTab === tab.id ? "active" : ""}`}
+                    onClick={() => handleSettingsTabSelect(tab.id)}
+                  >
+                    <Icon size={18} />
+                    <span>{tab.label}</span>
+                  </button>
+                );
+              })}
             </div>
-          </div>
+          </aside>
 
-          <div className="dashboard-card">
-            <div className="eyebrow">Danger zone</div>
-            <h3 style={{ margin: "12px 0 16px", fontFamily: "var(--font-display)", fontSize: "2rem" }}>
-              Delete stylist account
-            </h3>
-            <p className="muted tiny" style={{ margin: "0 0 16px" }}>
-              Delete this stylist account only when you want this Google email to stop belonging to the vendor side so it can be used for a client account instead.
-            </p>
-            <SiteButton type="button" variant="secondary" onClick={handleDeleteAccount} disabled={loading.deleteAccount}>
-              {loading.deleteAccount ? "Deleting..." : "Delete stylist account"}
+          <section className="dashboard-card vendor-settings-panel">
+            {activeSettingsTab === "notification" ? (
+              <form onSubmit={handleNotificationSubmit} className="vendor-settings-form">
+                <div className="vendor-settings-head">
+                  <div>
+                    <div className="eyebrow">Notification</div>
+                    <h3>My Notifications</h3>
+                    <p>You will receive updates about your account, client bookings, reschedules, and cancellations.</p>
+                  </div>
+                  <SiteButton type="submit" disabled={loading.notificationPreferences}>
+                    {loading.notificationPreferences ? "Saving..." : "Save"}
+                  </SiteButton>
+                </div>
+
+                <div className="vendor-settings-section">
+                  <div>
+                    <strong>Mobile Number</strong>
+                    <p>{profileForm.businessInfo?.smsNotificationsPhoneNumber || user?.phone || "No mobile number on file"}</p>
+                  </div>
+                </div>
+
+                <label className="vendor-settings-toggle-row">
+                  <div>
+                    <strong>Advice delivered to your phone</strong>
+                    <p>Actionable insights, advice, and marketing texts designed to help achieve your business goals.</p>
+                    <small>Recurring automated promotional and personalized marketing text messages may be sent to the number used when signing up.</small>
+                  </div>
+                  <span className="vendor-toggle" aria-label="Toggle advice texts">
+                    <input
+                      type="checkbox"
+                      checked={notificationForm.marketingTexts}
+                      onChange={() => toggleNotificationPreference("marketingTexts")}
+                    />
+                    <span />
+                  </span>
+                </label>
+
+                <div className="vendor-settings-toggle-row vendor-settings-hours-row">
+                  <div>
+                    <strong>Send within specific hours only</strong>
+                    <p>Keep SMS and push updates inside your preferred working window.</p>
+                    <div className="vendor-settings-time-grid">
+                      <label className="vendor-profile-field">
+                        <span>From</span>
+                        <select
+                          className="form-control"
+                          value={notificationForm.quietHoursFrom}
+                          onChange={(event) =>
+                            setNotificationForm((current) => ({ ...current, quietHoursFrom: event.target.value }))
+                          }
+                          disabled={!notificationForm.quietHoursEnabled}
+                        >
+                          {TIME_OPTIONS.map(([value, label]) => (
+                            <option key={value} value={value}>
+                              {label}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="vendor-profile-field">
+                        <span>To</span>
+                        <select
+                          className="form-control"
+                          value={notificationForm.quietHoursTo}
+                          onChange={(event) =>
+                            setNotificationForm((current) => ({ ...current, quietHoursTo: event.target.value }))
+                          }
+                          disabled={!notificationForm.quietHoursEnabled}
+                        >
+                          {TIME_OPTIONS.map(([value, label]) => (
+                            <option key={value} value={value}>
+                              {label}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+                  </div>
+                  <span className="vendor-toggle" aria-label="Toggle quiet hours">
+                    <input
+                      type="checkbox"
+                      checked={notificationForm.quietHoursEnabled}
+                      onChange={() => toggleNotificationPreference("quietHoursEnabled")}
+                    />
+                    <span />
+                  </span>
+                </div>
+
+                <div className="vendor-settings-option-list">
+                  {VENDOR_NOTIFICATION_OPTIONS.map((option) => (
+                    <label key={option.key} className="vendor-settings-toggle-row">
+                      <div>
+                        <strong>{option.label}</strong>
+                        <p>{option.description}</p>
+                      </div>
+                      <span className="vendor-toggle" aria-label={`Toggle ${option.label}`}>
+                        <input
+                          type="checkbox"
+                          checked={notificationForm[option.key]}
+                          onChange={() => toggleNotificationPreference(option.key)}
+                        />
+                        <span />
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </form>
+            ) : null}
+
+            {activeSettingsTab === "billing" ? (
+              <div className="vendor-settings-form">
+                <div className="vendor-settings-head">
+                  <div>
+                    <div className="eyebrow">Plan & Billing</div>
+                    <h3>Plan & Billing Details</h3>
+                    <p>Manage your Premium Plan and the card used for monthly billing.</p>
+                  </div>
+                </div>
+
+                <div className="vendor-plan-card">
+                  <div className="vendor-plan-card-head">
+                    <div>
+                      <strong>{formatCurrency(billingPlan.priceMonthly || 35)}/mo</strong>
+                      <h4>{billingPlan.name || "Premium Plan"}</h4>
+                      <p>Your business, your way: advanced features, more flexibility, and lower fees.</p>
+                    </div>
+                    <span className="vendor-plan-badge">{billingPlan.status === "active" ? "Current Plan" : "Trial Plan"}</span>
+                  </div>
+                  <div className="vendor-plan-feature-list">
+                    {(billingPlan.features || []).map((feature) => (
+                      <span key={feature}>
+                        <Check size={16} />
+                        {feature}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="vendor-settings-section">
+                  <div>
+                    <strong>Payment Details</strong>
+                    <p>
+                      {billingPlan.status === "active"
+                        ? `Your next bill is scheduled for ${formatBillingDate(billingPlan.nextBillingDate)}.`
+                        : `Your trial subscription ends ${formatBillingDate(billingPlan.trialEndsAt)}.`}
+                    </p>
+                    <small>{paymentMethodLabel(defaultBillingMethod)}</small>
+                  </div>
+                  <SiteButton type="button" onClick={handleSubscribePlan} disabled={loading.subscribePlan}>
+                    {loading.subscribePlan ? "Saving..." : defaultBillingMethod ? "Subscribe" : "Add card first"}
+                  </SiteButton>
+                </div>
+
+                <div className="vendor-settings-payment-grid">
+                  <div className="vendor-settings-section">
+                    <strong>Saved payment methods</strong>
+                    <div className="vendor-payment-method-list">
+                      {billingPaymentMethods.length ? (
+                        billingPaymentMethods.map((method) => (
+                          <div key={method.id} className="vendor-payment-method-row">
+                            <div>
+                              <strong>{paymentMethodLabel(method)}</strong>
+                              <p>Expires {String(method.expMonth).padStart(2, "0")}/{method.expYear}</p>
+                            </div>
+                            <div className="vendor-settings-actions">
+                              {method.isDefault ? <span className="chip">Default</span> : null}
+                              {!method.isDefault ? (
+                                <button
+                                  type="button"
+                                  className="vendor-inline-link"
+                                  onClick={() => handleSetDefaultPaymentMethod(method.id)}
+                                  disabled={loading.paymentMethod === method.id}
+                                >
+                                  Set default
+                                </button>
+                              ) : null}
+                              <button
+                                type="button"
+                                className="vendor-inline-link danger"
+                                onClick={() => handleRemovePaymentMethod(method.id)}
+                                disabled={loading.paymentMethod === method.id}
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="muted tiny" style={{ margin: 0 }}>No Payment Method on File</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <form onSubmit={handleAddPaymentMethod} className="vendor-settings-section vendor-payment-form">
+                    <strong>Add Payment Method</strong>
+                    <label className="vendor-profile-field">
+                      <span>Cardholder name</span>
+                      <input
+                        className="form-control"
+                        value={paymentMethodForm.holderName}
+                        onChange={(event) => setPaymentMethodForm((current) => ({ ...current, holderName: event.target.value }))}
+                        required
+                      />
+                    </label>
+                    <div className="vendor-profile-two">
+                      <label className="vendor-profile-field">
+                        <span>Card brand</span>
+                        <select
+                          className="form-control"
+                          value={paymentMethodForm.brand}
+                          onChange={(event) => setPaymentMethodForm((current) => ({ ...current, brand: event.target.value }))}
+                        >
+                          <option>Visa</option>
+                          <option>Mastercard</option>
+                          <option>American Express</option>
+                          <option>Discover</option>
+                        </select>
+                      </label>
+                      <label className="vendor-profile-field">
+                        <span>Last 4 digits</span>
+                        <input
+                          className="form-control"
+                          inputMode="numeric"
+                          maxLength="4"
+                          value={paymentMethodForm.last4}
+                          onChange={(event) => setPaymentMethodForm((current) => ({ ...current, last4: event.target.value.replace(/\D/g, "").slice(0, 4) }))}
+                          required
+                        />
+                      </label>
+                    </div>
+                    <div className="vendor-profile-two">
+                      <label className="vendor-profile-field">
+                        <span>Expiry month</span>
+                        <input
+                          className="form-control"
+                          type="number"
+                          min="1"
+                          max="12"
+                          value={paymentMethodForm.expMonth}
+                          onChange={(event) => setPaymentMethodForm((current) => ({ ...current, expMonth: event.target.value }))}
+                          required
+                        />
+                      </label>
+                      <label className="vendor-profile-field">
+                        <span>Expiry year</span>
+                        <input
+                          className="form-control"
+                          type="number"
+                          min={new Date().getFullYear()}
+                          value={paymentMethodForm.expYear}
+                          onChange={(event) => setPaymentMethodForm((current) => ({ ...current, expYear: event.target.value }))}
+                          required
+                        />
+                      </label>
+                    </div>
+                    <label className="vendor-check-row">
+                      <input
+                        type="checkbox"
+                        checked={paymentMethodForm.isDefault}
+                        onChange={(event) => setPaymentMethodForm((current) => ({ ...current, isDefault: event.target.checked }))}
+                      />
+                      Use as default billing card
+                    </label>
+                    <SiteButton type="submit" disabled={loading.addPaymentMethod}>
+                      {loading.addPaymentMethod ? "Saving..." : "Add Payment Method"}
+                    </SiteButton>
+                  </form>
+                </div>
+              </div>
+            ) : null}
+
+            {activeSettingsTab === "email" ? (
+              <div className="vendor-settings-form">
+                <div className="vendor-settings-head">
+                  <div>
+                    <div className="eyebrow">Login Email</div>
+                    <h3>Change Email</h3>
+                    <p>Email sign-in accounts can update the login email used for this stylist dashboard.</p>
+                  </div>
+                </div>
+                {canUseEmailLogin ? (
+                  <form onSubmit={handleEmailSubmit} className="vendor-settings-section">
+                    <label className="vendor-profile-field">
+                      <span>Email</span>
+                      <input
+                        className="form-control"
+                        type="email"
+                        value={emailForm.email}
+                        onChange={(event) => setEmailForm({ email: event.target.value })}
+                        autoComplete="email"
+                        required
+                      />
+                    </label>
+                    <SiteButton type="submit" disabled={loading.loginEmail}>
+                      {loading.loginEmail ? "Saving..." : "Save"}
+                    </SiteButton>
+                  </form>
+                ) : (
+                  <div className="vendor-settings-empty">
+                    <strong>Login email changes are not available</strong>
+                    <p>This account signs in with {accountSecurity.authProvider === "apple" ? "Apple" : "Google"}, so the login email is managed by that provider.</p>
+                  </div>
+                )}
+              </div>
+            ) : null}
+
+            {activeSettingsTab === "password" ? (
+              <div className="vendor-settings-form">
+                <div className="vendor-settings-head">
+                  <div>
+                    <div className="eyebrow">Password</div>
+                    <h3>Change Password</h3>
+                    <p>Password changes are available for email sign-in accounts.</p>
+                  </div>
+                </div>
+                {canUseEmailLogin ? (
+                  <form onSubmit={handlePasswordSubmit} className="vendor-settings-section">
+                    <label className="vendor-profile-field">
+                      <span>Old Password</span>
+                      <input
+                        className="form-control"
+                        type="password"
+                        placeholder="Old Password"
+                        value={passwordForm.currentPassword}
+                        onChange={(event) => setPasswordForm((current) => ({ ...current, currentPassword: event.target.value }))}
+                        autoComplete="current-password"
+                        required
+                      />
+                    </label>
+                    <label className="vendor-profile-field">
+                      <span>New Password</span>
+                      <input
+                        className="form-control"
+                        type="password"
+                        placeholder="New Password"
+                        value={passwordForm.password}
+                        onChange={(event) => setPasswordForm((current) => ({ ...current, password: event.target.value }))}
+                        autoComplete="new-password"
+                        required
+                      />
+                    </label>
+                    <label className="vendor-profile-field">
+                      <span>Confirm Password</span>
+                      <input
+                        className="form-control"
+                        type="password"
+                        placeholder="Confirm Password"
+                        value={passwordForm.confirmPassword}
+                        onChange={(event) => setPasswordForm((current) => ({ ...current, confirmPassword: event.target.value }))}
+                        autoComplete="new-password"
+                        required
+                      />
+                    </label>
+                    <SiteButton type="submit" disabled={loading.password}>
+                      {loading.password ? "Saving..." : "Save"}
+                    </SiteButton>
+                  </form>
+                ) : (
+                  <div className="vendor-settings-empty">
+                    <strong>Password changes are not available</strong>
+                    <p>This account signs in with {accountSecurity.authProvider === "apple" ? "Apple" : "Google"}, so password management stays with that provider.</p>
+                  </div>
+                )}
+              </div>
+            ) : null}
+
+            {activeSettingsTab === "delete" ? (
+              <div className="vendor-settings-form">
+                <div className="vendor-settings-head">
+                  <div>
+                    <div className="eyebrow">Danger zone</div>
+                    <h3>Delete stylist account</h3>
+                    <p>Delete this stylist account only when you want this login to stop belonging to the vendor side.</p>
+                  </div>
+                </div>
+                <div className="vendor-settings-danger">
+                  <strong>Permanent account deletion</strong>
+                  <p>This removes your vendor profile, services, bookings, conversations, saved billing methods, and notification settings.</p>
+                  <SiteButton type="button" variant="secondary" onClick={handleDeleteAccount} disabled={loading.deleteAccount}>
+                    {loading.deleteAccount ? "Deleting..." : "Delete stylist account"}
+                  </SiteButton>
+                </div>
+              </div>
+            ) : null}
+          </section>
+        </div>
+      ) : null}
+
+      {productModalOpen ? (
+        <div className="vendor-profile-modal-backdrop" onClick={() => setProductModalOpen(false)}>
+          <form className="vendor-profile-modal" onSubmit={handleProductSubmit} onClick={(event) => event.stopPropagation()}>
+            <div className="vendor-profile-modal-head">
+              <h4>{editingProductId ? "Edit Product" : "Add a Product"}</h4>
+              <button type="button" onClick={() => setProductModalOpen(false)} aria-label="Close product modal">
+                <X size={26} />
+              </button>
+            </div>
+
+            <label className="vendor-profile-field">
+              <span>Product Name</span>
+              <input
+                className="form-control"
+                placeholder="Ex: Bundles"
+                value={productForm.name}
+                onChange={(event) => setProductForm((current) => ({ ...current, name: event.target.value }))}
+                required
+              />
+            </label>
+            <label className="vendor-profile-field">
+              <span>Price</span>
+              <input
+                className="form-control"
+                type="number"
+                min="0"
+                step="0.01"
+                value={productForm.price}
+                onChange={(event) => setProductForm((current) => ({ ...current, price: event.target.value }))}
+              />
+            </label>
+            <label className="vendor-profile-field">
+              <span>Category</span>
+              <select
+                className="form-control"
+                value={productForm.category}
+                onChange={(event) => setProductForm((current) => ({ ...current, category: event.target.value }))}
+              >
+                {PRODUCT_CATEGORIES.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="vendor-profile-field">
+              <span>Description</span>
+              <textarea
+                className="form-control"
+                rows="6"
+                placeholder="Type Here..."
+                value={productForm.description}
+                onChange={(event) => setProductForm((current) => ({ ...current, description: event.target.value }))}
+              />
+            </label>
+
+            <SiteButton disabled={loading.profile} fullWidth type="submit">
+              {loading.profile ? "Saving..." : "Save"}
             </SiteButton>
-          </div>
+          </form>
+        </div>
+      ) : null}
+
+      {mediaModal.open && activeMediaItem ? (
+        <div className="vendor-profile-modal-backdrop" onClick={() => setMediaModal({ open: false, itemId: "" })}>
+          <form className="vendor-profile-modal vendor-media-modal" onSubmit={saveMediaEditor} onClick={(event) => event.stopPropagation()}>
+            <div className="vendor-profile-modal-head">
+              <h4>Edit Image</h4>
+              <button type="button" onClick={() => setMediaModal({ open: false, itemId: "" })} aria-label="Close media modal">
+                <X size={22} />
+              </button>
+            </div>
+
+            {activeMediaItem.type === "video" ? (
+              <video src={activeMediaItem.url} className="vendor-media-modal-preview" controls />
+            ) : (
+              <img src={activeMediaItem.url} alt="Selected gallery media" className="vendor-media-modal-preview" />
+            )}
+
+            <label className="vendor-profile-field">
+              <span>Service</span>
+              <select
+                className="form-control"
+                value={mediaForm.serviceId}
+                onChange={(event) => setMediaForm((current) => ({ ...current, serviceId: event.target.value }))}
+              >
+                <option value="">Select Service</option>
+                {services.map((service) => (
+                  <option key={service.id || service.title} value={service.id || service.title}>
+                    {service.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="vendor-profile-field">
+              <span>Client</span>
+              <input
+                className="form-control"
+                placeholder="Select Client"
+                value={mediaForm.clientName}
+                onChange={(event) => setMediaForm((current) => ({ ...current, clientName: event.target.value }))}
+              />
+            </label>
+            <label className="vendor-profile-field">
+              <span>Caption</span>
+              <textarea
+                className="form-control"
+                rows="4"
+                placeholder="Add a short description"
+                value={mediaForm.caption}
+                onChange={(event) => setMediaForm((current) => ({ ...current, caption: event.target.value }))}
+              />
+            </label>
+
+            <SiteButton disabled={loading.profile} fullWidth type="submit">
+              {loading.profile ? "Saving..." : "Save"}
+            </SiteButton>
+            <button type="button" className="vendor-delete-media-button" onClick={() => deleteMediaItem(activeMediaItem.id)}>
+              Delete Image
+            </button>
+          </form>
         </div>
       ) : null}
       </div>
+
+      {activeConversationId ? (
+        <MessengerWidget
+          conversationId={activeConversationId}
+          recipientName={activeConversation?.customerName || "Client"}
+          recipientAvatar=""
+          userRole="vendor"
+          externalMessages={threadState.messages}
+          externalDraft={threadState.draft}
+          externalSending={threadState.sending}
+          externalLoading={threadState.loading}
+          externalError={threadState.error}
+          onSend={(body) => sendMessage(body)}
+          onDraftChange={(value) => setThreadState((current) => ({ ...current, draft: value }))}
+        />
+      ) : null}
     </div>
   );
 }

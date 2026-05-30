@@ -46,15 +46,13 @@ const MANAGE_WEEKDAY_ROWS = [
 ];
 
 const COMMON_TIMEZONES = [
-  "Asia/Karachi",
-  "Asia/Dubai",
-  "Asia/Riyadh",
-  "Europe/London",
-  "Europe/Paris",
   "America/New_York",
   "America/Chicago",
   "America/Denver",
   "America/Los_Angeles",
+  "America/Phoenix",
+  "America/Anchorage",
+  "Pacific/Honolulu",
   "America/Toronto",
   "Australia/Sydney"
 ];
@@ -977,7 +975,7 @@ export default function VendorAvailabilityAgenda({
   const [agendaLoading, setAgendaLoading] = useState(false);
   const [manageSaving, setManageSaving] = useState(false);
   const [manageDraft, setManageDraft] = useState(() => buildManageDraftFromRules(availabilityForm));
-  const [manageTimezone, setManageTimezone] = useState(user?.timezone || "Asia/Karachi");
+  const [manageTimezone, setManageTimezone] = useState(user?.timezone || "America/Los_Angeles");
   const [vacationModalOpen, setVacationModalOpen] = useState(false);
   const [vacationMonthKey, setVacationMonthKey] = useState(getMonthStartKey(todayKey));
   const [vacationDraft, setVacationDraft] = useState({

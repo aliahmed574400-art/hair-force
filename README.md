@@ -8,7 +8,7 @@ Hair Force is a StyleSeat-inspired multi-vendor beauty marketplace built with Ne
 - Marketplace search and discovery flow for salons, barbers, spas, makeup artists, nail studios, and braid specialists
 - Detailed stylist profile pages with services, reviews, gallery, amenities, and availability
 - Booking flow with service selection, time-slot selection, and booking API
-- Vendor onboarding page and dashboard
+- Stylist sign-in and vendor dashboard
 - Client sign-up and sign-in screens with session cookie auth
 - Session-aware client and vendor dashboards
 - Vendor profile editing, cover image upload, service CRUD, recurring availability rules, and blackout date editing
@@ -57,10 +57,10 @@ npm run dev
 - `/discover` stylist discovery
 - `/stylists/[slug]` stylist profile
 - `/book/[slug]` booking flow
-- `/join` vendor onboarding
 - `/dashboard` session-aware client or vendor dashboard
 - `/admin` admin moderation queue
 - `/signin` client sign-in
+- `/vendor/signin` stylist sign-in
 - `/signup` client sign-up
 
 ## API routes
@@ -68,7 +68,6 @@ npm run dev
 - `GET /api/stylists`
 - `GET /api/stylists/[slug]`
 - `POST /api/bookings`
-- `POST /api/vendors`
 - `POST /api/auth/signup`
 - `POST /api/auth/signin`
 - `GET /api/auth/me`

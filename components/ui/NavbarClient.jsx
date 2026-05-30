@@ -3,9 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MessageSquareText } from "lucide-react";
 import Logo from "@/components/brand/Logo";
-import VendorNotificationsPopover from "@/components/dashboard/VendorNotificationsPopover";
 import SiteButton from "@/components/ui/SiteButton";
 import SignOutButton from "@/components/ui/SignOutButton";
 
@@ -52,7 +50,6 @@ export default function NavbarClient({ sessionUser, links }) {
       links.filter((link) => {
         if (
           link.href === "/signin" ||
-          link.href === "/join" ||
           link.href === "/vendor/signin" ||
           link.href === "/dashboard"
         ) {
@@ -113,22 +110,9 @@ export default function NavbarClient({ sessionUser, links }) {
               <>
                 {isVendorDashboardView ? (
                   <div className="topbar-vendor-tools" aria-label="Vendor dashboard shortcuts">
-                    <VendorNotificationsPopover className="topbar-vendor-icon-link" />
-                    <Link href="/dashboard?section=messages" className="topbar-vendor-icon-link" aria-label="Messages">
-                      <MessageSquareText size={18} />
-                    </Link>
-                    <Link href="/dashboard?section=profile" className="topbar-vendor-avatar-link" aria-label="Profile">
-                      {sessionUser.avatar ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={sessionUser.avatar}
-                          alt={`${sessionUser.name || sessionUser.email || "Vendor"} avatar`}
-                          className="topbar-vendor-avatar-image"
-                        />
-                      ) : (
-                        <span className="topbar-vendor-avatar-fallback">{getUserInitials(sessionUser)}</span>
-                      )}
-                    </Link>
+                    <SiteButton href={dashboardHref} variant="secondary" size="sm">
+                      {dashboardLabel}
+                    </SiteButton>
                   </div>
                 ) : (
                   <SiteButton href={dashboardHref} variant="secondary" size="sm">
@@ -142,8 +126,8 @@ export default function NavbarClient({ sessionUser, links }) {
                 <SiteButton href="/signin" variant="secondary" size="sm">
                   Sign in
                 </SiteButton>
-                <SiteButton href="/join" size="sm">
-                  Join as stylist
+                <SiteButton href="/vendor/signin" size="sm">
+                  Join as a Stylist
                 </SiteButton>
               </>
             )}
@@ -184,22 +168,9 @@ export default function NavbarClient({ sessionUser, links }) {
                 <>
                   {isVendorDashboardView ? (
                     <div className="mobile-vendor-tools">
-                      <VendorNotificationsPopover className="topbar-vendor-icon-link" />
-                      <Link href="/dashboard?section=messages" className="topbar-vendor-icon-link" aria-label="Messages">
-                        <MessageSquareText size={18} />
-                      </Link>
-                      <Link href="/dashboard?section=profile" className="topbar-vendor-avatar-link" aria-label="Profile">
-                        {sessionUser.avatar ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={sessionUser.avatar}
-                            alt={`${sessionUser.name || sessionUser.email || "Vendor"} avatar`}
-                            className="topbar-vendor-avatar-image"
-                          />
-                        ) : (
-                          <span className="topbar-vendor-avatar-fallback">{getUserInitials(sessionUser)}</span>
-                        )}
-                      </Link>
+                      <SiteButton href={dashboardHref} variant="secondary" fullWidth>
+                        {dashboardLabel}
+                      </SiteButton>
                     </div>
                   ) : (
                     <SiteButton href={dashboardHref} variant="secondary" fullWidth>
@@ -213,8 +184,8 @@ export default function NavbarClient({ sessionUser, links }) {
                   <SiteButton href="/signin" variant="secondary" fullWidth>
                     Sign in
                   </SiteButton>
-                  <SiteButton href="/join" fullWidth>
-                    Join as stylist
+                  <SiteButton href="/vendor/signin" fullWidth>
+                    Join as a Stylist
                   </SiteButton>
                 </>
               )}

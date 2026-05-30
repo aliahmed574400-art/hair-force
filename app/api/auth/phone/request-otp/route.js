@@ -16,7 +16,7 @@ export async function POST(request) {
 
     // SECURITY: Rate limit OTP requests per phone (5 per hour)
     const rateLimitKey = `phone:${phone}`;
-    if (!checkRateLimit(rateLimitKey, 5, 3600000)) {
+    if (!(await checkRateLimit(rateLimitKey, 5, 3600000))) {
       return NextResponse.json(
         { error: "Too many OTP requests. Please try again later." },
         { status: 429 }

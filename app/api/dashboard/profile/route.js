@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { AUDIT_ACTIONS, auditFromRequest } from "@/lib/audit-logging";
 import {
   getDashboardDataForUser,
   updateClientProfile,
@@ -38,6 +39,12 @@ export async function PUT(request) {
 
     if (user.role === "vendor") {
       const dashboard = await updateVendorProfile(user, payload);
+      await auditFromRequest(request, {
+        userId: user.id,
+        action: AUDIT_ACTIONS.VENDOR_PROFILE_UPDATED,
+        resourceType: "vendor",
+        resourceId: user.vendorSlug || user.id
+      });
       return NextResponse.json(dashboard);
     }
 

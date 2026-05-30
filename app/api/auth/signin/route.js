@@ -18,7 +18,7 @@ export async function POST(request) {
     
     // SECURITY: Rate limit sign-in attempts (10 per hour per email)
     const rateLimitKey = `signin:${email}`;
-    if (!checkRateLimit(rateLimitKey, 10, 3600000)) {
+    if (!(await checkRateLimit(rateLimitKey, 10, 3600000))) {
       return NextResponse.json(
         { error: "Too many sign-in attempts. Please try again later." },
         { status: 429 }

@@ -20,33 +20,21 @@ const STEP_ACCENTS = {
   sparkle: "rgba(186, 230, 253, 0.74)"
 };
 
-const CARD_HOLD_RATIO = 0.72;
-
+// Snap to integer card index based on scroll progress. The visual smoothness
+// comes from useSpring (below), not from interpolating between integers here.
+// Result: as user scrolls past a segment boundary, the target jumps from N to
+// N+1 and the spring animates the cards from one to the next without ever
+// showing two side-by-side at rest.
 function getHeldCardProgress(progress, stepCount) {
   const maxIndex = Math.max(stepCount - 1, 0);
   const clampedProgress = Math.max(0, Math.min(1, progress));
-  const totalSegments = Math.max(stepCount, 1);
 
   if (!maxIndex) {
     return 0;
   }
 
-  // Reserve one extra segment so the last card can fully appear and hold
-  // before the sticky section releases to the next page section.
-  const scaledProgress = clampedProgress * totalSegments;
-  const segmentIndex = Math.floor(scaledProgress);
-
-  if (segmentIndex >= maxIndex) {
-    return maxIndex;
-  }
-
-  const segmentProgress = scaledProgress - segmentIndex;
-
-  if (segmentProgress <= CARD_HOLD_RATIO) {
-    return segmentIndex;
-  }
-
-  return segmentIndex + (segmentProgress - CARD_HOLD_RATIO) / (1 - CARD_HOLD_RATIO);
+  const index = Math.floor(clampedProgress * stepCount);
+  return Math.min(maxIndex, index);
 }
 
 function StepIcon({ name }) {
@@ -402,19 +390,26 @@ export default function HowItWorksTimeline({ steps }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [stageWidth, setStageWidth] = useState(0);
   const stepCount = Math.max(steps.length, 1);
-  const scrollStepCount = stepCount + 1;
+  // Total scroll-trap height = stepCount segments. The old code added a "+1"
+  // buffer segment so the last card could fully animate in before release —
+  // unnecessary now that the spring animates the transition. Without this,
+  // the section released ~18vh AFTER the last card was already visible,
+  // making the page feel stuck.
+  const scrollStepCount = stepCount;
   const { scrollYProgress } = useScroll({
     target: scrollRef,
     offset: ["start start", "end end"]
   });
-  const smoothProgress = useSpring(scrollYProgress, {
-    stiffness: 120,
-    damping: 24,
-    mass: 0.34
-  });
 
-  // Hold each card in focus before shifting the track to the next card.
-  const cardProgress = useTransform(smoothProgress, (latest) => getHeldCardProgress(latest, stepCount));
+  // Raw integer index from scroll; cardProgress is the spring-animated version
+  // that drives all transforms. Spring config tuned so transitions take ~400ms
+  // and don't oscillate.
+  const rawCardProgress = useTransform(scrollYProgress, (latest) => getHeldCardProgress(latest, stepCount));
+  const cardProgress = useSpring(rawCardProgress, {
+    stiffness: 180,
+    damping: 30,
+    mass: 0.9
+  });
 
   useEffect(() => {
     const node = stageViewportRef.current;
@@ -444,17 +439,13 @@ export default function HowItWorksTimeline({ steps }) {
     setActiveIndex((previousIndex) => (previousIndex === nextIndex ? previousIndex : nextIndex));
   });
 
-  const backX = useTransform(cardProgress, (v) => -22 + v * 6);
-  const backY = useTransform(cardProgress, (v) => -20 + v * 5);
-  const backRot = useTransform(cardProgress, (v) => -6 + v * 0.8);
-
-  const frontX = useTransform(cardProgress, (v) => 18 - v * 5);
-  const frontY = useTransform(cardProgress, (v) => 22 - v * 4);
-  const frontRot = useTransform(cardProgress, (v) => 5 - v * 0.7);
-  const cardWidth = stageWidth ? Math.min(stageWidth * 0.78, 860) : 0;
-  const trackGap = stageWidth ? Math.min(stageWidth * 0.035, 28) : 28;
-  const trackPadding = stageWidth && cardWidth ? Math.max((stageWidth - cardWidth) / 2, 0) : 0;
-  const trackStepWidth = cardWidth + trackGap;
+  // Card stretches to fill the stage — no centered padding, no neighbor
+  // bleed, no parallax backplates behind it. Each track step shifts by one
+  // full stage width so card N replaces card N-1 cleanly.
+  const cardWidth = stageWidth;
+  const trackGap = 0;
+  const trackPadding = 0;
+  const trackStepWidth = stageWidth || 0;
   const trackX = useTransform(cardProgress, (v) => -v * trackStepWidth);
 
   const handleMouseMove = (event) => {
@@ -504,7 +495,7 @@ export default function HowItWorksTimeline({ steps }) {
             <div className="how-story-progress">
               <div className="how-story-progress-rail" aria-hidden="true">
                 <span className="how-story-progress-base" />
-                <motion.span className="how-story-progress-fill" style={{ scaleY: smoothProgress }} />
+                <motion.span className="how-story-progress-fill" style={{ scaleY: scrollYProgress }} />
               </div>
 
               <div className="how-story-progress-list">
@@ -539,25 +530,6 @@ export default function HowItWorksTimeline({ steps }) {
           }}
         >
           <div ref={stageViewportRef} className="how-story-card-stack">
-            <motion.span
-              className="how-story-stage-backplate is-back"
-              aria-hidden="true"
-              style={{
-                x: backX,
-                y: backY,
-                rotate: backRot
-              }}
-            />
-            <motion.span
-              className="how-story-stage-backplate is-front"
-              aria-hidden="true"
-              style={{
-                x: frontX,
-                y: frontY,
-                rotate: frontRot
-              }}
-            />
-
             <motion.span
               className="how-story-stage-glow"
               aria-hidden="true"

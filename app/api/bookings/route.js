@@ -1,11 +1,21 @@
 import { NextResponse } from "next/server";
-import { createBooking, getUserByEmail } from "@/lib/postgres-repositories";
+import { createBooking } from "@/lib/postgres-repositories";
 import { getSessionFromRequest } from "@/lib/session";
 
 export async function POST(request) {
   try {
-    const payload = await request.json();
     const sessionUser = await getSessionFromRequest(request);
+
+    // SECURITY: Booking requires sign-in. Anonymous booking creation is rejected
+    // so attackers cannot submit bookings using other people's emails or spam vendors.
+    if (!sessionUser) {
+      return NextResponse.json(
+        { error: "Sign in to book an appointment." },
+        { status: 401 }
+      );
+    }
+
+    const payload = await request.json();
 
     const requiredFields = [
       "vendorSlug",
@@ -13,8 +23,6 @@ export async function POST(request) {
       "serviceName",
       "appointmentDate",
       "appointmentSlot",
-      "customerName",
-      "customerEmail",
       "total"
     ];
 
@@ -30,26 +38,17 @@ export async function POST(request) {
       return NextResponse.json({ error: "Invalid booking amount." }, { status: 400 });
     }
 
-    // SECURITY: If a specific customer email is provided, verify it matches the session user
-    // Only allow users to book for themselves unless they have explicit permission
-    if (payload.customerEmail && sessionUser) {
-      const customerEmail = String(payload.customerEmail || "").toLowerCase().trim();
-      const sessionEmail = String(sessionUser.email || "").toLowerCase().trim();
-      
-      // If emails don't match and user is not admin, reject the request
-      if (customerEmail !== sessionEmail && sessionUser.role !== "admin") {
-        return NextResponse.json(
-          { error: "You can only create bookings for your own email address." },
-          { status: 403 }
-        );
-      }
-    }
+    // SECURITY: Force the booking identity to come from the session, not the payload.
+    // Admins are still allowed to book on behalf of another email.
+    const sessionEmail = String(sessionUser.email || "").toLowerCase().trim();
+    const payloadEmail = String(payload.customerEmail || "").toLowerCase().trim();
+    const isAdminOverride = sessionUser.role === "admin" && payloadEmail && payloadEmail !== sessionEmail;
 
     const booking = await createBooking({
       ...payload,
-      customerId: payload.customerId || sessionUser?.id || null,
-      customerEmail: payload.customerEmail || sessionUser?.email,
-      customerName: payload.customerName || sessionUser?.name
+      customerId: isAdminOverride ? (payload.customerId || null) : sessionUser.id,
+      customerEmail: isAdminOverride ? payloadEmail : sessionEmail,
+      customerName: isAdminOverride ? (payload.customerName || sessionUser.name) : sessionUser.name
     });
     return NextResponse.json({ booking }, { status: 201 });
   } catch (error) {

@@ -132,6 +132,7 @@ export default function GoogleAuthButton({
         router.refresh();
       } catch (nextError) {
         const message = nextError.message || "Google sign in failed.";
+        console.error("[GoogleAuth] fetch error:", nextError);
         setError(message);
         onStatusChange?.({ loading: false, message, tone: "error" });
       } finally {

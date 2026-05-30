@@ -7,7 +7,10 @@ export async function GET(request, { params }) {
     const availability = await getStylistAvailability(params.slug, {
       serviceId: searchParams.get("serviceId") || "",
       minLeadHours: Number(searchParams.get("minLeadHours") || 0),
-      maxWindows: Number(searchParams.get("maxWindows") || 12)
+      maxWindows: Number(searchParams.get("maxWindows") || 12),
+      view: searchParams.get("view") || "",
+      referenceDate: searchParams.get("referenceDate") || "",
+      timezone: searchParams.get("timezone") || ""
     });
 
     return NextResponse.json(availability);

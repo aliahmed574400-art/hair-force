@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { changeClientPassword } from "@/lib/postgres-repositories";
+import { AUDIT_ACTIONS, auditFromRequest } from "@/lib/audit-logging";
+import { changeDashboardPassword } from "@/lib/postgres-repositories";
 import { getSessionFromRequest } from "@/lib/session";
 
 export async function POST(request) {
@@ -11,9 +12,19 @@ export async function POST(request) {
     }
 
     const payload = await request.json();
-    const updatedUser = await changeClientPassword(user, payload);
+    const updatedUser = await changeDashboardPassword(user, payload);
+
+    await auditFromRequest(request, {
+      userId: user.id,
+      action: AUDIT_ACTIONS.PASSWORD_CHANGED,
+      resourceType: "user",
+      resourceId: user.id
+    });
+
     return NextResponse.json({ user: updatedUser, success: true });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    // SECURITY: Generic error — don't leak whether old password was right,
+    // policy violation, etc.
+    return NextResponse.json({ error: "Unable to change password." }, { status: 400 });
   }
 }

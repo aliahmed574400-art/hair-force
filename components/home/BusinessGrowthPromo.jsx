@@ -11,22 +11,21 @@ export default function BusinessGrowthPromo() {
       <div className="business-promo-grid">
         <div className="business-promo-copy">
           <Reveal as="span" className="eyebrow" y={18}>
-            Hair Force for business
+            For stylists
           </Reveal>
 
           <RevealText as="h2" delay={0.06}>
-            Hair Force for business
+            A toolkit for booked-out salons
           </RevealText>
 
           <Reveal as="p" delay={0.14} y={22}>
-            Supercharge your business with a polished booking platform for salons,
-            spas, barbers, and beauty professionals. Manage schedules, staff, and
-            client demand from one refined system.
+            Manage your service menu, calendar, and client list from one dashboard.
+            Set deposits, confirm bookings, skip the phone tag.
           </Reveal>
 
           <Reveal className="business-promo-actions" delay={0.22} y={16}>
-            <Link href="/join" className="button button-primary business-promo-button">
-              Find out more
+            <Link href="/vendor/signin" className="button button-primary business-promo-button">
+              Stylist sign in
             </Link>
           </Reveal>
 
@@ -37,7 +36,7 @@ export default function BusinessGrowthPromo() {
                 <span key={`${star}-${index}`}>{star}</span>
               ))}
             </div>
-            <p>Trusted by modern salon teams and independent beauty professionals.</p>
+            <p>Used by independent stylists and small salon teams across the US.</p>
           </Reveal>
         </div>
 

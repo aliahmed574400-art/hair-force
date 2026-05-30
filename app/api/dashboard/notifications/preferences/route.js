@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   getDashboardDataForUser,
-  updateClientNotificationPreferences
+  updateDashboardNotificationPreferences
 } from "@/lib/postgres-repositories";
 import { getSessionFromRequest } from "@/lib/session";
 
@@ -25,7 +25,7 @@ export async function PUT(request) {
     }
 
     const payload = await request.json();
-    const preferences = await updateClientNotificationPreferences(user, payload);
+    const preferences = await updateDashboardNotificationPreferences(user, payload);
     return NextResponse.json({ preferences });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });

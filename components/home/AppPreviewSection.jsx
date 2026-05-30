@@ -5,18 +5,15 @@ export default function AppPreviewSection() {
   return (
     <div className="app-preview-grid">
       <Reveal className="app-preview-copy" y={22}>
-        <span className="eyebrow">App Preview</span>
-        <h2>Manage Everything — Right From Your Device</h2>
+        <span className="eyebrow">On your phone</span>
+        <h2>Run your salon from your phone</h2>
         <p>
-          Book appointments, track clients, and grow your business — all in one powerful
-          platform.
+          Check today&apos;s bookings, message clients, and update your menu from your
+          phone between cuts.
         </p>
 
         <div className="app-preview-actions">
-          <SiteButton href="#faqs">Explore Features</SiteButton>
-          <SiteButton href="/join" variant="secondary">
-            Get Started
-          </SiteButton>
+          <SiteButton href="/discover">Explore stylists</SiteButton>
         </div>
       </Reveal>
 

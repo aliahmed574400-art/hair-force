@@ -19,8 +19,8 @@ export default function BusinessPromoSection() {
           </p>
 
           <div className="hero-actions" style={{ marginTop: 28, marginBottom: 36 }}>
-            <SiteButton href="/join" className="window-button">
-              Find out more
+            <SiteButton href="/vendor/signin" className="window-button">
+              Stylist sign in
             </SiteButton>
           </div>
 

@@ -16,7 +16,7 @@ export async function POST(request) {
     }
 
     // SECURITY: Rate limit OTP requests per email (5 per hour)
-    if (!checkEmailRateLimit(email, 5)) {
+    if (!(await checkEmailRateLimit(email, 5))) {
       return NextResponse.json(
         { error: "Too many OTP requests. Please try again later." },
         { status: 429 }
