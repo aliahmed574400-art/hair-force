@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { MapPin } from "lucide-react";
+import { MapPin, X, Heart, Star } from "lucide-react";
 
 let googleMapsPromise = null;
 
@@ -44,21 +44,74 @@ function loadGoogleMaps(apiKey) {
   return googleMapsPromise;
 }
 
-function markerIcon(maps, active) {
-  return {
-    path: maps.SymbolPath.CIRCLE,
-    fillColor: active ? "#173064" : "#60a5fa",
-    fillOpacity: 1,
-    strokeColor: "#ffffff",
-    strokeWeight: active ? 3 : 2,
-    scale: active ? 10 : 7
-  };
+function createRatingMarkerSvg(rating, active) {
+  const display = Number(rating || 0).toFixed(1);
+  const bg = active ? "#0f172a" : "#ffffff";
+  const textColor = active ? "#ffffff" : "#0f172a";
+  const stroke = active ? "#0f172a" : "#e2e8f0";
+  const width = 44 + display.length * 7;
+
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="32" viewBox="0 0 ${width} 32">
+      <rect x="1" y="1" width="${width - 2}" height="30" rx="15" ry="15" fill="${bg}" stroke="${stroke}" stroke-width="1.5"/>
+      <text x="${width / 2}" y="21" font-family="system-ui, sans-serif" font-size="13" font-weight="600" fill="${textColor}" text-anchor="middle">⭐ ${display}</text>
+    </svg>
+  `;
+  return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg.trim());
+}
+
+function createPinMarkerSvg(rating, active) {
+  const display = Number(rating || 0).toFixed(1);
+  const bg = active ? "#0f172a" : "#ffffff";
+  const textColor = active ? "#ffffff" : "#0f172a";
+  const stroke = active ? "#0f172a" : "#cbd5e1";
+  const w = 52;
+  const h = 36;
+
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h + 8}" viewBox="0 0 ${w} ${h + 8}">
+      <rect x="1" y="1" width="${w - 2}" height="${h - 2}" rx="14" ry="14" fill="${bg}" stroke="${stroke}" stroke-width="1.5"/>
+      <text x="${w / 2}" y="23" font-family="system-ui, sans-serif" font-size="13" font-weight="600" fill="${textColor}" text-anchor="middle">★ ${display}</text>
+      <polygon points="${w / 2 - 6},${h - 2} ${w / 2 + 6},${h - 2} ${w / 2},${h + 6}" fill="${bg}" stroke="${stroke}" stroke-width="1.5"/>
+    </svg>
+  `;
+  return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg.trim());
+}
+
+function buildInfoWindowContent(stylist) {
+  const image = stylist.coverImage || stylist.avatar || "";
+  const services = (stylist.topServices || []).slice(0, 3);
+  const servicesText = services.length
+    ? services.map((s) => s.title).join(" · ")
+    : "View profile";
+
+  return `
+    <div style="font-family:system-ui,sans-serif;width:260px;padding:0;overflow:hidden;border-radius:16px;background:#fff;">
+      ${image ? `<div style="width:100%;height:140px;background:url('${image}') center/cover no-repeat;position:relative;">
+        <div style="position:absolute;top:8px;right:8px;display:flex;gap:6px;">
+          <button style="width:28px;height:28px;border-radius:50%;border:none;background:rgba(0,0,0,0.5);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;" onclick="event.stopPropagation();">❤</button>
+          <button style="width:28px;height:28px;border-radius:50%;border:none;background:rgba(0,0,0,0.5);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;" onclick="event.stopPropagation();window.parent.postMessage({type:'HAIRFORCE_CLOSE_INFO'},'*');">✕</button>
+        </div>
+      </div>` : ""}
+      <div style="padding:14px;">
+        <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:2px;">${stylist.name}</div>
+        <div style="font-size:12px;color:#64748b;margin-bottom:6px;">${stylist.locationLabel || stylist.cityStateLabel || ""}</div>
+        <div style="display:flex;align-items:center;gap:4px;margin-bottom:10px;">
+          <span style="color:#f59e0b;font-size:14px;">★</span>
+          <span style="font-size:13px;font-weight:600;color:#0f172a;">${Number(stylist.rating || 0).toFixed(1)}</span>
+          <span style="font-size:12px;color:#94a3b8;">(${stylist.reviewCount || 0})</span>
+        </div>
+        <a href="/stylists/${stylist.slug}" target="_top" style="display:block;text-align:center;padding:10px 0;background:#0f5132;color:#fff;border-radius:10px;text-decoration:none;font-size:13px;font-weight:600;">See All Services</a>
+      </div>
+    </div>
+  `;
 }
 
 export default function DiscoverMap({ stylists, activeSlug, onSelectStylist, userCoords }) {
   const mapNodeRef = useRef(null);
   const mapRef = useRef(null);
   const markersRef = useRef([]);
+  const infoWindowRef = useRef(null);
   const [status, setStatus] = useState({
     loading: true,
     error: ""
@@ -115,7 +168,7 @@ export default function DiscoverMap({ stylists, activeSlug, onSelectStylist, use
               {
                 featureType: "landscape",
                 elementType: "geometry",
-                stylers: [{ color: "#eef4ff" }]
+                stylers: [{ color: "#f8fafc" }]
               },
               {
                 featureType: "poi",
@@ -124,12 +177,17 @@ export default function DiscoverMap({ stylists, activeSlug, onSelectStylist, use
               {
                 featureType: "road",
                 elementType: "geometry",
-                stylers: [{ color: "#d8e5ff" }]
+                stylers: [{ color: "#ffffff" }]
+              },
+              {
+                featureType: "road",
+                elementType: "labels.text.fill",
+                stylers: [{ color: "#64748b" }]
               },
               {
                 featureType: "water",
                 elementType: "geometry",
-                stylers: [{ color: "#b8d9ff" }]
+                stylers: [{ color: "#e0f2fe" }]
               }
             ]
           });
@@ -157,8 +215,13 @@ export default function DiscoverMap({ stylists, activeSlug, onSelectStylist, use
 
     const maps = window.google.maps;
 
-    markersRef.current.forEach((marker) => marker.setMap(null));
+    markersRef.current.forEach((m) => m.setMap(null));
     markersRef.current = [];
+
+    if (infoWindowRef.current) {
+      infoWindowRef.current.close();
+      infoWindowRef.current = null;
+    }
 
     let hasBounds = false;
     const bounds = new maps.LatLngBounds();
@@ -184,17 +247,37 @@ export default function DiscoverMap({ stylists, activeSlug, onSelectStylist, use
     }
 
     mappableStylists.forEach((stylist) => {
+      const isActive = stylist.slug === activeSlug;
       const marker = new maps.Marker({
         position: {
           lat: Number(stylist.latitude),
           lng: Number(stylist.longitude)
         },
         map: mapRef.current,
-        icon: markerIcon(maps, stylist.slug === activeSlug),
+        icon: {
+          url: createPinMarkerSvg(stylist.rating, isActive),
+          scaledSize: new maps.Size(52, 44),
+          anchor: new maps.Point(26, 40)
+        },
         title: stylist.name
       });
 
-      marker.addListener("click", () => onSelectStylist?.(stylist.slug));
+      marker.addListener("click", () => {
+        onSelectStylist?.(stylist.slug);
+
+        if (infoWindowRef.current) {
+          infoWindowRef.current.close();
+        }
+
+        infoWindowRef.current = new maps.InfoWindow({
+          content: buildInfoWindowContent(stylist),
+          pixelOffset: new maps.Size(0, -8),
+          disableAutoPan: false
+        });
+
+        infoWindowRef.current.open(mapRef.current, marker);
+      });
+
       bounds.extend(marker.getPosition());
       hasBounds = true;
       markersRef.current.push(marker);
@@ -209,11 +292,11 @@ export default function DiscoverMap({ stylists, activeSlug, onSelectStylist, use
         lat: Number(mappableStylists[0].latitude),
         lng: Number(mappableStylists[0].longitude)
       });
-      mapRef.current.setZoom(12);
+      mapRef.current.setZoom(13);
       return;
     }
 
-    mapRef.current.fitBounds(bounds, 72);
+    mapRef.current.fitBounds(bounds, { top: 60, right: 40, bottom: 60, left: 40 });
   }, [activeSlug, mappableStylists, onSelectStylist, userCoords]);
 
   if (!apiKey) {

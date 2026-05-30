@@ -21484,3 +21484,427 @@ button[type="submit"]:active {
     justify-content: center;
   }
 }
+
+/* ========================
+   Discover Page Redesign
+   ======================== */
+
+.discover-topbar {
+  padding: 18px 0 10px;
+  background: #ffffff;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.discover-search-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.discover-search-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  height: 48px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.discover-search-box:focus-within {
+  border-color: #0f5132;
+  box-shadow: 0 0 0 3px rgba(15, 81, 50, 0.08);
+}
+
+.discover-search-icon {
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+.discover-search-box input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  font-size: 0.95rem;
+  color: #0f172a;
+  outline: none;
+}
+
+.discover-search-box input::placeholder {
+  color: #94a3b8;
+}
+
+.discover-search-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  padding: 0 28px;
+  border-radius: 12px;
+  border: 0;
+  background: #0f5132;
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.discover-search-btn:hover {
+  background: #0a3a23;
+}
+
+.discover-search-btn:active {
+  transform: scale(0.98);
+}
+
+.discover-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+
+.discover-toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #334155;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.discover-toolbar-btn:hover,
+.discover-toolbar-btn.active {
+  border-color: #0f5132;
+  color: #0f5132;
+  background: rgba(15, 81, 50, 0.04);
+}
+
+.discover-toolbar-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.discover-sort-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #0f172a;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.discover-nearby-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid #0f5132;
+  background: rgba(15, 81, 50, 0.06);
+  color: #0f5132;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.discover-filters-panel {
+  margin-top: 14px;
+  padding: 18px;
+  border-radius: 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.discover-filters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.discover-filters-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #e2e8f0;
+}
+
+/* Redesigned Cards */
+.discover-card {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 18px;
+  padding: 16px;
+  border-radius: 16px;
+  background: #ffffff;
+  border: 1px solid #f1f5f9;
+  color: #0f172a;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.discover-card:hover,
+.discover-card.active {
+  transform: translateY(-1px);
+  border-color: #e2e8f0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+.discover-card-media {
+  display: block;
+}
+
+.discover-card-image {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+}
+
+.discover-card-image-fallback {
+  display: grid;
+  place-items: center;
+  color: #64748b;
+  font-size: 1.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+}
+
+.discover-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.discover-card-topline {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.discover-card-title-block {
+  min-width: 0;
+}
+
+.discover-card-name {
+  display: block;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #0f172a;
+  line-height: 1.3;
+}
+
+.discover-card-salon {
+  margin: 2px 0 0;
+  font-size: 0.85rem;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.discover-card-heart {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #94a3b8;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.discover-card-heart:hover {
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.discover-card-heart.liked {
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.discover-card-rating-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.discover-card-loved-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  color: #92400e;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.discover-card-stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.discover-card-rating-text {
+  margin-left: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.discover-card-services {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.discover-service-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #334155;
+  font-size: 0.82rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.discover-service-pill--primary {
+  background: #0f172a;
+  border-color: #0f172a;
+  color: #ffffff;
+  text-decoration: none;
+}
+
+.discover-service-pill--primary:hover {
+  background: #1e293b;
+}
+
+/* Map panel tweaks */
+.discover-map-panel-frame {
+  position: sticky;
+  top: 90px;
+  padding: 0;
+  border-radius: 16px;
+  background: #ffffff;
+  border: 1px solid #f1f5f9;
+  overflow: hidden;
+}
+
+.discover-map-canvas,
+.discover-map-fallback {
+  position: relative;
+  min-height: calc(100vh - 140px);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.discover-map-node {
+  width: 100%;
+  min-height: calc(100vh - 140px);
+}
+
+/* InfoWindow override via global Google Maps CSS */
+.gm-style .gm-style-iw-c {
+  padding: 0 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15) !important;
+}
+
+.gm-style .gm-style-iw-d {
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+.gm-style .gm-style-iw-t::after {
+  background: #ffffff !important;
+}
+
+.gm-style button.gm-ui-hover-effect {
+  display: none !important;
+}
+
+/* Responsive */
+@media (max-width: 1180px) {
+  .discover-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(340px, 0.85fr);
+  }
+}
+
+@media (max-width: 980px) {
+  .discover-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .discover-map-panel {
+    display: none;
+  }
+
+  .discover-search-row {
+    grid-template-columns: 1fr;
+  }
+
+  .discover-search-btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 720px) {
+  .discover-card {
+    grid-template-columns: 100px minmax(0, 1fr);
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .discover-card-name {
+    font-size: 1rem;
+  }
+
+  .discover-service-pill {
+    height: 28px;
+    padding: 0 10px;
+    font-size: 0.75rem;
+  }
+
+  .discover-map-canvas,
+  .discover-map-node,
+  .discover-map-fallback {
+    min-height: 360px;
+  }
+}

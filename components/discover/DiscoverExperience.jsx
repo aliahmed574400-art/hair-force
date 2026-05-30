@@ -4,20 +4,23 @@ import Link from "next/link";
 import { startTransition, useDeferredValue, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  Clock3,
+  CalendarDays,
+  ChevronDown,
   Filter,
+  Heart,
   LocateFixed,
   MapPinned,
+  Search,
   ShieldCheck,
   Sparkles,
-  Star
+  Star,
+  X
 } from "lucide-react";
 import DiscoverMap from "@/components/discover/DiscoverMap";
 import SiteButton from "@/components/ui/SiteButton";
 import {
   DISCOVER_PRICE_OPTIONS,
   DISCOVER_SORT_OPTIONS,
-  US_STATES,
   buildVendorLocationLabel,
   formatReviewCount
 } from "@/lib/discovery";
@@ -35,52 +38,20 @@ function getLocationErrorMessage(error) {
   if (!error) {
     return "Unable to fetch your location right now.";
   }
-
   if (error.code === 1) {
-    return "Location permission was denied. You can still browse manually by state.";
+    return "Location permission was denied. You can still browse manually by city or state.";
   }
-
   if (error.code === 2) {
     return "Location is unavailable right now. Try again in a moment.";
   }
-
   return "Unable to fetch your location right now.";
 }
 
-function ActiveMapPreview({ stylist }) {
-  if (!stylist) {
-    return null;
-  }
-
-  return (
-    <div className="discover-map-preview">
-      <div className="discover-map-preview-head">
-        <span className="badge badge-accent">{stylist.category}</span>
-        <span className="badge">{stylist.distanceLabel || stylist.cityStateLabel}</span>
-      </div>
-      <h3>{stylist.name}</h3>
-      <p className="muted">
-        {stylist.locationLabel || buildVendorLocationLabel(stylist)}
-      </p>
-      <div className="discover-card-rating">
-        <Star size={15} />
-        <span>
-          {stylist.rating} · {formatReviewCount(stylist.reviewCount)} reviews
-        </span>
-      </div>
-      <div className="hero-actions" style={{ marginTop: 14 }}>
-        <SiteButton href={`/stylists/${stylist.slug}`} size="sm">
-          View profile
-        </SiteButton>
-        <SiteButton href={buildBookingHref(stylist)} variant="secondary" size="sm">
-          Book
-        </SiteButton>
-      </div>
-    </div>
-  );
-}
-
 function StylistResultCard({ stylist, active, onActivate }) {
+  const [liked, setLiked] = useState(false);
+  const mainService = stylist.topServices?.[0];
+  const extraServices = (stylist.topServices || []).slice(1, 3);
+
   return (
     <article
       className={`discover-card ${active ? "active" : ""}`}
@@ -108,65 +79,65 @@ function StylistResultCard({ stylist, active, onActivate }) {
 
       <div className="discover-card-body">
         <div className="discover-card-topline">
-          <div>
-            <div className="discover-card-name-row">
-              <Link href={`/stylists/${stylist.slug}`} className="discover-card-name">
-                {stylist.name}
-              </Link>
-              {stylist.verified ? (
-                <span className="discover-inline-flag">
-                  <ShieldCheck size={14} />
-                  Verified
-                </span>
-              ) : null}
-            </div>
-            <p className="discover-card-location">{stylist.locationLabel || stylist.cityStateLabel}</p>
+          <div className="discover-card-title-block">
+            <Link href={`/stylists/${stylist.slug}`} className="discover-card-name">
+              {stylist.name}
+            </Link>
+            <p className="discover-card-salon">
+              {stylist.category}
+              {stylist.locationLabel || stylist.cityStateLabel
+                ? ` · ${stylist.locationLabel || stylist.cityStateLabel}`
+                : ""}
+              {stylist.distanceLabel ? ` · ${stylist.distanceLabel}` : ""}
+            </p>
           </div>
+          <button
+            type="button"
+            className={`discover-card-heart ${liked ? "liked" : ""}`}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setLiked((v) => !v);
+            }}
+            aria-label="Save stylist"
+          >
+            <Heart size={18} fill={liked ? "currentColor" : "none"} />
+          </button>
+        </div>
 
-          <div className="discover-card-rating">
-            <Star size={15} />
-            <span>
-              {stylist.rating} · {formatReviewCount(stylist.reviewCount)}
+        <div className="discover-card-rating-row">
+          {stylist.rating >= 4.8 ? (
+            <span className="discover-card-loved-badge">
+              <Star size={12} fill="currentColor" />
+              Loved by Clients
+            </span>
+          ) : null}
+          <div className="discover-card-stars">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Star
+                key={i}
+                size={14}
+                fill={i < Math.round(stylist.rating || 0) ? "#f59e0b" : "none"}
+                color={i < Math.round(stylist.rating || 0) ? "#f59e0b" : "#cbd5e1"}
+              />
+            ))}
+            <span className="discover-card-rating-text">
+              {Number(stylist.rating || 0).toFixed(1)}({formatReviewCount(stylist.reviewCount)})
             </span>
           </div>
         </div>
 
-        <div className="chip-row discover-card-badges">
-          {stylist.badges?.map((badge) => (
-            <span key={badge} className="chip">
-              {badge}
-            </span>
-          ))}
-          {stylist.distanceLabel ? <span className="chip">{stylist.distanceLabel}</span> : null}
-        </div>
-
-        <div className="discover-card-meta-row">
-          <span className="discover-card-price">From {formatCurrency(stylist.priceFrom || 0)}</span>
-          {stylist.nextAvailabilityLabel ? (
-            <span className="discover-inline-meta">
-              <Clock3 size={15} />
-              {stylist.nextAvailabilityLabel}
-            </span>
-          ) : (
-            <span className="discover-inline-meta">No live times posted yet</span>
-          )}
-        </div>
-
-        <div className="chip-row">
-          {(stylist.topServices || []).slice(0, 3).map((service) => (
-            <span key={service.id} className="chip discover-service-chip">
+        <div className="discover-card-services">
+          <Link href={`/stylists/${stylist.slug}`} className="discover-service-pill discover-service-pill--primary">
+            See All Services
+          </Link>
+          {extraServices.map((service) => (
+            <span key={service.id} className="discover-service-pill">
               {service.title}
+              {service.duration ? ` · ${service.duration}` : ""}
+              {service.price ? ` · $${service.price}` : ""}
             </span>
           ))}
-        </div>
-
-        <div className="hero-actions discover-card-actions">
-          <SiteButton href={`/stylists/${stylist.slug}`} size="sm">
-            View profile
-          </SiteButton>
-          <SiteButton href={buildBookingHref(stylist)} variant="secondary" size="sm">
-            Book
-          </SiteButton>
         </div>
       </div>
     </article>
@@ -191,6 +162,7 @@ export default function DiscoverExperience({ initialFilters, initialResults }) {
   const [activeSlug, setActiveSlug] = useState(initialResults.stylists?.[0]?.slug || "");
   const [mobileMapOpen, setMobileMapOpen] = useState(false);
   const [locationPromptVisible, setLocationPromptVisible] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
   const [nearby, setNearby] = useState({
     loading: false,
     error: "",
@@ -205,7 +177,6 @@ export default function DiscoverExperience({ initialFilters, initialResults }) {
     if (typeof window === "undefined") {
       return;
     }
-
     const dismissed = window.localStorage.getItem(LOCATION_PROMPT_STORAGE_KEY) === "1";
     setLocationPromptVisible(!dismissed);
   }, []);
@@ -222,23 +193,18 @@ export default function DiscoverExperience({ initialFilters, initialResults }) {
     if (filters.query.trim()) {
       params.set("query", filters.query.trim());
     }
-
     if (filters.state) {
       params.set("state", filters.state);
     }
-
     if (filters.sort && filters.sort !== "highest_rated") {
       params.set("sort", filters.sort);
     }
-
     if (filters.priceRange) {
       params.set("priceRange", filters.priceRange);
     }
-
     if (filters.verifiedOnly) {
       params.set("verifiedOnly", "1");
     }
-
     if (filters.instantOnly) {
       params.set("instantOnly", "1");
     }
@@ -266,23 +232,18 @@ export default function DiscoverExperience({ initialFilters, initialResults }) {
         if (deferredQuery.trim()) {
           params.set("query", deferredQuery.trim());
         }
-
         if (filters.state) {
           params.set("state", filters.state);
         }
-
         if (filters.priceRange) {
           params.set("priceRange", filters.priceRange);
         }
-
         if (filters.verifiedOnly) {
           params.set("verifiedOnly", "1");
         }
-
         if (filters.instantOnly) {
           params.set("instantOnly", "1");
         }
-
         if (nearby.coords?.lat && nearby.coords?.lng) {
           params.set("nearLat", String(nearby.coords.lat));
           params.set("nearLng", String(nearby.coords.lng));
@@ -339,23 +300,18 @@ export default function DiscoverExperience({ initialFilters, initialResults }) {
       if (deferredQuery.trim()) {
         params.set("query", deferredQuery.trim());
       }
-
       if (filters.state) {
         params.set("state", filters.state);
       }
-
       if (filters.priceRange) {
         params.set("priceRange", filters.priceRange);
       }
-
       if (filters.verifiedOnly) {
         params.set("verifiedOnly", "1");
       }
-
       if (filters.instantOnly) {
         params.set("instantOnly", "1");
       }
-
       if (nearby.coords?.lat && nearby.coords?.lng) {
         params.set("nearLat", String(nearby.coords.lat));
         params.set("nearLng", String(nearby.coords.lng));
@@ -383,7 +339,6 @@ export default function DiscoverExperience({ initialFilters, initialResults }) {
     if (typeof window !== "undefined") {
       window.localStorage.setItem(LOCATION_PROMPT_STORAGE_KEY, "1");
     }
-
     setLocationPromptVisible(false);
   }
 
@@ -459,24 +414,185 @@ export default function DiscoverExperience({ initialFilters, initialResults }) {
     );
   }
 
-  /* const summaryChips = useMemo(
-    () => [
-      `${results.meta?.total || 0} stylists`,
-      `${results.meta?.mappableCount || 0} public map pins`,
-      nearby.label ? `Near you · ${nearby.label}` : "Highest rated first"
-    ],
-    [nearby.label, results.meta?.mappableCount, results.meta?.total]
-  ); */
+  async function geocodeLocationInput(raw) {
+    const address = raw.trim();
+    if (!address) return;
+    try {
+      const response = await fetch(`/api/location/geocode?address=${encodeURIComponent(address)}`);
+      const data = await response.json();
+      if (response.ok && data.location?.state) {
+        setFilters((current) => ({ ...current, state: data.location.state }));
+        if (data.location.latitude && data.location.longitude) {
+          setNearby({
+            loading: false,
+            error: "",
+            coords: { lat: data.location.latitude, lng: data.location.longitude },
+            label: data.location.formattedAddress || address
+          });
+        }
+      }
+    } catch {
+      // silently fail — the text filter still works
+    }
+  }
+
+  const sortLabel = DISCOVER_SORT_OPTIONS.find((o) => o.value === filters.sort)?.label || "Best Match";
 
   return (
-    <main className="section page-intro discover-page">
-      <div className="container">
-        {locationPromptVisible ? (
+    <main className="discover-page">
+      {/* Top Search Bar */}
+      <div className="discover-topbar">
+        <div className="container">
+          <div className="discover-search-row">
+            <div className="discover-search-box">
+              <Search size={18} className="discover-search-icon" />
+              <input
+                type="text"
+                placeholder="Service, stylist or salon"
+                value={filters.query}
+                onChange={(e) => setFilters((c) => ({ ...c, query: e.target.value }))}
+              />
+            </div>
+            <div className="discover-search-box">
+              <MapPinned size={18} className="discover-search-icon" />
+              <input
+                type="text"
+                placeholder="City, state, or zip"
+                value={filters.state}
+                onChange={(e) => setFilters((c) => ({ ...c, state: e.target.value }))}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") geocodeLocationInput(filters.state);
+                }}
+                onBlur={() => geocodeLocationInput(filters.state)}
+              />
+            </div>
+            <button
+              type="button"
+              className="discover-search-btn"
+              onClick={() => geocodeLocationInput(filters.state)}
+            >
+              Search
+            </button>
+          </div>
+
+          <div className="discover-toolbar">
+            <button
+              type="button"
+              className={`discover-toolbar-btn ${showFilters ? "active" : ""}`}
+              onClick={() => setShowFilters((v) => !v)}
+            >
+              <Filter size={16} />
+              Filters
+            </button>
+            <div className="discover-toolbar-sort">
+              <span>Sort:</span>
+              <button
+                type="button"
+                className="discover-sort-trigger"
+                onClick={() => setShowFilters((v) => !v)}
+              >
+                {sortLabel}
+                <ChevronDown size={14} />
+              </button>
+            </div>
+            {nearby.label ? (
+              <button type="button" className="discover-nearby-chip" onClick={clearNearby}>
+                <Sparkles size={12} />
+                Near you: {nearby.label}
+                <X size={12} />
+              </button>
+            ) : null}
+          </div>
+
+          {showFilters ? (
+            <div className="discover-filters-panel">
+              <div className="discover-filters-grid">
+                <label className="discover-filter-field">
+                  <span>Sort by</span>
+                  <select
+                    value={filters.sort}
+                    onChange={(e) => setFilters((c) => ({ ...c, sort: e.target.value }))}
+                  >
+                    {DISCOVER_SORT_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="discover-filter-field">
+                  <span>Price range</span>
+                  <select
+                    value={filters.priceRange}
+                    onChange={(e) => setFilters((c) => ({ ...c, priceRange: e.target.value }))}
+                  >
+                    {DISCOVER_PRICE_OPTIONS.map((option) => (
+                      <option key={option.value || "all"} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="discover-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={filters.verifiedOnly}
+                    onChange={(e) => setFilters((c) => ({ ...c, verifiedOnly: e.target.checked }))}
+                  />
+                  <span>Verified only</span>
+                </label>
+
+                <label className="discover-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={filters.instantOnly}
+                    onChange={(e) => setFilters((c) => ({ ...c, instantOnly: e.target.checked }))}
+                  />
+                  <span>Instant book</span>
+                </label>
+              </div>
+
+              <div className="discover-filters-actions">
+                <SiteButton
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    setFilters({
+                      query: "",
+                      state: "",
+                      sort: "highest_rated",
+                      priceRange: "",
+                      verifiedOnly: false,
+                      instantOnly: false
+                    });
+                    clearNearby();
+                  }}
+                >
+                  Reset
+                </SiteButton>
+                <SiteButton type="button" size="sm" onClick={() => setShowFilters(false)}>
+                  Apply
+                </SiteButton>
+              </div>
+            </div>
+          ) : null}
+
+          {nearby.error ? <div className="discover-inline-error">{nearby.error}</div> : null}
+          {error ? <div className="discover-inline-error">{error}</div> : null}
+        </div>
+      </div>
+
+      {/* Location Prompt */}
+      {locationPromptVisible ? (
+        <div className="container">
           <div className="discover-location-prompt">
             <div>
               <strong>Use your location for nearby stylists</strong>
               <p className="muted">
-                We can suggest nearby stylists before sign-in and keep state browsing as the primary filter.
+                We can suggest nearby stylists before sign-in and keep location browsing as the primary filter.
               </p>
             </div>
             <div className="hero-actions">
@@ -488,114 +604,11 @@ export default function DiscoverExperience({ initialFilters, initialResults }) {
               </SiteButton>
             </div>
           </div>
-        ) : null}
+        </div>
+      ) : null}
 
-        <section className="discover-filter-shell surface">
-          <div className="discover-filter-main">
-            <label className="discover-filter-field">
-              <span>Search service or stylist</span>
-              <input
-                value={filters.query}
-                onChange={(event) => setFilters((current) => ({ ...current, query: event.target.value }))}
-                placeholder="Braids, silk press, fades, facials..."
-              />
-            </label>
-
-            <label className="discover-filter-field">
-              <span>State</span>
-              <select
-                value={filters.state}
-                onChange={(event) => setFilters((current) => ({ ...current, state: event.target.value }))}
-              >
-                <option value="">All states</option>
-                {US_STATES.map((state) => (
-                  <option key={state} value={state}>
-                    {state}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="discover-filter-field">
-              <span>Sort</span>
-              <select
-                value={filters.sort}
-                onChange={(event) => setFilters((current) => ({ ...current, sort: event.target.value }))}
-              >
-                {DISCOVER_SORT_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <div className="discover-filter-actions">
-              <SiteButton type="button" size="sm" onClick={requestNearby} disabled={nearby.loading}>
-                <LocateFixed size={16} />
-                {nearby.loading ? "Finding..." : "Near me"}
-              </SiteButton>
-              <SiteButton type="button" size="sm" variant="secondary" onClick={() => setMobileMapOpen(true)}>
-                <MapPinned size={16} />
-                Map
-              </SiteButton>
-            </div>
-          </div>
-
-          <div className="discover-quick-filters">
-            <div className="discover-quick-filter-heading">
-              <Filter size={15} />
-              <span>Quick filters</span>
-            </div>
-
-            <label className="discover-checkbox">
-              <input
-                type="checkbox"
-                checked={filters.verifiedOnly}
-                onChange={(event) =>
-                  setFilters((current) => ({ ...current, verifiedOnly: event.target.checked }))
-                }
-              />
-              <span>Verified only</span>
-            </label>
-
-            <label className="discover-checkbox">
-              <input
-                type="checkbox"
-                checked={filters.instantOnly}
-                onChange={(event) =>
-                  setFilters((current) => ({ ...current, instantOnly: event.target.checked }))
-                }
-              />
-              <span>Instant book</span>
-            </label>
-
-            <label className="discover-inline-select">
-              <span>Price</span>
-              <select
-                value={filters.priceRange}
-                onChange={(event) => setFilters((current) => ({ ...current, priceRange: event.target.value }))}
-              >
-                {DISCOVER_PRICE_OPTIONS.map((option) => (
-                  <option key={option.value || "all"} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            {nearby.label ? (
-              <button type="button" className="discover-nearby-pill" onClick={clearNearby}>
-                <Sparkles size={14} />
-                Near you: {nearby.label}
-              </button>
-            ) : null}
-          </div>
-        </section>
-
-        {nearby.error ? <div className="discover-inline-error">{nearby.error}</div> : null}
-        {error ? <div className="discover-inline-error">{error}</div> : null}
-
+      {/* Results + Map */}
+      <div className="container">
         <section className="discover-layout">
           <div className="discover-results-panel">
             {loading ? <div className="discover-status-card">Refreshing stylists…</div> : null}
@@ -604,12 +617,12 @@ export default function DiscoverExperience({ initialFilters, initialResults }) {
               <div className="discover-empty-state">
                 <strong>No stylists match these filters yet.</strong>
                 <p className="muted">
-                  Try widening the state or price filters, or remove the nearby context to see more options.
+                  Try widening the location or price filters, or remove the nearby context to see more options.
                 </p>
                 <SiteButton
                   type="button"
                   variant="secondary"
-                  onClick={() =>
+                  onClick={() => {
                     setFilters({
                       query: "",
                       state: "",
@@ -617,8 +630,9 @@ export default function DiscoverExperience({ initialFilters, initialResults }) {
                       priceRange: "",
                       verifiedOnly: false,
                       instantOnly: false
-                    })
-                  }
+                    });
+                    clearNearby();
+                  }}
                 >
                   Reset filters
                 </SiteButton>
@@ -646,19 +660,19 @@ export default function DiscoverExperience({ initialFilters, initialResults }) {
           </div>
 
           <aside className="discover-map-panel">
-            <div className="discover-map-panel-frame surface">
+            <div className="discover-map-panel-frame">
               <DiscoverMap
                 stylists={results.stylists}
                 activeSlug={activeSlug}
                 onSelectStylist={setActiveSlug}
                 userCoords={nearby.coords}
               />
-              <ActiveMapPreview stylist={activeStylist} />
             </div>
           </aside>
         </section>
       </div>
 
+      {/* Mobile Map */}
       {mobileMapOpen ? (
         <div className="discover-mobile-map-backdrop" onClick={() => setMobileMapOpen(false)}>
           <div className="discover-mobile-map-sheet" onClick={(event) => event.stopPropagation()}>
@@ -677,7 +691,6 @@ export default function DiscoverExperience({ initialFilters, initialResults }) {
               onSelectStylist={setActiveSlug}
               userCoords={nearby.coords}
             />
-            <ActiveMapPreview stylist={activeStylist} />
           </div>
         </div>
       ) : null}
