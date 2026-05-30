@@ -9,18 +9,32 @@ import {
   ChevronRight,
   Clock3,
   Heart,
+  Image as ImageIcon,
   ImagePlus,
+  Info,
   LayoutDashboard,
   LockKeyhole,
+  LogOut,
   MapPin,
   MessageSquareText,
+  MoreHorizontal,
+  Paperclip,
+  Phone,
+  Plus,
   RefreshCw,
+  Search,
+  Send,
   ShieldCheck,
+  Smile,
   Sparkles,
   UserRound,
-  Wallet
+  Video,
+  Wallet,
+  X
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import { parseMediaUrl, formatMessageTime, formatMessageDate, isSameDay } from "@/lib/chat-helpers";
+import MessengerWidget from "@/components/ui/MessengerWidget";
 
 const TAB_OPTIONS = [
   { id: "overview", label: "Dashboard", icon: LayoutDashboard },
@@ -28,7 +42,6 @@ const TAB_OPTIONS = [
   { id: "payments", label: "Payments", icon: Wallet },
   { id: "favorites", label: "Saved Stylists", icon: Heart },
   { id: "messages", label: "Messages", icon: MessageSquareText },
-  { id: "notifications", label: "Notifications", icon: Bell },
   { id: "profile", label: "Account", icon: UserRound }
 ];
 
@@ -52,10 +65,6 @@ const HEADER_COPY = {
   messages: {
     title: "Messages",
     subtitle: "Only booked-client conversations with your stylists appear here"
-  },
-  notifications: {
-    title: "Notifications",
-    subtitle: "Track confirmations, reminders, and account updates in one inbox"
   },
   profile: {
     title: "Profile & Security",
@@ -420,10 +429,6 @@ function linkedMethodLabel(method) {
   return method.connected ? `${method.label} linked` : `${method.label} not linked`;
 }
 
-function activityMeta(item) {
-  return item.type ? item.type.replace(/_/g, " ") : "update";
-}
-
 function metricTone(id) {
   if (id === "appointments") {
     return "blue";
@@ -544,7 +549,6 @@ export default function ClientDashboard({ user, initialData }) {
     offsetX: 0,
     offsetY: 0
   });
-  const [dashboardSearch, setDashboardSearch] = useState("");
   const [dashboard, setDashboard] = useState(initialData);
   const [activeTab, setActiveTab] = useState(getValidTab(searchParams.get("tab")));
   const [feedback, setFeedback] = useState({ type: "", message: "" });
@@ -577,6 +581,14 @@ export default function ClientDashboard({ user, initialData }) {
     initialData?.conversations?.[0]?.id || ""
   );
   const [messageThread, setMessageThread] = useState(() => createMessageThreadState());
+  const [conversationSearch, setConversationSearch] = useState("");
+  const [widgetOpen, setWidgetOpen] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState("");
+  const [showAttachmentMenu, setShowAttachmentMenu] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showConversations, setShowConversations] = useState(false);
   const [expandedBookingId, setExpandedBookingId] = useState("");
   const [rescheduleState, setRescheduleState] = useState({
     bookingId: "",
@@ -592,9 +604,7 @@ export default function ClientDashboard({ user, initialData }) {
     booking: "",
     paymentMethod: "",
     paymentBooking: "",
-    notification: "",
     receipt: "",
-    markAll: false,
     profile: false,
     addPaymentMethod: false,
     password: false,
@@ -684,6 +694,28 @@ export default function ClientDashboard({ user, initialData }) {
     loadConversation(activeConversationId);
   }, [activeConversationId, activeTab]);
 
+  useEffect(() => {
+    if (!showNotifications && !showUserMenu && !showConversations) return;
+
+    function handleClickOutside(event) {
+      const notificationContainer = document.querySelector(".client-notification-bell-container");
+      if (notificationContainer && !notificationContainer.contains(event.target)) {
+        setShowNotifications(false);
+      }
+      const userContainer = document.querySelector(".client-user-avatar-container");
+      if (userContainer && !userContainer.contains(event.target)) {
+        setShowUserMenu(false);
+      }
+      const conversationContainer = document.querySelector(".client-message-bell-container");
+      if (conversationContainer && !conversationContainer.contains(event.target)) {
+        setShowConversations(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showNotifications, showUserMenu, showConversations]);
+
   const activeCopy = HEADER_COPY[activeTab] || HEADER_COPY.overview;
   const displayName = dashboard?.profile?.name || user.name || "Client";
   const conversations = dashboard?.conversations || [];
@@ -704,8 +736,6 @@ export default function ClientDashboard({ user, initialData }) {
   const linkedMethodCount =
     dashboard?.profile?.linkedMethods?.filter((item) => item.connected).length || 0;
   const totalLinkedMethods = dashboard?.profile?.linkedMethods?.length || 3;
-  const totalNotifications = dashboard?.notifications?.length || 0;
-  const readNotifications = totalNotifications - unreadNotifications;
   const avatarPreviewMetrics = avatarEditor.open
     ? getAvatarEditorMetrics(
         avatarEditor.imageWidth,
@@ -728,11 +758,9 @@ export default function ClientDashboard({ user, initialData }) {
               ? dashboard?.favorites?.length || 0
             : item.id === "messages"
               ? unreadMessages
-            : item.id === "notifications"
-                ? unreadNotifications
-                : 0
+              : 0
       })),
-    [dashboard, paymentsSummary.unpaidBookingsCount, unreadMessages, unreadNotifications]
+    [dashboard, paymentsSummary.unpaidBookingsCount, unreadMessages]
   );
 
   const metrics = useMemo(
@@ -763,23 +791,11 @@ export default function ClientDashboard({ user, initialData }) {
             ? "Your go-to stylists are ready to rebook"
             : "Save stylists to speed up rebooking"
       },
-      {
-        id: "alerts",
-        label: "Unread Alerts",
-        value: String(unreadNotifications),
-        detail:
-          unreadNotifications
-            ? `${unreadNotifications} new update(s) waiting`
-            : "No unread notifications"
-      }
     ],
-    [dashboard, nextBooking, unreadNotifications]
+    [dashboard, nextBooking]
   );
 
   const quickStats = useMemo(() => {
-    const alertsReadProgress = totalNotifications
-      ? Math.round((readNotifications / totalNotifications) * 100)
-      : 100;
     const accountProgress = Math.round((linkedMethodCount / Math.max(1, totalLinkedMethods)) * 100);
     const favoriteProgress = Math.min(100, (dashboard?.favorites?.length || 0) * 25);
 
@@ -791,19 +807,13 @@ export default function ClientDashboard({ user, initialData }) {
         progress: accountProgress
       },
       {
-        id: "read",
-        label: "Alerts read",
-        value: `${alertsReadProgress}%`,
-        progress: alertsReadProgress
-      },
-      {
         id: "favorites",
         label: "Rebook readiness",
         value: `${favoriteProgress}%`,
         progress: favoriteProgress
       }
     ];
-  }, [dashboard, linkedMethodCount, readNotifications, totalLinkedMethods, totalNotifications]);
+  }, [dashboard, linkedMethodCount, totalLinkedMethods]);
 
   function syncTabUrl(nextTab) {
     if (typeof window === "undefined") {
@@ -944,39 +954,6 @@ export default function ClientDashboard({ user, initialData }) {
       setFeedback({ type: "error", message: error.message });
     } finally {
       setLoading((current) => ({ ...current, favorite: "" }));
-    }
-  }
-
-  async function handleMarkNotificationRead(notificationId) {
-    setLoading((current) => ({ ...current, notification: notificationId }));
-
-    try {
-      await fetchJson(`/api/dashboard/notifications/${notificationId}`, {
-        method: "PATCH",
-        body: JSON.stringify({ read: true })
-      });
-      await refreshDashboard();
-    } catch (error) {
-      setFeedback({ type: "error", message: error.message });
-    } finally {
-      setLoading((current) => ({ ...current, notification: "" }));
-    }
-  }
-
-  async function handleMarkAllRead() {
-    setLoading((current) => ({ ...current, markAll: true }));
-
-    try {
-      await fetchJson("/api/dashboard/notifications", {
-        method: "PATCH",
-        body: JSON.stringify({ action: "markAllRead" })
-      });
-      await refreshDashboard();
-      setFeedback({ type: "success", message: "All notifications marked as read." });
-    } catch (error) {
-      setFeedback({ type: "error", message: error.message });
-    } finally {
-      setLoading((current) => ({ ...current, markAll: false }));
     }
   }
 
@@ -1453,10 +1430,14 @@ export default function ClientDashboard({ user, initialData }) {
     }
   }
 
-  async function handleSendMessage(event) {
-    event.preventDefault();
+  async function handleSendMessage(eventOrBody) {
+    if (eventOrBody?.preventDefault) {
+      eventOrBody.preventDefault();
+    }
 
-    if (!activeConversationId || !messageThread.draft.trim()) {
+    const bodyText = typeof eventOrBody === "string" ? eventOrBody : messageThread.draft;
+
+    if (!activeConversationId || !bodyText.trim()) {
       return;
     }
 
@@ -1465,7 +1446,7 @@ export default function ClientDashboard({ user, initialData }) {
     try {
       const data = await fetchJson(`/api/dashboard/messages/${activeConversationId}`, {
         method: "POST",
-        body: JSON.stringify({ body: messageThread.draft })
+        body: JSON.stringify({ body: bodyText.trim() })
       });
 
       setMessageThread((current) => ({
@@ -1484,23 +1465,9 @@ export default function ClientDashboard({ user, initialData }) {
 
   return (
     <div className="client-admin-shell">
-      <aside className="client-admin-sidebar">
-        <div className="client-admin-brand">
-          <div className="client-admin-brand-mark">
-            {dashboard?.profile?.avatar ? (
-              <img
-                src={dashboard.profile.avatar}
-                alt={displayName}
-                className="client-admin-brand-image"
-              />
-            ) : (
-              <span>{getInitials(displayName)}</span>
-            )}
-          </div>
-          <div className="client-admin-brand-copy">
-            <strong>Hair Force</strong>
-            <span>{displayName}</span>
-          </div>
+      <aside className="client-admin-sidebar" aria-label="Client dashboard navigation">
+        <div className="client-admin-brand-mark">
+          <Sparkles size={18} />
         </div>
 
         <nav className="client-admin-nav" aria-label="Dashboard navigation">
@@ -1510,79 +1477,365 @@ export default function ClientDashboard({ user, initialData }) {
             return (
               <button
                 key={item.id}
+                type="button"
                 className={`client-admin-nav-item ${activeTab === item.id ? "active" : ""}`}
                 onClick={() => handleTabChange(item.id)}
-                type="button"
-                aria-current={activeTab === item.id ? "page" : undefined}
-                aria-pressed={activeTab === item.id}
+                aria-label={item.label}
+                title={item.label}
               >
-                <span className="client-admin-nav-item-left">
-                  <span className="client-admin-nav-icon">
-                    <Icon size={18} />
-                  </span>
-                  <span>{item.label}</span>
-                </span>
-                {item.count ? <Badge className="client-admin-badge">{item.count}</Badge> : null}
+                <Icon size={18} />
+                {item.count ? <span className="client-admin-nav-badge">{item.count}</span> : null}
               </button>
             );
           })}
         </nav>
+
+        <div className="client-admin-sidebar-footer">
+          <button
+            type="button"
+            className="client-admin-nav-item"
+            onClick={handleSignOut}
+            aria-label="Sign out"
+            title="Sign out"
+          >
+            <LogOut size={18} />
+          </button>
+        </div>
       </aside>
 
       <section id="client-dashboard-main" ref={mainSectionRef} className="client-admin-main">
-        <div className="client-admin-toolbar">
-          <div className="client-admin-search-shell">
-            <svg
-              className="client-admin-search-icon"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              aria-hidden="true"
+        <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 8, padding: "14px 18px 0" }}>
+          {/* Notification Bell */}
+          <div className="client-notification-bell-container" style={{ position: "relative" }}>
+            <button
+              type="button"
+              onClick={() => {
+                setShowNotifications((c) => !c);
+                setShowUserMenu(false);
+              }}
+              style={{
+                position: "relative",
+                background: "transparent",
+                border: "none",
+                cursor: "pointer",
+                padding: 8,
+                borderRadius: "50%",
+                color: "#64748b",
+                width: 40,
+                height: 40,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transition: "background 0.2s"
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "#f1f5f9"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+              title="Notifications"
             >
-              <path
-                d="M21 21L16.65 16.65M19 10.5C19 15.1944 15.1944 19 10.5 19C5.80558 19 2 15.1944 2 10.5C2 5.80558 5.80558 2 10.5 2C15.1944 2 19 5.80558 19 10.5Z"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            <input
-              className="client-admin-search-input"
-              value={dashboardSearch}
-              onChange={(event) => setDashboardSearch(event.target.value)}
-              placeholder={`Search ${activeCopy.title.toLowerCase()} details`}
-              type="search"
-            />
+              <Bell size={20} />
+              {unreadNotifications > 0 ? (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: 2,
+                    right: 2,
+                    minWidth: 16,
+                    height: 16,
+                    borderRadius: "50%",
+                    background: "#ef4444",
+                    color: "#fff",
+                    fontSize: 10,
+                    fontWeight: 600,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: "0 4px"
+                  }}
+                >
+                  {unreadNotifications}
+                </span>
+              ) : null}
+            </button>
+
+            {showNotifications ? (
+              <div
+                style={{
+                  position: "absolute",
+                  top: 48,
+                  right: 0,
+                  width: 340,
+                  maxHeight: 420,
+                  overflow: "auto",
+                  background: "#fff",
+                  borderRadius: 12,
+                  boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+                  border: "1px solid #e5e5e5",
+                  zIndex: 100
+                }}
+              >
+                <div style={{ padding: "12px 16px", borderBottom: "1px solid #e5e5e5" }}>
+                  <strong style={{ fontSize: 14, color: "#0f172a" }}>Notifications</strong>
+                </div>
+                {(dashboard?.notifications || []).length === 0 ? (
+                  <div style={{ padding: 20, textAlign: "center", color: "#94a3b8", fontSize: 13 }}>
+                    No notifications yet.
+                  </div>
+                ) : (
+                  (dashboard?.notifications || []).slice(0, 5).map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => {
+                        setShowNotifications(false);
+                      }}
+                      style={{
+                        width: "100%",
+                        textAlign: "left",
+                        padding: "12px 16px",
+                        border: "none",
+                        borderBottom: "1px solid #f1f5f9",
+                        background: item.readAt ? "#fff" : "#f0f7ff",
+                        cursor: "pointer",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 4
+                      }}
+                    >
+                      <strong style={{ fontSize: 13, color: "#0f172a" }}>{item.title}</strong>
+                      <span style={{ fontSize: 12, color: "#64748b", lineHeight: 1.4 }}>{item.message}</span>
+                    </button>
+                  ))
+                )}
+              </div>
+            ) : null}
           </div>
 
-          <div className="client-admin-header-actions">
+          {/* Message Icon */}
+          <div className="client-message-bell-container" style={{ position: "relative" }}>
             <button
-              className="client-admin-icon-button"
-              onClick={() => handleTabChange("notifications")}
               type="button"
-              aria-label="Open notifications"
+              onClick={() => {
+                setShowConversations((c) => !c);
+                setShowNotifications(false);
+                setShowUserMenu(false);
+              }}
+              style={{
+                position: "relative",
+                background: "transparent",
+                border: "none",
+                cursor: "pointer",
+                padding: 8,
+                borderRadius: "50%",
+                color: "#64748b",
+                width: 40,
+                height: 40,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transition: "background 0.2s"
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "#f1f5f9"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+              title="Messages"
             >
-              <Bell size={18} />
-              {unreadNotifications ? <span className="client-admin-dot" /> : null}
+              <MessageSquareText size={20} />
+              {unreadMessages > 0 ? (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: 2,
+                    right: 2,
+                    minWidth: 16,
+                    height: 16,
+                    borderRadius: "50%",
+                    background: "#ef4444",
+                    color: "#fff",
+                    fontSize: 10,
+                    fontWeight: 600,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: "0 4px"
+                  }}
+                >
+                  {unreadMessages}
+                </span>
+              ) : null}
             </button>
+
+            {showConversations ? (
+              <div
+                style={{
+                  position: "absolute",
+                  top: 48,
+                  right: 0,
+                  width: 340,
+                  maxHeight: 420,
+                  overflow: "auto",
+                  background: "#fff",
+                  borderRadius: 12,
+                  boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+                  border: "1px solid #e5e5e5",
+                  zIndex: 100
+                }}
+              >
+                <div style={{ padding: "12px 16px", borderBottom: "1px solid #e5e5e5" }}>
+                  <strong style={{ fontSize: 14, color: "#0f172a" }}>Messages</strong>
+                </div>
+                {conversations.length === 0 ? (
+                  <div style={{ padding: 20, textAlign: "center", color: "#94a3b8", fontSize: 13 }}>
+                    No conversations yet.
+                  </div>
+                ) : (
+                  conversations.map((conversation) => (
+                    <button
+                      key={conversation.id}
+                      type="button"
+                      onClick={() => {
+                        setActiveConversationId(conversation.id);
+                        setShowConversations(false);
+                        setWidgetOpen(true);
+                      }}
+                      style={{
+                        width: "100%",
+                        textAlign: "left",
+                        padding: "12px 16px",
+                        border: "none",
+                        borderBottom: "1px solid #f1f5f9",
+                        background: conversation.clientUnreadCount > 0 ? "#f0f7ff" : "#fff",
+                        cursor: "pointer",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 4
+                      }}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <strong style={{ fontSize: 13, color: "#0f172a" }}>{conversation.vendorName || "Stylist"}</strong>
+                        {conversation.clientUnreadCount > 0 ? (
+                          <span
+                            style={{
+                              minWidth: 18,
+                              height: 18,
+                              borderRadius: "50%",
+                              background: "#0070f3",
+                              color: "#fff",
+                              fontSize: 10,
+                              fontWeight: 600,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              padding: "0 5px"
+                            }}
+                          >
+                            {conversation.clientUnreadCount}
+                          </span>
+                        ) : null}
+                      </div>
+                      <span style={{ fontSize: 12, color: "#64748b", lineHeight: 1.4 }}>
+                        {conversation.lastMessagePreview || "No messages yet"}
+                      </span>
+                    </button>
+                  ))
+                )}
+              </div>
+            ) : null}
+          </div>
+
+          {/* User Avatar */}
+          <div className="client-user-avatar-container" style={{ position: "relative" }}>
             <button
-              className={`client-admin-icon-button ${loading.refresh ? "is-spinning" : ""}`}
-              onClick={() => refreshDashboard()}
               type="button"
-              aria-label="Refresh dashboard"
+              onClick={() => {
+                setShowUserMenu((c) => !c);
+                setShowNotifications(false);
+              }}
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: "50%",
+                border: "none",
+                overflow: "hidden",
+                cursor: "pointer",
+                padding: 0,
+                background: "#e2e8f0",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center"
+              }}
+              title="Account"
             >
-              <RefreshCw size={18} />
+              {profileForm.avatar ? (
+                <img src={profileForm.avatar} alt="Profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              ) : (
+                <div
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 14,
+                    fontWeight: 600,
+                    color: "#64748b",
+                    background: "linear-gradient(135deg, #2856f8, #54b6ff)",
+                    color: "#fff"
+                  }}
+                >
+                  {getInitials(profileForm.name || displayName)}
+                </div>
+              )}
             </button>
-            <button
-              className="client-admin-icon-button"
-              onClick={() => handleTabChange("profile")}
-              type="button"
-              aria-label="Open account settings"
-            >
-              <UserRound size={18} />
-            </button>
+
+            {showUserMenu ? (
+              <div
+                style={{
+                  position: "absolute",
+                  top: 48,
+                  right: 0,
+                  width: 220,
+                  background: "#fff",
+                  borderRadius: 12,
+                  boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+                  border: "1px solid #e5e5e5",
+                  zIndex: 100,
+                  overflow: "hidden"
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => { setShowUserMenu(false); handleTabChange("profile"); }}
+                  style={{
+                    width: "100%",
+                    textAlign: "left",
+                    padding: "12px 16px",
+                    border: "none",
+                    borderBottom: "1px solid #f1f5f9",
+                    background: "#fff",
+                    cursor: "pointer",
+                    fontSize: 13,
+                    color: "#0f172a"
+                  }}
+                >
+                  Profile
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setShowUserMenu(false); handleSignOut(); }}
+                  style={{
+                    width: "100%",
+                    textAlign: "left",
+                    padding: "12px 16px",
+                    border: "none",
+                    background: "#fff",
+                    cursor: "pointer",
+                    fontSize: 13,
+                    color: "#dc2626"
+                  }}
+                >
+                  Sign out
+                </button>
+              </div>
+            ) : null}
           </div>
         </div>
 
@@ -1612,7 +1865,7 @@ export default function ClientDashboard({ user, initialData }) {
                     type="button"
                     variant="link"
                     className="client-admin-link-button"
-                    onClick={() => handleTabChange("notifications")}
+                    onClick={() => setShowNotifications((c) => !c)}
                   >
                     View all
                   </Button>
@@ -2523,200 +2776,319 @@ export default function ClientDashboard({ user, initialData }) {
 
         {activeTab === "messages" ? (
           <div className="client-admin-content-stack">
-            <div className="client-admin-messages-layout">
-              <Card className="client-admin-panel client-admin-panel-large">
-                <div className="client-admin-panel-head">
-                  <div>
-                    <h2>Booked stylist inbox</h2>
-                    <p>Only threads attached to your appointments appear here</p>
+            <div className="client-messenger-layout">
+              {/* Conversation List */}
+              <div className="client-messenger-list">
+                <div className="client-messenger-list-header">
+                  <h3>Chats</h3>
+                  <div className="client-messenger-list-actions">
+                    <button type="button" title="More options"><MoreHorizontal size={20} /></button>
                   </div>
-                  <Badge variant="secondary" className="client-admin-badge subtle">
-                    {conversations.length}
-                  </Badge>
                 </div>
-
-                <div className="client-admin-list">
-                  {conversations.length ? (
-                    conversations.map((conversation) => (
+                <div className="client-messenger-search">
+                  <Search size={16} />
+                  <input
+                    type="text"
+                    placeholder="Search Messenger"
+                    value={conversationSearch}
+                    onChange={(e) => setConversationSearch(e.target.value)}
+                  />
+                </div>
+                <div className="client-messenger-conversations">
+                  {conversations.filter((c) => {
+                    const term = conversationSearch.toLowerCase();
+                    if (!term) return true;
+                    return (
+                      (c.vendorName || "").toLowerCase().includes(term) ||
+                      (c.serviceName || "").toLowerCase().includes(term)
+                    );
+                  }).length ? (
+                    conversations.filter((c) => {
+                      const term = conversationSearch.toLowerCase();
+                      if (!term) return true;
+                      return (
+                        (c.vendorName || "").toLowerCase().includes(term) ||
+                        (c.serviceName || "").toLowerCase().includes(term)
+                      );
+                    }).map((conversation) => (
                       <button
                         key={conversation.id}
                         type="button"
-                        className={`client-admin-conversation-card ${
-                          activeConversationId === conversation.id ? "active" : ""
-                        }`}
+                        className={`client-messenger-chat-item ${activeConversationId === conversation.id ? "active" : ""}`}
                         onClick={() => setActiveConversationId(conversation.id)}
                       >
-                        <div className="client-admin-list-top">
-                          <div>
-                            <strong>{conversation.vendorName || "Stylist"}</strong>
-                            <p>
-                              {conversation.serviceName} -{" "}
-                              {formatAppointmentDate(conversation.appointmentDate)}
-                            </p>
-                          </div>
-                          <Badge
-                            variant="secondary"
-                            className={`client-admin-status ${
-                              conversation.clientUnreadCount ? "success" : "muted"
-                            }`}
-                          >
-                            {conversation.clientUnreadCount || 0} unread
-                          </Badge>
+                        <div className="client-messenger-chat-avatar">
+                          {getInitials(conversation.vendorName)}
                         </div>
-
-                        <div className="client-admin-meta">
-                          <span>
-                            <Clock3 size={15} /> {conversation.appointmentSlot || "Time pending"}
-                          </span>
-                          <span>
-                            <MessageSquareText size={15} />{" "}
-                            {conversation.lastMessagePreview || "Open the thread to start chatting."}
-                          </span>
+                        <div className="client-messenger-chat-info">
+                          <div className="client-messenger-chat-top">
+                            <strong>{conversation.vendorName || "Stylist"}</strong>
+                            <span className="client-messenger-chat-time">
+                              {conversation.lastMessageAt ? formatMessageTime(conversation.lastMessageAt) : ""}
+                            </span>
+                          </div>
+                          <div className="client-messenger-chat-bottom">
+                            <span className="client-messenger-chat-preview">
+                              {conversation.lastMessagePreview || "No messages yet"}
+                            </span>
+                            {conversation.clientUnreadCount ? (
+                              <span className="client-messenger-unread-badge">{conversation.clientUnreadCount}</span>
+                            ) : null}
+                          </div>
                         </div>
                       </button>
                     ))
                   ) : (
-                    <div className="client-admin-empty">
-                      <strong>No messages yet</strong>
-                      <p>Once you book with a stylist, your appointment conversation will show up here.</p>
+                    <div className="client-messenger-empty">
+                      <p>No conversations found.</p>
                     </div>
                   )}
                 </div>
-              </Card>
-
-              <Card className="client-admin-panel client-admin-panel-large">
-                <div className="client-admin-panel-head">
-                  <div>
-                    <h2>{activeConversation ? activeConversation.vendorName : "Choose a conversation"}</h2>
-                    <p>
-                      {activeConversation
-                        ? `${activeConversation.serviceName} - ${formatAppointmentDate(
-                            activeConversation.appointmentDate
-                          )} - ${activeConversation.appointmentSlot || "Time pending"}`
-                        : "Select a booked appointment thread to see messages and send updates."}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="client-admin-message-thread">
-                  {messageThread.loading ? <p className="client-admin-note">Loading conversation...</p> : null}
-                  {messageThread.error ? (
-                    <div className="client-admin-feedback error small">{messageThread.error}</div>
-                  ) : null}
-                  {!messageThread.loading && activeConversation && messageThread.messages.length ? (
-                    messageThread.messages.map((message) => (
-                      <div
-                        key={message.id}
-                        className={`client-admin-message-bubble ${
-                          message.senderRole === "client" ? "mine" : ""
-                        }`}
-                      >
-                        <strong>{message.senderRole === "client" ? "You" : activeConversation.vendorName}</strong>
-                        <p>{message.body}</p>
-                      </div>
-                    ))
-                  ) : !messageThread.loading && activeConversation ? (
-                    <div className="client-admin-empty compact">
-                      <p>No messages yet. Send the first note for this booking.</p>
-                    </div>
-                  ) : (
-                    <div className="client-admin-empty compact">
-                      <p>Select a conversation from the left to open your booking inbox.</p>
-                    </div>
-                  )}
-                </div>
-
-                {activeConversation ? (
-                  <form onSubmit={handleSendMessage} className="client-admin-message-form">
-                    <textarea
-                      className="form-control"
-                      rows="4"
-                      placeholder="Send a note to your stylist about prep, arrival time, or booking changes."
-                      value={messageThread.draft}
-                      onChange={(event) =>
-                        setMessageThread((current) => ({ ...current, draft: event.target.value }))
-                      }
-                    />
-                    <Button
-                      type="submit"
-                      className="client-admin-button client-admin-button-primary"
-                      disabled={messageThread.sending}
-                    >
-                      {messageThread.sending ? "Sending..." : "Send message"}
-                    </Button>
-                  </form>
-                ) : null}
-              </Card>
-            </div>
-          </div>
-        ) : null}
-
-        {activeTab === "notifications" ? (
-          <div className="client-admin-content-stack">
-            <Card className="client-admin-panel">
-              <div className="client-admin-panel-head">
-                <div>
-                  <h2>Notification Inbox</h2>
-                  <p>Recent booking updates and account alerts</p>
-                </div>
-                <Button
-                  type="button"
-                  variant="link"
-                  className="client-admin-link-button"
-                  onClick={handleMarkAllRead}
-                  disabled={loading.markAll}
-                >
-                  {loading.markAll ? "Updating..." : "Mark all read"}
-                </Button>
               </div>
 
-              <div className="client-admin-list">
-                {dashboard?.notifications?.length ? (
-                  dashboard.notifications.map((item) => (
-                    <div key={item.id} className={`client-admin-list-item ${item.readAt ? "is-read" : ""}`}>
-                      <div className="client-admin-list-top">
-                        <div>
-                          <strong>{item.title}</strong>
-                          <p>{item.message}</p>
+              {/* Thread */}
+              <div className="client-messenger-thread">
+                {activeConversation ? (
+                  <>
+                    <div className="client-messenger-thread-header">
+                      <div className="client-messenger-thread-user">
+                        <div className="client-messenger-thread-avatar">
+                          {getInitials(activeConversation.vendorName)}
                         </div>
-                        <Badge variant="secondary" className={`client-admin-status ${item.readAt ? "muted" : "success"}`}>
-                          {item.readAt ? "Read" : "New"}
-                        </Badge>
+                        <div>
+                          <strong>{activeConversation.vendorName || "Stylist"}</strong>
+                          <p>{activeConversation.serviceName}{activeConversation.appointmentDate ? ` · ${formatAppointmentDate(activeConversation.appointmentDate)}` : ""}</p>
+                        </div>
                       </div>
-
-                      <div className="client-admin-meta">
-                        <span><Bell size={15} /> {formatNotificationDate(item.createdAt)}</span>
-                        <span><ShieldCheck size={15} /> {activityMeta(item)}</span>
-                      </div>
-
-                      <div className="client-admin-action-row">
-                        {item.ctaHref ? (
-                          <Link href={item.ctaHref} className="client-admin-button client-admin-button-primary">
-                            {item.ctaLabel || "Open"}
-                          </Link>
-                        ) : null}
-                        {!item.readAt ? (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className="client-admin-button client-admin-button-secondary"
-                            onClick={() => handleMarkNotificationRead(item.id)}
-                            disabled={loading.notification === item.id}
-                          >
-                            {loading.notification === item.id ? "Saving..." : "Mark read"}
-                          </Button>
-                        ) : null}
+                      <div className="client-messenger-thread-actions">
+                        <button type="button" title="Call"><Phone size={18} /></button>
+                        <button type="button" title="Info"><Info size={18} /></button>
                       </div>
                     </div>
-                  ))
+
+                    <div className="client-messenger-messages">
+                      {messageThread.loading ? (
+                        <p style={{ textAlign: "center", color: "#94a3b8", margin: "auto" }}>Loading conversation...</p>
+                      ) : null}
+                      {messageThread.error ? (
+                        <p style={{ textAlign: "center", color: "#dc2626", margin: "auto" }}>{messageThread.error}</p>
+                      ) : null}
+                      {!messageThread.loading && activeConversation && messageThread.messages.length ? (
+                        (() => {
+                          const rows = [];
+                          let lastDate = null;
+                          messageThread.messages.forEach((message, index) => {
+                            const showDate = !lastDate || !isSameDay(lastDate, message.createdAt);
+                            if (showDate) {
+                              rows.push(
+                                <div key={`date-${index}`} className="client-messenger-date-divider">
+                                  <span>{formatMessageDate(message.createdAt)}</span>
+                                </div>
+                              );
+                              lastDate = message.createdAt;
+                            }
+                            const isMine = message.senderRole === "client";
+                            const media = parseMediaUrl(message.body);
+                            rows.push(
+                              <div key={message.id} className={`client-messenger-bubble-row ${isMine ? "mine" : ""}`}>
+                                {!isMine ? (
+                                  <div className="client-messenger-bubble-avatar">
+                                    {getInitials(activeConversation.vendorName)}
+                                  </div>
+                                ) : null}
+                                <div className={`client-messenger-bubble ${isMine ? "mine" : ""}`}>
+                                  {media?.type === "image" ? (
+                                    <img
+                                      src={media.url}
+                                      alt="Attachment"
+                                      style={{ maxWidth: 220, borderRadius: 12, display: "block", cursor: "pointer" }}
+                                      onClick={() => setLightboxImage(media.url)}
+                                    />
+                                  ) : media?.type === "video" ? (
+                                    <video src={media.url} controls style={{ maxWidth: 220, borderRadius: 12, display: "block" }} />
+                                  ) : (
+                                    <p>{message.body}</p>
+                                  )}
+                                  <span className="client-messenger-bubble-time">{formatMessageTime(message.createdAt)}</span>
+                                </div>
+                              </div>
+                            );
+                          });
+                          return rows;
+                        })()
+                      ) : !messageThread.loading && activeConversation ? (
+                        <div className="client-messenger-empty-thread">
+                          <p>No messages yet. Send the first note.</p>
+                        </div>
+                      ) : (
+                        <div className="client-messenger-empty-thread">
+                          <p>Select a conversation to start messaging.</p>
+                        </div>
+                      )}
+                    </div>
+
+                    <form onSubmit={handleSendMessage} className="client-messenger-input-bar">
+                      <input
+                        ref={(el) => { if (el && !window.clientChatFileInput) window.clientChatFileInput = el; }}
+                        type="file"
+                        accept="image/*,video/*"
+                        style={{ display: "none" }}
+                        onChange={async (event) => {
+                          const file = event.target.files?.[0];
+                          if (!file) return;
+                          try {
+                            const formData = new FormData();
+                            formData.append("file", file);
+                            formData.append("folder", "messages");
+                            const response = await fetch("/api/uploads", { method: "POST", body: formData });
+                            const data = await response.json();
+                            if (!response.ok) throw new Error(data.error || "Upload failed.");
+                            await handleSendMessage(data.url);
+                          } catch (error) {
+                            setMessageThread((current) => ({ ...current, error: error.message }));
+                          }
+                          event.target.value = "";
+                        }}
+                      />
+                      <div style={{ position: "relative" }}>
+                        <button
+                          type="button"
+                          className="client-messenger-input-action"
+                          title="Add attachment"
+                          onClick={(e) => {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            window.clientAttachmentPos = { left: rect.left, bottom: window.innerHeight - rect.top };
+                            setShowAttachmentMenu((s) => !s);
+                          }}
+                        >
+                          <Plus size={20} />
+                        </button>
+                        {showAttachmentMenu ? (
+                          <div
+                            className="chat-attachment-menu"
+                            style={{
+                              position: "fixed",
+                              left: Math.max(8, (window.clientAttachmentPos?.left || 0) - 80),
+                              bottom: (window.clientAttachmentPos?.bottom || 50) + 8,
+                              top: "auto",
+                              right: "auto"
+                            }}
+                          >
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowAttachmentMenu(false);
+                                window.clientChatFileInput?.click();
+                              }}
+                            >
+                              <ImageIcon size={18} /> Picture
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowAttachmentMenu(false);
+                                window.clientChatFileInput?.click();
+                              }}
+                            >
+                              <Video size={18} /> Video
+                            </button>
+                          </div>
+                        ) : null}
+                      </div>
+                      <div className="client-messenger-input-wrap">
+                        <input
+                          type="text"
+                          placeholder="Aa"
+                          value={messageThread.draft}
+                          onChange={(event) =>
+                            setMessageThread((current) => ({ ...current, draft: event.target.value }))
+                          }
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter" && !event.shiftKey) {
+                              event.preventDefault();
+                              handleSendMessage();
+                            }
+                          }}
+                        />
+                        <div style={{ position: "relative" }}>
+                          <button
+                            type="button"
+                            className="client-messenger-input-action"
+                            title="Emoji"
+                            onClick={(e) => {
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              window.clientEmojiPos = { right: window.innerWidth - rect.right, bottom: window.innerHeight - rect.top };
+                              setShowEmojiPicker((s) => !s);
+                            }}
+                          >
+                            <Smile size={20} />
+                          </button>
+                          {showEmojiPicker ? (
+                            <div
+                              style={{
+                                position: "fixed",
+                                bottom: (window.clientEmojiPos?.bottom || 50) + 8,
+                                right: Math.max(8, window.clientEmojiPos?.right || 8),
+                                top: "auto",
+                                left: "auto",
+                                background: "#ffffff",
+                                borderRadius: 12,
+                                boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+                                padding: 10,
+                                display: "grid",
+                                gridTemplateColumns: "repeat(10, 1fr)",
+                                gap: 4,
+                                zIndex: 9999,
+                                width: 280,
+                                border: "1px solid #e5e7eb"
+                              }}
+                            >
+                              {["😀","😂","🥰","😍","😎","🤔","😢","😡","👍","👎","🙏","🔥","❤️","🎉","✅","❌","👋","🤝","💇","💇‍♀️"].map((emoji) => (
+                                <button
+                                  key={emoji}
+                                  type="button"
+                                  onClick={() => {
+                                    setMessageThread((current) => ({
+                                      ...current,
+                                      draft: (current.draft || "") + emoji
+                                    }));
+                                    setShowEmojiPicker(false);
+                                  }}
+                                  style={{
+                                    background: "transparent",
+                                    border: "none",
+                                    cursor: "pointer",
+                                    fontSize: 20,
+                                    padding: 4,
+                                    borderRadius: 6,
+                                    lineHeight: 1,
+                                    color: "#0f172a"
+                                  }}
+                                >
+                                  {emoji}
+                                </button>
+                              ))}
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
+                      <button
+                        type="submit"
+                        className="client-messenger-send-btn"
+                        disabled={messageThread.sending || !messageThread.draft.trim()}
+                      >
+                        <Send size={20} />
+                      </button>
+                    </form>
+                  </>
                 ) : (
-                  <div className="client-admin-empty">
-                    <strong>No notifications yet</strong>
-                    <p>Booking confirmations and reminders will land here once activity starts.</p>
+                  <div className="client-messenger-no-chat">
+                    <MessageSquareText size={48} style={{ opacity: 0.4 }} />
+                    <p>Select a conversation to start messaging</p>
                   </div>
                 )}
               </div>
-            </Card>
+            </div>
           </div>
         ) : null}
 
@@ -3195,6 +3567,37 @@ export default function ClientDashboard({ user, initialData }) {
               </div>
             </div>
           </div>
+        </div>
+      ) : null}
+
+      {activeConversationId && activeTab !== "messages" ? (
+        <MessengerWidget
+          conversationId={activeConversationId}
+          recipientName={activeConversation?.vendorName || "Stylist"}
+          recipientAvatar=""
+          userRole="client"
+          controlledOpen={widgetOpen}
+          onToggle={(v) => setWidgetOpen(v)}
+          externalMessages={messageThread.messages}
+          externalDraft={messageThread.draft}
+          externalSending={messageThread.sending}
+          externalLoading={messageThread.loading}
+          externalError={messageThread.error}
+          onSend={(body) => handleSendMessage(body)}
+          onDraftChange={(value) => setMessageThread((current) => ({ ...current, draft: value }))}
+          onExpand={() => {
+            handleTabChange("messages");
+            setWidgetOpen(false);
+          }}
+        />
+      ) : null}
+
+      {lightboxImage ? (
+        <div className="chat-lightbox-overlay" onClick={() => setLightboxImage("")}>
+          <button className="chat-lightbox-close" onClick={() => setLightboxImage("")}>
+            <X size={20} />
+          </button>
+          <img src={lightboxImage} alt="Full size" onClick={(e) => e.stopPropagation()} />
         </div>
       ) : null}
     </div>

@@ -1,7 +1,100 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { MessageCircle, Send, X, Minimize2 } from "lucide-react";
+import {
+  MessageCircle,
+  Send,
+  X,
+  Minimize2,
+  Paperclip,
+  Maximize2,
+  Smile
+} from "lucide-react";
+
+import { parseMediaUrl } from "@/lib/chat-helpers";
+
+const COMMON_EMOJIS = [
+  "😀","😂","🥰","😍","😎","🤔","😢","😡","👍","👎",
+  "🙏","🔥","❤️","🎉","✅","❌","👋","🤝","💇","💇‍♀️"
+];
+
+function MessageBubble({ message, userRole }) {
+  const isMine = message.senderRole === userRole;
+  const media = parseMediaUrl(message.body);
+
+  return (
+    <div
+      style={{
+        alignSelf: isMine ? "flex-end" : "flex-start",
+        maxWidth: "80%",
+        padding: "10px 14px",
+        borderRadius: isMine ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
+        background: isMine ? "#0070f3" : "#f1f5f9",
+        color: isMine ? "#fff" : "#0f172a",
+        fontSize: 13,
+        lineHeight: 1.4,
+        wordBreak: "break-word"
+      }}
+    >
+      {media?.type === "image" ? (
+        <img
+          src={media.url}
+          alt="Attachment"
+          style={{ maxWidth: "100%", borderRadius: 8, display: "block" }}
+        />
+      ) : media?.type === "video" ? (
+        <video
+          src={media.url}
+          controls
+          style={{ maxWidth: "100%", borderRadius: 8, display: "block" }}
+        />
+      ) : (
+        message.body
+      )}
+    </div>
+  );
+}
+
+function EmojiPicker({ onPick }) {
+  return (
+    <div
+      style={{
+        position: "absolute",
+        bottom: "100%",
+        right: 0,
+        marginBottom: 8,
+        background: "#fff",
+        borderRadius: 12,
+        boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+        padding: 10,
+        display: "grid",
+        gridTemplateColumns: "repeat(10, 1fr)",
+        gap: 4,
+        zIndex: 10,
+        width: 280
+      }}
+    >
+      {COMMON_EMOJIS.map((emoji) => (
+        <button
+          key={emoji}
+          type="button"
+          onClick={() => onPick(emoji)}
+          style={{
+            background: "transparent",
+            border: "none",
+            cursor: "pointer",
+            fontSize: 20,
+            padding: 4,
+            borderRadius: 6,
+            lineHeight: 1
+          }}
+        >
+          {emoji}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 function useInternalThreadState(conversationId) {
   const [threadState, setThreadState] = useState({
@@ -28,14 +121,15 @@ function useInternalThreadState(conversationId) {
     }
   }, [conversationId]);
 
-  async function handleSendMessage() {
-    if (!conversationId || !threadState.draft.trim()) return;
+  async function handleSendMessage(bodyOverride) {
+    const bodyText = String(bodyOverride || threadState.draft || "").trim();
+    if (!conversationId || !bodyText) return;
     setThreadState((current) => ({ ...current, sending: true, error: "" }));
     try {
       const response = await fetch(`/api/dashboard/messages/${conversationId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ body: threadState.draft.trim() })
+        body: JSON.stringify({ body: bodyText })
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Unable to send message.");
@@ -65,7 +159,10 @@ export default function MessengerWidget({
   recipientAvatar,
   userRole = "client",
   initialOpen = false,
+  controlledOpen,
+  onToggle,
   onClose,
+  onExpand,
   // Optional external state (for vendor dashboard integration)
   externalMessages,
   externalDraft,
@@ -75,9 +172,17 @@ export default function MessengerWidget({
   onSend,
   onDraftChange
 }) {
-  const [isOpen, setIsOpen] = useState(initialOpen);
+  const isControlled = controlledOpen !== undefined;
+  const [internalOpen, setInternalOpen] = useState(initialOpen);
+  const isOpen = isControlled ? controlledOpen : internalOpen;
+
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const messagesEndRef = useRef(null);
   const pollRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const emojiRef = useRef(null);
 
   const hasExternalState =
     externalMessages !== undefined ||
@@ -101,9 +206,11 @@ export default function MessengerWidget({
     : (value) => internal.setThreadState((c) => ({ ...c, draft: value }));
 
   const handleSend = hasExternalState
-    ? async () => {
-        if (!conversationId || !threadState.draft.trim()) return;
-        onSend?.(threadState.draft.trim());
+    ? async (bodyOverride) => {
+        const bodyText = String(bodyOverride || threadState.draft || "").trim();
+        if (!conversationId || !bodyText) return;
+        setUploadError("");
+        onSend?.(bodyText);
       }
     : internal.handleSendMessage;
 
@@ -133,9 +240,65 @@ export default function MessengerWidget({
     scrollToBottom();
   }, [threadState.messages, scrollToBottom]);
 
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (emojiRef.current && !emojiRef.current.contains(event.target)) {
+        setShowEmojiPicker(false);
+      }
+    }
+    if (showEmojiPicker) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [showEmojiPicker]);
+
+  function setOpen(value) {
+    if (isControlled) {
+      onToggle?.(value);
+    } else {
+      setInternalOpen(value);
+    }
+  }
+
   function handleClose() {
-    setIsOpen(false);
+    setOpen(false);
     onClose?.();
+  }
+
+  async function handleFileUpload(file) {
+    if (!file || !conversationId) return;
+    setIsUploading(true);
+    setUploadError("");
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("folder", "messages");
+      const response = await fetch("/api/uploads", {
+        method: "POST",
+        body: formData
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Upload failed.");
+      await handleSend(data.url);
+    } catch (error) {
+      setUploadError(error.message || "Failed to upload file.");
+    } finally {
+      setIsUploading(false);
+    }
+  }
+
+  function handleFileSelect(event) {
+    const file = event.target.files?.[0];
+    if (file) {
+      handleFileUpload(file);
+    }
+    event.target.value = "";
+  }
+
+  function handleEmojiPick(emoji) {
+    const current = threadState.draft || "";
+    setDraft(current + emoji);
+    setShowEmojiPicker(false);
   }
 
   if (!conversationId) {
@@ -148,11 +311,11 @@ export default function MessengerWidget({
       style={{
         position: "fixed",
         bottom: 20,
-        left: 20,
+        right: 20,
         zIndex: 9999,
         display: "flex",
         flexDirection: "column",
-        alignItems: "flex-start"
+        alignItems: "flex-end"
       }}
     >
       {isOpen ? (
@@ -180,7 +343,8 @@ export default function MessengerWidget({
               justifyContent: "space-between",
               padding: "14px 16px",
               borderBottom: "1px solid #e5e5e5",
-              background: "#f8fafc"
+              background: "#f8fafc",
+              flexShrink: 0
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -210,7 +374,7 @@ export default function MessengerWidget({
                       justifyContent: "center",
                       fontSize: 14,
                       fontWeight: 600,
-                      color: "#64748b"
+                      color: "#1e293b"
                     }}
                   >
                     {recipientName?.charAt(0)?.toUpperCase() || "?"}
@@ -223,9 +387,29 @@ export default function MessengerWidget({
               </div>
             </div>
             <div style={{ display: "flex", gap: 6 }}>
+              {onExpand ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOpen(false);
+                    onExpand();
+                  }}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    padding: 6,
+                    borderRadius: 8,
+                    color: "#64748b"
+                  }}
+                  title="Expand"
+                >
+                  <Maximize2 size={16} />
+                </button>
+              ) : null}
               <button
                 type="button"
-                onClick={() => setIsOpen(false)}
+                onClick={() => setOpen(false)}
                 style={{
                   background: "transparent",
                   border: "none",
@@ -264,7 +448,8 @@ export default function MessengerWidget({
               padding: 16,
               display: "flex",
               flexDirection: "column",
-              gap: 10
+              gap: 10,
+              minHeight: 0
             }}
           >
             {threadState.loading ? (
@@ -286,43 +471,26 @@ export default function MessengerWidget({
                 Send a message to start the conversation.
               </div>
             ) : (
-              threadState.messages.map((message) => {
-                const isMine = message.senderRole === userRole;
-                return (
-                  <div
-                    key={message.id}
-                    style={{
-                      alignSelf: isMine ? "flex-end" : "flex-start",
-                      maxWidth: "80%",
-                      padding: "10px 14px",
-                      borderRadius: isMine ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
-                      background: isMine ? "#0070f3" : "#f1f5f9",
-                      color: isMine ? "#fff" : "#0f172a",
-                      fontSize: 13,
-                      lineHeight: 1.4,
-                      wordBreak: "break-word"
-                    }}
-                  >
-                    {message.body}
-                  </div>
-                );
-              })
+              threadState.messages.map((message) => (
+                <MessageBubble key={message.id} message={message} userRole={userRole} />
+              ))
             )}
             <div ref={messagesEndRef} />
           </div>
 
           {/* Error */}
-          {threadState.error ? (
+          {(threadState.error || uploadError) ? (
             <div
               style={{
                 padding: "8px 16px",
                 fontSize: 12,
                 color: "#dc2626",
                 background: "#fef2f2",
-                borderTop: "1px solid #fecaca"
+                borderTop: "1px solid #fecaca",
+                flexShrink: 0
               }}
             >
-              {threadState.error}
+              {threadState.error || uploadError}
             </div>
           ) : null}
 
@@ -338,15 +506,45 @@ export default function MessengerWidget({
               gap: 8,
               padding: "10px 14px",
               borderTop: "1px solid #e5e5e5",
-              background: "#fff"
+              background: "#fff",
+              flexShrink: 0,
+              position: "relative"
             }}
           >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*,video/*"
+              onChange={handleFileSelect}
+              style={{ display: "none" }}
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading || threadState.sending}
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: "50%",
+                border: "none",
+                background: "transparent",
+                color: "#64748b",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                flexShrink: 0
+              }}
+              title="Send image or video"
+            >
+              <Paperclip size={18} />
+            </button>
             <input
               type="text"
               placeholder="Type a message..."
               value={threadState.draft}
               onChange={(event) => setDraft(event.target.value)}
-              disabled={threadState.sending}
+              disabled={threadState.sending || isUploading}
               style={{
                 flex: 1,
                 padding: "10px 14px",
@@ -354,7 +552,8 @@ export default function MessengerWidget({
                 border: "1px solid #e2e8f0",
                 background: "#f8fafc",
                 fontSize: 13,
-                outline: "none"
+                outline: "none",
+                color: "#0f172a"
               }}
               onKeyDown={(event) => {
                 if (event.key === "Enter" && !event.shiftKey) {
@@ -363,9 +562,32 @@ export default function MessengerWidget({
                 }
               }}
             />
+            <div ref={emojiRef} style={{ position: "relative" }}>
+              <button
+                type="button"
+                onClick={() => setShowEmojiPicker((s) => !s)}
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: "50%",
+                  border: "none",
+                  background: "transparent",
+                  color: "#64748b",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                  flexShrink: 0
+                }}
+                title="Emoji"
+              >
+                <Smile size={18} />
+              </button>
+              {showEmojiPicker ? <EmojiPicker onPick={handleEmojiPick} /> : null}
+            </div>
             <button
               type="submit"
-              disabled={threadState.sending || !threadState.draft.trim()}
+              disabled={threadState.sending || !threadState.draft.trim() || isUploading}
               style={{
                 width: 38,
                 height: 38,
@@ -390,7 +612,7 @@ export default function MessengerWidget({
       {!isOpen ? (
         <button
           type="button"
-          onClick={() => setIsOpen(true)}
+          onClick={() => setOpen(true)}
           style={{
             width: 56,
             height: 56,

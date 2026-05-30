@@ -20,7 +20,7 @@ export async function POST(request) {
     const folder = String(formData.get("folder") || "general");
 
     // SECURITY: Validate folder name to prevent path traversal
-    const validFolders = ["general", "profile", "gallery", "cover", "covers", "avatars", "services", "portfolio", "products"];
+    const validFolders = ["general", "profile", "gallery", "cover", "covers", "avatars", "services", "portfolio", "products", "messages"];
     const safeFolderName = validFolders.includes(folder) ? folder : "general";
 
     const url = await saveUploadedFile(fileValidation.file, safeFolderName);

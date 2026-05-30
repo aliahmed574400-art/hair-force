@@ -22,12 +22,17 @@ import {
   LogOut,
   Mail,
   MessageSquareText,
+  MoreHorizontal,
   Package,
+  Paperclip,
+  Phone,
   Plus,
   Scissors,
   Search,
+  Send,
   ShieldAlert,
   Settings,
+  Smile,
   Sparkles,
   Tag,
   Trash2,
@@ -40,6 +45,7 @@ import SiteButton from "@/components/ui/SiteButton";
 import VendorAvailabilityAgenda from "@/components/dashboard/VendorAvailabilityAgenda";
 import MessengerWidget from "@/components/ui/MessengerWidget";
 import { formatCurrency } from "@/lib/utils";
+import { parseMediaUrl, formatMessageTime, formatMessageDate, isSameDay } from "@/lib/chat-helpers";
 import {
   CALENDAR_WEEKDAYS,
   DURATION_OPTIONS,
@@ -146,7 +152,6 @@ export default function VendorDashboardManager({ user, initialData }) {
     caption: ""
   });
   const [showNotifications, setShowNotifications] = useState(false);
-  const [showMessages, setShowMessages] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [notificationForm, setNotificationForm] = useState(
     createNotificationPreferenceForm(initialData.notificationPreferences)
@@ -159,6 +164,11 @@ export default function VendorDashboardManager({ user, initialData }) {
   const [status, setStatus] = useState({ type: "", message: "" });
   const [activeConversationId, setActiveConversationId] = useState(initialData.conversations?.[0]?.id || "");
   const [threadState, setThreadState] = useState(initialThreadState());
+  const [conversationSearch, setConversationSearch] = useState("");
+  const [widgetOpen, setWidgetOpen] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState("");
+  const [showAttachmentMenu, setShowAttachmentMenu] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [rescheduleState, setRescheduleState] = useState({
     bookingId: "",
     loading: false,
@@ -340,16 +350,12 @@ export default function VendorDashboardManager({ user, initialData }) {
   }, [initialData]);
 
   useEffect(() => {
-    if (!showNotifications && !showMessages && !showUserMenu) return;
+    if (!showNotifications && !showUserMenu) return;
 
     function handleClickOutside(event) {
       const notificationContainer = document.querySelector(".vendor-notification-bell-container");
       if (notificationContainer && !notificationContainer.contains(event.target)) {
         setShowNotifications(false);
-      }
-      const messageContainer = document.querySelector(".vendor-message-bell-container");
-      if (messageContainer && !messageContainer.contains(event.target)) {
-        setShowMessages(false);
       }
       const userContainer = document.querySelector(".vendor-user-avatar-container");
       if (userContainer && !userContainer.contains(event.target)) {
@@ -359,7 +365,7 @@ export default function VendorDashboardManager({ user, initialData }) {
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [showNotifications, showMessages, showUserMenu]);
+  }, [showNotifications, showUserMenu]);
 
   useEffect(() => {
     const nextSection = requestedSection || "overview";
@@ -1168,13 +1174,12 @@ export default function VendorDashboardManager({ user, initialData }) {
     }
 
     if (notification.conversationId) {
-      handleSectionSelect("messages");
       setActiveConversationId(notification.conversationId);
+      setWidgetOpen(true);
     }
   }
 
   function handleConversationClick(conversationId) {
-    setShowMessages(false);
     handleSectionSelect("messages");
     setActiveConversationId(conversationId);
   }
@@ -1542,7 +1547,6 @@ export default function VendorDashboardManager({ user, initialData }) {
               type="button"
               onClick={() => {
                 setShowNotifications((c) => !c);
-                setShowMessages(false);
                 setShowUserMenu(false);
               }}
               style={{
@@ -1650,7 +1654,10 @@ export default function VendorDashboardManager({ user, initialData }) {
             <button
               type="button"
               onClick={() => {
-                setShowMessages((c) => !c);
+                if (!activeConversationId && conversations.length > 0) {
+                  setActiveConversationId(conversations[0].id);
+                }
+                setWidgetOpen((v) => !v);
                 setShowNotifications(false);
                 setShowUserMenu(false);
               }}
@@ -1697,79 +1704,6 @@ export default function VendorDashboardManager({ user, initialData }) {
                 </span>
               ) : null}
             </button>
-
-            {showMessages ? (
-              <div
-                style={{
-                  position: "absolute",
-                  top: 48,
-                  right: 0,
-                  width: 340,
-                  maxHeight: 420,
-                  overflow: "auto",
-                  background: "#fff",
-                  borderRadius: 12,
-                  boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
-                  border: "1px solid #e5e5e5",
-                  zIndex: 100
-                }}
-              >
-                <div style={{ padding: "12px 16px", borderBottom: "1px solid #e5e5e5" }}>
-                  <strong style={{ fontSize: 14, color: "#0f172a" }}>Messages</strong>
-                </div>
-                {conversations.length === 0 ? (
-                  <div style={{ padding: 20, textAlign: "center", color: "#94a3b8", fontSize: 13 }}>
-                    No conversations yet.
-                  </div>
-                ) : (
-                  conversations.map((conversation) => (
-                    <button
-                      key={conversation.id}
-                      type="button"
-                      onClick={() => handleConversationClick(conversation.id)}
-                      style={{
-                        width: "100%",
-                        textAlign: "left",
-                        padding: "12px 16px",
-                        border: "none",
-                        borderBottom: "1px solid #f1f5f9",
-                        background: conversation.vendorUnreadCount > 0 ? "#f0f7ff" : "#fff",
-                        cursor: "pointer",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 4
-                      }}
-                    >
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <strong style={{ fontSize: 13, color: "#0f172a" }}>{conversation.customerName || "Client"}</strong>
-                        {conversation.vendorUnreadCount > 0 ? (
-                          <span
-                            style={{
-                              minWidth: 18,
-                              height: 18,
-                              borderRadius: "50%",
-                              background: "#0070f3",
-                              color: "#fff",
-                              fontSize: 10,
-                              fontWeight: 600,
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              padding: "0 5px"
-                            }}
-                          >
-                            {conversation.vendorUnreadCount}
-                          </span>
-                        ) : null}
-                      </div>
-                      <span style={{ fontSize: 12, color: "#64748b", lineHeight: 1.4 }}>
-                        {conversation.lastMessagePreview || "No messages yet"}
-                      </span>
-                    </button>
-                  ))
-                )}
-              </div>
-            ) : null}
           </div>
 
           {/* User Avatar */}
@@ -1779,7 +1713,6 @@ export default function VendorDashboardManager({ user, initialData }) {
               onClick={() => {
                 setShowUserMenu((c) => !c);
                 setShowNotifications(false);
-                setShowMessages(false);
               }}
               style={{
                 width: 40,
@@ -3354,81 +3287,319 @@ export default function VendorDashboardManager({ user, initialData }) {
 
       {activeSection === "messages" ? (
         <div className="vendor-dashboard-messages" style={{ marginTop: 18 }}>
-          <div className="dashboard-card vendor-dashboard-messages-list">
-            <div className="eyebrow">Conversations</div>
-            <h3 style={{ margin: "12px 0 16px", fontFamily: "var(--font-display)", fontSize: "2rem" }}>
-              Booking inbox
-            </h3>
-            <div className="timeline">
-              {conversations.length ? (
-                conversations.map((conversation) => (
+          {/* Conversation List */}
+          <div className="dashboard-card vendor-messenger-list">
+            <div className="vendor-messenger-list-header">
+              <h3>Chats</h3>
+              <div className="vendor-messenger-list-actions">
+                <button type="button" title="More options"><MoreHorizontal size={20} /></button>
+              </div>
+            </div>
+            <div className="vendor-messenger-search">
+              <Search size={16} />
+              <input
+                type="text"
+                placeholder="Search Messenger"
+                value={conversationSearch}
+                onChange={(e) => setConversationSearch(e.target.value)}
+              />
+            </div>
+            <div className="vendor-messenger-conversations">
+              {conversations.filter((c) => {
+                const term = conversationSearch.toLowerCase();
+                if (!term) return true;
+                return (
+                  (c.customerName || "").toLowerCase().includes(term) ||
+                  (c.serviceName || "").toLowerCase().includes(term)
+                );
+              }).length ? (
+                conversations.filter((c) => {
+                  const term = conversationSearch.toLowerCase();
+                  if (!term) return true;
+                  return (
+                    (c.customerName || "").toLowerCase().includes(term) ||
+                    (c.serviceName || "").toLowerCase().includes(term)
+                  );
+                }).map((conversation) => (
                   <button
                     key={conversation.id}
                     type="button"
-                    className={`vendor-conversation-card ${activeConversationId === conversation.id ? "active" : ""}`}
+                    className={`vendor-messenger-chat-item ${activeConversationId === conversation.id ? "active" : ""}`}
                     onClick={() => setActiveConversationId(conversation.id)}
                   >
-                    <div className="row-between">
-                      <strong>{conversation.customerName || "Client"}</strong>
-                      <span className="chip">{conversation.vendorUnreadCount || 0} unread</span>
+                    <div className="vendor-messenger-chat-avatar">
+                      {getInitials(conversation.customerName)}
                     </div>
-                    <p className="muted tiny" style={{ margin: "8px 0 0" }}>
-                      {conversation.serviceName} · {formatDateLabel(conversation.appointmentDate)}
-                    </p>
-                    <p className="muted tiny" style={{ margin: "8px 0 0" }}>
-                      {conversation.lastMessagePreview || "Open the thread to send the first update."}
-                    </p>
+                    <div className="vendor-messenger-chat-info">
+                      <div className="vendor-messenger-chat-top">
+                        <strong>{conversation.customerName || "Client"}</strong>
+                        <span className="vendor-messenger-chat-time">
+                          {conversation.lastMessageAt ? formatMessageTime(conversation.lastMessageAt) : ""}
+                        </span>
+                      </div>
+                      <div className="vendor-messenger-chat-bottom">
+                        <span className="vendor-messenger-chat-preview">
+                          {conversation.lastMessagePreview || "No messages yet"}
+                        </span>
+                        {conversation.vendorUnreadCount ? (
+                          <span className="vendor-messenger-unread-badge">{conversation.vendorUnreadCount}</span>
+                        ) : null}
+                      </div>
+                    </div>
                   </button>
                 ))
               ) : (
-                <div className="timeline-item">
-                  <p className="muted" style={{ margin: 0 }}>Conversations will appear here after bookings are created.</p>
+                <div className="vendor-messenger-empty">
+                  <p>No conversations found.</p>
                 </div>
               )}
             </div>
           </div>
 
-          <div className="dashboard-card vendor-dashboard-messages-thread">
-            <div className="row-between" style={{ marginBottom: 16 }}>
-              <div>
-                <div className="eyebrow">Selected thread</div>
-                <h3 style={{ margin: "10px 0 0", fontFamily: "var(--font-display)", fontSize: "2rem" }}>
-                  {activeConversation ? activeConversation.customerName : "Choose a conversation"}
-                </h3>
-                {activeConversation ? (
-                  <p className="muted tiny" style={{ margin: "8px 0 0" }}>
-                    {activeConversation.serviceName} · {formatDateLabel(activeConversation.appointmentDate)} · {activeConversation.appointmentSlot}
-                  </p>
-                ) : null}
-              </div>
-            </div>
-
-            <div className="vendor-message-thread">
-              {threadState.loading ? <p className="muted tiny">Loading conversation...</p> : null}
-              {threadState.error ? <p className="muted tiny">{threadState.error}</p> : null}
-              {!threadState.loading && activeConversation && threadState.messages.length ? (
-                threadState.messages.map((message) => (
-                  <div key={message.id} className={`vendor-message-bubble ${message.senderRole === "vendor" ? "mine" : ""}`}>
-                    <strong>{message.senderRole === "vendor" ? "You" : activeConversation.customerName}</strong>
-                    <p style={{ margin: "8px 0 0" }}>{message.body}</p>
-                  </div>
-                ))
-              ) : !threadState.loading && activeConversation ? (
-                <p className="muted tiny">No messages yet. Send the first update from this thread.</p>
-              ) : (
-                <p className="muted tiny">Select a booking conversation to start messaging.</p>
-              )}
-            </div>
-
+          {/* Thread */}
+          <div className="dashboard-card vendor-messenger-thread">
             {activeConversation ? (
-              <form onSubmit={sendMessage} className="vendor-message-form">
-                <textarea className="form-control" rows="4" placeholder="Message the client about arrival time, prep instructions, or changes to the booking." value={threadState.draft} onChange={(event) => setThreadState((current) => ({ ...current, draft: event.target.value }))} />
-                <SiteButton type="submit" disabled={threadState.sending}>
-                  {threadState.sending ? "Sending..." : "Send message"}
-                </SiteButton>
-              </form>
-            ) : null}
+              <>
+                <div className="vendor-messenger-thread-header">
+                  <div className="vendor-messenger-thread-user">
+                    <div className="vendor-messenger-thread-avatar">
+                      {getInitials(activeConversation.customerName)}
+                    </div>
+                    <div>
+                      <strong>{activeConversation.customerName || "Client"}</strong>
+                      <p>{activeConversation.serviceName}{activeConversation.appointmentDate ? ` · ${formatDateLabel(activeConversation.appointmentDate)}` : ""}</p>
+                    </div>
+                  </div>
+                  <div className="vendor-messenger-thread-actions">
+                    <button type="button" title="Call"><Phone size={18} /></button>
+                    <button type="button" title="Info"><Info size={18} /></button>
+                  </div>
+                </div>
+
+                <div className="vendor-messenger-messages">
+                  {threadState.loading ? (
+                    <p className="muted tiny" style={{ textAlign: "center", margin: "auto" }}>Loading conversation...</p>
+                  ) : null}
+                  {threadState.error ? (
+                    <p className="muted tiny" style={{ textAlign: "center", margin: "auto", color: "#fca5a5" }}>{threadState.error}</p>
+                  ) : null}
+                  {!threadState.loading && activeConversation && threadState.messages.length ? (
+                    (() => {
+                      const rows = [];
+                      let lastDate = null;
+                      threadState.messages.forEach((message, index) => {
+                        const showDate = !lastDate || !isSameDay(lastDate, message.createdAt);
+                        if (showDate) {
+                          rows.push(
+                            <div key={`date-${index}`} className="vendor-messenger-date-divider">
+                              <span>{formatMessageDate(message.createdAt)}</span>
+                            </div>
+                          );
+                          lastDate = message.createdAt;
+                        }
+                        const isMine = message.senderRole === "vendor";
+                        const media = parseMediaUrl(message.body);
+                        rows.push(
+                          <div key={message.id} className={`vendor-messenger-bubble-row ${isMine ? "mine" : ""}`}>
+                            {!isMine ? (
+                              <div className="vendor-messenger-bubble-avatar">
+                                {getInitials(activeConversation.customerName)}
+                              </div>
+                            ) : null}
+                            <div className={`vendor-messenger-bubble ${isMine ? "mine" : ""}`}>
+                              {media?.type === "image" ? (
+                                <img
+                                  src={media.url}
+                                  alt="Attachment"
+                                  style={{ maxWidth: 220, borderRadius: 12, display: "block", cursor: "pointer" }}
+                                  onClick={() => setLightboxImage(media.url)}
+                                />
+                              ) : media?.type === "video" ? (
+                                <video src={media.url} controls style={{ maxWidth: 220, borderRadius: 12, display: "block" }} />
+                              ) : (
+                                <p>{message.body}</p>
+                              )}
+                              <span className="vendor-messenger-bubble-time">{formatMessageTime(message.createdAt)}</span>
+                            </div>
+                          </div>
+                        );
+                      });
+                      return rows;
+                    })()
+                  ) : !threadState.loading && activeConversation ? (
+                    <div className="vendor-messenger-empty-thread">
+                      <p>No messages yet. Send the first update.</p>
+                    </div>
+                  ) : (
+                    <div className="vendor-messenger-empty-thread">
+                      <p>Select a conversation to start messaging.</p>
+                    </div>
+                  )}
+                </div>
+
+                <form onSubmit={sendMessage} className="vendor-messenger-input-bar">
+                  <input
+                    ref={(el) => { if (el && !window.vendorChatFileInput) window.vendorChatFileInput = el; }}
+                    type="file"
+                    accept="image/*,video/*"
+                    style={{ display: "none" }}
+                    onChange={async (event) => {
+                      const file = event.target.files?.[0];
+                      if (!file) return;
+                      try {
+                        const url = await uploadAsset(file, "messages");
+                        await sendMessage(url);
+                      } catch (error) {
+                        setThreadState((current) => ({ ...current, error: error.message }));
+                      }
+                      event.target.value = "";
+                    }}
+                  />
+                  <div style={{ position: "relative" }}>
+                    <button
+                      type="button"
+                      className="vendor-messenger-input-action"
+                      title="Add attachment"
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        window.vendorAttachmentPos = { left: rect.left, bottom: window.innerHeight - rect.top };
+                        setShowAttachmentMenu((s) => !s);
+                      }}
+                    >
+                      <Plus size={20} />
+                    </button>
+                    {showAttachmentMenu ? (
+                      <div
+                        className="chat-attachment-menu"
+                        style={{
+                          position: "fixed",
+                          left: Math.max(8, (window.vendorAttachmentPos?.left || 0) - 80),
+                          bottom: (window.vendorAttachmentPos?.bottom || 50) + 8,
+                          top: "auto",
+                          right: "auto"
+                        }}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowAttachmentMenu(false);
+                            window.vendorChatFileInput?.click();
+                          }}
+                        >
+                          <ImageIcon size={18} /> Picture
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowAttachmentMenu(false);
+                            window.vendorChatFileInput?.click();
+                          }}
+                        >
+                          <Video size={18} /> Video
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+                  <div className="vendor-messenger-input-wrap">
+                    <input
+                      type="text"
+                      placeholder="Aa"
+                      value={threadState.draft}
+                      onChange={(event) => setThreadState((current) => ({ ...current, draft: event.target.value }))}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" && !event.shiftKey) {
+                          event.preventDefault();
+                          sendMessage();
+                        }
+                      }}
+                    />
+                    <div style={{ position: "relative" }}>
+                      <button
+                        type="button"
+                        className="vendor-messenger-input-action"
+                        title="Emoji"
+                        onClick={(e) => {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          window.vendorEmojiPos = { right: window.innerWidth - rect.right, bottom: window.innerHeight - rect.top };
+                          setShowEmojiPicker((s) => !s);
+                        }}
+                      >
+                        <Smile size={20} />
+                      </button>
+                      {showEmojiPicker ? (
+                        <div
+                          style={{
+                            position: "fixed",
+                            bottom: (window.vendorEmojiPos?.bottom || 50) + 8,
+                            right: Math.max(8, window.vendorEmojiPos?.right || 8),
+                            top: "auto",
+                            left: "auto",
+                            background: "#ffffff",
+                            borderRadius: 12,
+                            boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+                            padding: 10,
+                            display: "grid",
+                            gridTemplateColumns: "repeat(10, 1fr)",
+                            gap: 4,
+                            zIndex: 9999,
+                            width: 280,
+                            border: "1px solid #e5e7eb"
+                          }}
+                        >
+                          {["😀","😂","🥰","😍","😎","🤔","😢","😡","👍","👎","🙏","🔥","❤️","🎉","✅","❌","👋","🤝","💇","💇‍♀️"].map((emoji) => (
+                            <button
+                              key={emoji}
+                              type="button"
+                              onClick={() => {
+                                setThreadState((current) => ({
+                                  ...current,
+                                  draft: (current.draft || "") + emoji
+                                }));
+                                setShowEmojiPicker(false);
+                              }}
+                              style={{
+                                background: "transparent",
+                                border: "none",
+                                cursor: "pointer",
+                                fontSize: 20,
+                                padding: 4,
+                                borderRadius: 6,
+                                lineHeight: 1,
+                                color: "#0f172a"
+                              }}
+                            >
+                              {emoji}
+                            </button>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                  <button
+                    type="submit"
+                    className="vendor-messenger-send-btn"
+                    disabled={threadState.sending || !threadState.draft.trim()}
+                  >
+                    <Send size={20} />
+                  </button>
+                </form>
+              </>
+            ) : (
+              <div className="vendor-messenger-no-chat">
+                <MessageSquareText size={48} style={{ opacity: 0.4 }} />
+                <p>Select a conversation to start messaging</p>
+              </div>
+            )}
           </div>
+        </div>
+      ) : null}
+
+      {lightboxImage ? (
+        <div className="chat-lightbox-overlay" onClick={() => setLightboxImage("")}>
+          <button className="chat-lightbox-close" onClick={() => setLightboxImage("")}>
+            <X size={20} />
+          </button>
+          <img src={lightboxImage} alt="Full size" onClick={(e) => e.stopPropagation()} />
         </div>
       ) : null}
 
@@ -3973,12 +4144,14 @@ export default function VendorDashboardManager({ user, initialData }) {
       ) : null}
       </div>
 
-      {activeConversationId ? (
+      {activeConversationId && activeSection !== "messages" ? (
         <MessengerWidget
           conversationId={activeConversationId}
           recipientName={activeConversation?.customerName || "Client"}
           recipientAvatar=""
           userRole="vendor"
+          controlledOpen={widgetOpen}
+          onToggle={(v) => setWidgetOpen(v)}
           externalMessages={threadState.messages}
           externalDraft={threadState.draft}
           externalSending={threadState.sending}
@@ -3986,6 +4159,10 @@ export default function VendorDashboardManager({ user, initialData }) {
           externalError={threadState.error}
           onSend={(body) => sendMessage(body)}
           onDraftChange={(value) => setThreadState((current) => ({ ...current, draft: value }))}
+          onExpand={() => {
+            handleSectionSelect("messages");
+            setWidgetOpen(false);
+          }}
         />
       ) : null}
     </div>
