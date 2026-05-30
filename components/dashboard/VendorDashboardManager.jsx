@@ -1635,7 +1635,7 @@ export default function VendorDashboardManager({ user, initialData }) {
                       <span style={{ fontSize: 12, color: "#64748b", lineHeight: 1.4 }}>{notification.message}</span>
                       {notification.metadata?.preview ? (
                         <span style={{ fontSize: 11, color: "#94a3b8", fontStyle: "italic" }}>
-                          "{notification.metadata.preview}"
+                          &quot;{notification.metadata.preview}&quot;
                         </span>
                       ) : null}
                     </button>

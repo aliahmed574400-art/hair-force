@@ -50,6 +50,10 @@ export async function PUT(request) {
 
     return NextResponse.json({ error: "Invalid user role." }, { status: 400 });
   } catch (error) {
-    return NextResponse.json({ error: "Failed to update profile." }, { status: 400 });
+    console.error("Profile update error:", error);
+    return NextResponse.json(
+      { error: error.message || "Failed to update profile." },
+      { status: 400 }
+    );
   }
 }
