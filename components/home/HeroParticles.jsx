@@ -20,7 +20,6 @@ function createParticle(width, height, large = false) {
     vy: (Math.random() - 0.5) * (large ? 0.42 : 0.78),
     radius: large ? Math.random() * 3.8 + 2.8 : Math.random() * 1.8 + 0.4,
     alpha: large ? Math.random() * 0.18 + 0.08 : Math.random() * 0.55 + 0.18,
-    blur: large ? 18 : 8,
     tint: Math.random(),
     sway: Math.random() * Math.PI * 2,
     orbitX: large ? Math.random() * 8 + 6 : Math.random() * 4 + 2,
@@ -37,29 +36,25 @@ export default function HeroParticles({
 
   useEffect(() => {
     const canvas = canvasRef.current;
+    if (!canvas) return undefined;
 
-    if (!canvas) {
-      return undefined;
-    }
-
-    const context = canvas.getContext("2d");
+    const context = canvas.getContext("2d", { alpha: true });
     const parent = canvas.parentElement;
-
-    if (!context || !parent) {
-      return undefined;
-    }
+    if (!context || !parent) return undefined;
 
     let width = 0;
     let height = 0;
     let animationFrame = 0;
     let particles = [];
+    let isVisible = true;
+    let hasResized = false;
     const pointer = { x: -9999, y: -9999, active: false, vx: 0, vy: 0, lastX: -9999, lastY: -9999 };
 
     function resize() {
       width = parent.clientWidth;
       height = parent.clientHeight;
 
-      const dpr = window.devicePixelRatio || 1;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
       canvas.width = Math.floor(width * dpr);
       canvas.height = Math.floor(height * dpr);
       canvas.style.width = `${width}px`;
@@ -70,63 +65,114 @@ export default function HeroParticles({
       particles = Array.from({ length: count }, (_, index) =>
         createParticle(width, height, index < count * 0.22)
       );
+      hasResized = true;
     }
 
-    function drawParticle(particle, time) {
-      context.save();
-      context.beginPath();
-      context.shadowBlur = particle.blur;
-      context.shadowColor =
-        particle.tint > 0.62 ? "rgba(145, 208, 255, 0.58)" : "rgba(255, 255, 255, 0.34)";
-      context.fillStyle =
-        particle.tint > 0.62
-          ? `rgba(126, 184, 255, ${particle.alpha})`
-          : `rgba(255, 255, 255, ${particle.alpha})`;
-      context.arc(
-        particle.x + Math.sin(time * 0.0015 + particle.sway) * particle.orbitX,
-        particle.y + Math.cos(time * 0.00102 + particle.sway) * particle.orbitY,
-        particle.radius,
-        0,
-        Math.PI * 2
-      );
-      context.fill();
-      context.restore();
-    }
+    // Batch draw particles by color to minimize fillStyle changes.
+    // Glow is simulated by drawing a larger, more transparent circle first,
+    // then the core particle on top — this avoids expensive shadowBlur.
+    function drawParticles(time) {
+      const blueParticles = [];
+      const whiteParticles = [];
 
-    function tick(time) {
-      context.clearRect(0, 0, width, height);
-
-      for (const particle of particles) {
-        const dx = pointer.x - particle.x;
-        const dy = pointer.y - particle.y;
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        const dx = pointer.x - p.x;
+        const dy = pointer.y - p.y;
         const distance = Math.hypot(dx, dy) || 1;
 
         if (pointer.active && distance < INTERACTION_RADIUS) {
           const force = (1 - distance / INTERACTION_RADIUS) * INTERACTION_FORCE;
-          particle.vx -= (dx / distance) * force;
-          particle.vy -= (dy / distance) * force;
-          particle.vx += pointer.vx * force * POINTER_SWEEP;
-          particle.vy += pointer.vy * force * POINTER_SWEEP;
+          p.vx -= (dx / distance) * force;
+          p.vy -= (dy / distance) * force;
+          p.vx += pointer.vx * force * POINTER_SWEEP;
+          p.vy += pointer.vy * force * POINTER_SWEEP;
         }
 
-        particle.x += particle.vx;
-        particle.y += particle.vy;
-        particle.vx *= 0.997;
-        particle.vy *= 0.997;
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vx *= 0.997;
+        p.vy *= 0.997;
 
-        if (particle.x < -20) particle.x = width + 20;
-        if (particle.x > width + 20) particle.x = -20;
-        if (particle.y < -20) particle.y = height + 20;
-        if (particle.y > height + 20) particle.y = -20;
+        if (p.x < -20) p.x = width + 20;
+        if (p.x > width + 20) p.x = -20;
+        if (p.y < -20) p.y = height + 20;
+        if (p.y > height + 20) p.y = -20;
 
-        particle.vx += (Math.random() - 0.5) * 0.024;
-        particle.vy += (Math.random() - 0.5) * 0.02;
-        particle.vx = clamp(particle.vx, -1.8, 1.8);
-        particle.vy = clamp(particle.vy, -1.56, 1.56);
+        p.vx += (Math.random() - 0.5) * 0.024;
+        p.vy += (Math.random() - 0.5) * 0.02;
+        p.vx = clamp(p.vx, -1.8, 1.8);
+        p.vy = clamp(p.vy, -1.56, 1.56);
 
-        drawParticle(particle, time);
+        const ox = Math.sin(time * 0.0015 + p.sway) * p.orbitX;
+        const oy = Math.cos(time * 0.00102 + p.sway) * p.orbitY;
+        const px = p.x + ox;
+        const py = p.y + oy;
+
+        if (p.tint > 0.62) {
+          blueParticles.push(px, py, p.radius, p.alpha);
+        } else {
+          whiteParticles.push(px, py, p.radius, p.alpha);
+        }
       }
 
+      // Draw glow layer (larger, more transparent)
+      context.globalCompositeOperation = "screen";
+
+      if (blueParticles.length) {
+        context.fillStyle = "rgba(126, 184, 255, 0.06)";
+        for (let i = 0; i < blueParticles.length; i += 4) {
+          const r = blueParticles[i + 2] * 2.5;
+          context.beginPath();
+          context.arc(blueParticles[i], blueParticles[i + 1], r, 0, Math.PI * 2);
+          context.fill();
+        }
+      }
+      if (whiteParticles.length) {
+        context.fillStyle = "rgba(255, 255, 255, 0.04)";
+        for (let i = 0; i < whiteParticles.length; i += 4) {
+          const r = whiteParticles[i + 2] * 2.5;
+          context.beginPath();
+          context.arc(whiteParticles[i], whiteParticles[i + 1], r, 0, Math.PI * 2);
+          context.fill();
+        }
+      }
+
+      // Draw core particles
+      if (blueParticles.length) {
+        context.fillStyle = "rgba(126, 184, 255, 0.55)";
+        for (let i = 0; i < blueParticles.length; i += 4) {
+          context.beginPath();
+          context.arc(blueParticles[i], blueParticles[i + 1], blueParticles[i + 2], 0, Math.PI * 2);
+          context.fill();
+        }
+      }
+      if (whiteParticles.length) {
+        context.fillStyle = "rgba(255, 255, 255, 0.45)";
+        for (let i = 0; i < whiteParticles.length; i += 4) {
+          context.beginPath();
+          context.arc(whiteParticles[i], whiteParticles[i + 1], whiteParticles[i + 2], 0, Math.PI * 2);
+          context.fill();
+        }
+      }
+
+      context.globalCompositeOperation = "source-over";
+    }
+
+    function tick(time) {
+      if (!isVisible) {
+        animationFrame = window.requestAnimationFrame(tick);
+        return;
+      }
+
+      if (hasResized) {
+        context.clearRect(0, 0, width, height);
+        hasResized = false;
+      } else {
+        context.clearRect(0, 0, width, height);
+      }
+
+      drawParticles(time);
       animationFrame = window.requestAnimationFrame(tick);
     }
 
@@ -157,8 +203,19 @@ export default function HeroParticles({
       pointer.y = -9999;
     }
 
+    // Pause when off-screen to save CPU
+    const visibilityObserver = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          isVisible = entry.isIntersecting;
+        }
+      },
+      { threshold: 0 }
+    );
+
     resize();
     animationFrame = window.requestAnimationFrame(tick);
+    visibilityObserver.observe(canvas);
 
     const resizeObserver = new ResizeObserver(resize);
     resizeObserver.observe(parent);
@@ -167,11 +224,12 @@ export default function HeroParticles({
 
     return () => {
       window.cancelAnimationFrame(animationFrame);
+      visibilityObserver.disconnect();
       resizeObserver.disconnect();
       parent.removeEventListener("pointermove", handlePointerMove);
       parent.removeEventListener("pointerleave", handlePointerLeave);
     };
-  }, []);
+  }, [mobileCount, desktopCount]);
 
   return <canvas ref={canvasRef} className={className} aria-hidden="true" />;
 }

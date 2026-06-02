@@ -94,6 +94,7 @@ export default function CategoryCarousel({ categories }) {
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     let frameId = 0;
     let lastTimestamp = 0;
+    let isVisible = false;
 
     function tick(timestamp) {
       if (!lastTimestamp) {
@@ -103,7 +104,7 @@ export default function CategoryCarousel({ categories }) {
       const delta = timestamp - lastTimestamp;
       lastTimestamp = timestamp;
 
-      if (!prefersReducedMotion.matches && !dragStateRef.current.active && !interactionStateRef.current.isHovering) {
+      if (isVisible && !prefersReducedMotion.matches && !dragStateRef.current.active && !interactionStateRef.current.isHovering) {
         viewport.scrollLeft += (AUTOPLAY_PIXELS_PER_SECOND * delta) / 1000;
       }
 
@@ -115,16 +116,27 @@ export default function CategoryCarousel({ categories }) {
       lastTimestamp = 0;
     }
 
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          isVisible = entry.isIntersecting;
+        }
+      },
+      { threshold: 0 }
+    );
+
     frameId = window.requestAnimationFrame((timestamp) => {
       setInitialPosition();
       lastTimestamp = timestamp;
       frameId = window.requestAnimationFrame(tick);
     });
+    observer.observe(viewport);
     viewport.addEventListener("scroll", normalizeLoopPosition, { passive: true });
     window.addEventListener("resize", handleResize);
 
     return () => {
       window.cancelAnimationFrame(frameId);
+      observer.disconnect();
       viewport.removeEventListener("scroll", normalizeLoopPosition);
       window.removeEventListener("resize", handleResize);
     };

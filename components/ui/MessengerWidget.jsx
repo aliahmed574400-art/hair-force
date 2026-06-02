@@ -170,7 +170,8 @@ export default function MessengerWidget({
   externalLoading,
   externalError,
   onSend,
-  onDraftChange
+  onDraftChange,
+  onLoadMessages
 }) {
   const isControlled = controlledOpen !== undefined;
   const [internalOpen, setInternalOpen] = useState(initialOpen);
@@ -180,7 +181,6 @@ export default function MessengerWidget({
   const [uploadError, setUploadError] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const messagesEndRef = useRef(null);
-  const pollRef = useRef(null);
   const fileInputRef = useRef(null);
   const emojiRef = useRef(null);
 
@@ -205,14 +205,19 @@ export default function MessengerWidget({
     ? (value) => onDraftChange?.(value)
     : (value) => internal.setThreadState((c) => ({ ...c, draft: value }));
 
-  const handleSend = hasExternalState
-    ? async (bodyOverride) => {
-        const bodyText = String(bodyOverride || threadState.draft || "").trim();
-        if (!conversationId || !bodyText) return;
-        setUploadError("");
+  const handleSend = useCallback(
+    async (bodyOverride) => {
+      const bodyText = String(bodyOverride || threadState.draft || "").trim();
+      if (!conversationId || !bodyText) return;
+      setUploadError("");
+      if (hasExternalState) {
         onSend?.(bodyText);
+      } else {
+        await internal.handleSendMessage(bodyOverride);
       }
-    : internal.handleSendMessage;
+    },
+    [conversationId, threadState.draft, hasExternalState, onSend, internal.handleSendMessage]
+  );
 
   const loadMessages = hasExternalState ? null : internal.loadMessages;
 
@@ -221,20 +226,13 @@ export default function MessengerWidget({
   }, []);
 
   useEffect(() => {
-    if (!hasExternalState && isOpen && conversationId) {
+    if (!isOpen || !conversationId) return;
+    if (hasExternalState) {
+      onLoadMessages?.();
+    } else {
       loadMessages();
     }
-  }, [isOpen, conversationId, loadMessages, hasExternalState]);
-
-  useEffect(() => {
-    if (hasExternalState || !isOpen || !conversationId) return;
-    pollRef.current = setInterval(() => {
-      loadMessages();
-    }, 4000);
-    return () => {
-      if (pollRef.current) clearInterval(pollRef.current);
-    };
-  }, [isOpen, conversationId, loadMessages, hasExternalState]);
+  }, [isOpen, conversationId, loadMessages, hasExternalState, onLoadMessages]);
 
   useEffect(() => {
     scrollToBottom();
@@ -556,7 +554,7 @@ export default function MessengerWidget({
                 color: "#0f172a"
               }}
               onKeyDown={(event) => {
-                if (event.key === "Enter" && !event.shiftKey) {
+                if ((event.key === "Enter" || event.code === "Enter" || event.code === "NumpadEnter") && !event.shiftKey && !event.isComposing) {
                   event.preventDefault();
                   handleSend();
                 }

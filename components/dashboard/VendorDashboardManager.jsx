@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useSocket } from "@/components/providers/SocketProvider";
 import {
   Bell,
   CalendarDays,
@@ -153,6 +154,7 @@ export default function VendorDashboardManager({ user, initialData }) {
   });
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showConversations, setShowConversations] = useState(false);
   const [notificationForm, setNotificationForm] = useState(
     createNotificationPreferenceForm(initialData.notificationPreferences)
   );
@@ -195,6 +197,40 @@ export default function VendorDashboardManager({ user, initialData }) {
     subscribePlan: false,
     signout: false
   });
+
+  const { socket, connected } = useSocket();
+
+  // Socket.IO: join conversation rooms and listen for new messages
+  useEffect(() => {
+    if (!socket) return;
+
+    function handleNewMessage({ conversationId: incomingId, messages: incomingMessages }) {
+      if (incomingId === activeConversationId) {
+        setThreadState((current) => ({
+          ...current,
+          messages: incomingMessages || current.messages,
+          error: ""
+        }));
+      }
+      // Refresh conversation list to update previews/unread counts
+      refreshConversations().catch(() => {});
+    }
+
+    socket.on("message:new", handleNewMessage);
+
+    return () => {
+      socket.off("message:new", handleNewMessage);
+    };
+  }, [socket, activeConversationId]);
+
+  // Socket.IO: join/leave conversation rooms as active conversation changes
+  useEffect(() => {
+    if (!socket || !activeConversationId) return;
+    socket.emit("join_conversation", activeConversationId);
+    return () => {
+      socket.emit("leave_conversation", activeConversationId);
+    };
+  }, [socket, activeConversationId]);
 
   const bookings = dashboard.bookings || [];
   const services = dashboard.services || [];
@@ -350,7 +386,7 @@ export default function VendorDashboardManager({ user, initialData }) {
   }, [initialData]);
 
   useEffect(() => {
-    if (!showNotifications && !showUserMenu) return;
+    if (!showNotifications && !showUserMenu && !showConversations) return;
 
     function handleClickOutside(event) {
       const notificationContainer = document.querySelector(".vendor-notification-bell-container");
@@ -361,11 +397,15 @@ export default function VendorDashboardManager({ user, initialData }) {
       if (userContainer && !userContainer.contains(event.target)) {
         setShowUserMenu(false);
       }
+      const conversationContainer = document.querySelector(".vendor-message-bell-container");
+      if (conversationContainer && !conversationContainer.contains(event.target)) {
+        setShowConversations(false);
+      }
     }
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [showNotifications, showUserMenu]);
+  }, [showNotifications, showUserMenu, showConversations]);
 
   useEffect(() => {
     const nextSection = requestedSection || "overview";
@@ -1431,7 +1471,7 @@ export default function VendorDashboardManager({ user, initialData }) {
 
     const bodyText = typeof eventOrBody === "string" ? eventOrBody : threadState.draft;
 
-    if (!activeConversationId || !bodyText.trim()) {
+    if (!activeConversationId || !bodyText.trim() || threadState.sending) {
       return;
     }
 
@@ -1456,7 +1496,11 @@ export default function VendorDashboardManager({ user, initialData }) {
         messages: data.messages || [],
         error: ""
       }));
-      await refreshConversations();
+      try {
+        await refreshConversations();
+      } catch {
+        // Refresh failure is non-critical; polling will catch up
+      }
     } catch (error) {
       setThreadState((current) => ({ ...current, sending: false, error: error.message }));
     }
@@ -1654,10 +1698,7 @@ export default function VendorDashboardManager({ user, initialData }) {
             <button
               type="button"
               onClick={() => {
-                if (!activeConversationId && conversations.length > 0) {
-                  setActiveConversationId(conversations[0].id);
-                }
-                setWidgetOpen((v) => !v);
+                setShowConversations((c) => !c);
                 setShowNotifications(false);
                 setShowUserMenu(false);
               }}
@@ -1704,6 +1745,83 @@ export default function VendorDashboardManager({ user, initialData }) {
                 </span>
               ) : null}
             </button>
+
+            {showConversations ? (
+              <div
+                style={{
+                  position: "absolute",
+                  top: 48,
+                  right: 0,
+                  width: 340,
+                  maxHeight: 420,
+                  overflow: "auto",
+                  background: "#fff",
+                  borderRadius: 12,
+                  boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+                  border: "1px solid #e5e5e5",
+                  zIndex: 100
+                }}
+              >
+                <div style={{ padding: "12px 16px", borderBottom: "1px solid #e5e5e5" }}>
+                  <strong style={{ fontSize: 14, color: "#0f172a" }}>Messages</strong>
+                </div>
+                {conversations.length === 0 ? (
+                  <div style={{ padding: 20, textAlign: "center", color: "#94a3b8", fontSize: 13 }}>
+                    No conversations yet.
+                  </div>
+                ) : (
+                  conversations.map((conversation) => (
+                    <button
+                      key={conversation.id}
+                      type="button"
+                      onClick={() => {
+                        setActiveConversationId(conversation.id);
+                        setShowConversations(false);
+                        setWidgetOpen(true);
+                      }}
+                      style={{
+                        width: "100%",
+                        textAlign: "left",
+                        padding: "12px 16px",
+                        border: "none",
+                        borderBottom: "1px solid #f1f5f9",
+                        background: conversation.vendorUnreadCount > 0 ? "#f0f7ff" : "#fff",
+                        cursor: "pointer",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 4
+                      }}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <strong style={{ fontSize: 13, color: "#0f172a" }}>{conversation.customerName || "Client"}</strong>
+                        {conversation.vendorUnreadCount > 0 ? (
+                          <span
+                            style={{
+                              minWidth: 18,
+                              height: 18,
+                              borderRadius: "50%",
+                              background: "#0070f3",
+                              color: "#fff",
+                              fontSize: 10,
+                              fontWeight: 600,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              padding: "0 5px"
+                            }}
+                          >
+                            {conversation.vendorUnreadCount}
+                          </span>
+                        ) : null}
+                      </div>
+                      <span style={{ fontSize: 12, color: "#64748b", lineHeight: 1.4 }}>
+                        {conversation.lastMessagePreview || "No messages yet"}
+                      </span>
+                    </button>
+                  ))
+                )}
+              </div>
+            ) : null}
           </div>
 
           {/* User Avatar */}
@@ -3437,7 +3555,7 @@ export default function VendorDashboardManager({ user, initialData }) {
                   )}
                 </div>
 
-                <form onSubmit={sendMessage} className="vendor-messenger-input-bar">
+                <form onSubmit={(e) => { e.preventDefault(); sendMessage(); }} className="vendor-messenger-input-bar">
                   <input
                     ref={(el) => { if (el && !window.vendorChatFileInput) window.vendorChatFileInput = el; }}
                     type="file"
@@ -3507,7 +3625,7 @@ export default function VendorDashboardManager({ user, initialData }) {
                       value={threadState.draft}
                       onChange={(event) => setThreadState((current) => ({ ...current, draft: event.target.value }))}
                       onKeyDown={(event) => {
-                        if (event.key === "Enter" && !event.shiftKey) {
+                        if ((event.key === "Enter" || event.code === "Enter" || event.code === "NumpadEnter") && !event.shiftKey && !event.isComposing) {
                           event.preventDefault();
                           sendMessage();
                         }
@@ -4159,6 +4277,7 @@ export default function VendorDashboardManager({ user, initialData }) {
           externalError={threadState.error}
           onSend={(body) => sendMessage(body)}
           onDraftChange={(value) => setThreadState((current) => ({ ...current, draft: value }))}
+          onLoadMessages={() => loadConversation(activeConversationId)}
           onExpand={() => {
             handleSectionSelect("messages");
             setWidgetOpen(false);

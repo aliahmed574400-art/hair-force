@@ -17,12 +17,21 @@ export default function MagneticWrap({ children, strength = 0.35, radius = 80 })
     let targetY = 0;
     let currentX = 0;
     let currentY = 0;
+    let isVisible = false;
 
     function tick() {
-      currentX += (targetX - currentX) * 0.18;
-      currentY += (targetY - currentY) * 0.18;
-      node.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
-      frame = window.requestAnimationFrame(tick);
+      const dx = targetX - currentX;
+      const dy = targetY - currentY;
+
+      if (Math.abs(dx) > 0.01 || Math.abs(dy) > 0.01) {
+        currentX += dx * 0.18;
+        currentY += dy * 0.18;
+        node.style.transform = `translate3d(${currentX.toFixed(2)}px, ${currentY.toFixed(2)}px, 0)`;
+      }
+
+      if (isVisible && (Math.abs(dx) > 0.01 || Math.abs(dy) > 0.01 || targetX !== 0 || targetY !== 0)) {
+        frame = window.requestAnimationFrame(tick);
+      }
     }
 
     function onMove(event) {
@@ -40,19 +49,35 @@ export default function MagneticWrap({ children, strength = 0.35, radius = 80 })
         targetX = 0;
         targetY = 0;
       }
+      if (!frame && isVisible) {
+        frame = window.requestAnimationFrame(tick);
+      }
     }
 
     function onLeave() {
       targetX = 0;
       targetY = 0;
+      if (!frame && isVisible) {
+        frame = window.requestAnimationFrame(tick);
+      }
     }
 
-    frame = window.requestAnimationFrame(tick);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          isVisible = entry.isIntersecting;
+        }
+      },
+      { threshold: 0 }
+    );
+
+    observer.observe(node);
     window.addEventListener("pointermove", onMove);
     node.addEventListener("pointerleave", onLeave);
 
     return () => {
       window.cancelAnimationFrame(frame);
+      observer.disconnect();
       window.removeEventListener("pointermove", onMove);
       node.removeEventListener("pointerleave", onLeave);
     };

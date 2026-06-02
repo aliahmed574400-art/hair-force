@@ -1,6 +1,7 @@
 import ClientDashboard from "@/components/dashboard/ClientDashboard";
 import SiteButton from "@/components/ui/SiteButton";
 import VendorDashboardManager from "@/components/dashboard/VendorDashboardManager";
+import SocketProvider from "@/components/providers/SocketProvider";
 import { getDashboardDataForUser } from "@/lib/postgres-repositories";
 import { getSessionFromServer } from "@/lib/session";
 
@@ -48,11 +49,13 @@ export default async function DashboardPage() {
   return (
     <main className="section page-intro">
       <div className="container">
-        {dashboardData.kind === "vendor" ? (
-          <VendorDashboardManager user={sessionUser} initialData={dashboardData} />
-        ) : (
-          <ClientDashboard user={sessionUser} initialData={dashboardData} />
-        )}
+        <SocketProvider>
+          {dashboardData.kind === "vendor" ? (
+            <VendorDashboardManager user={sessionUser} initialData={dashboardData} />
+          ) : (
+            <ClientDashboard user={sessionUser} initialData={dashboardData} />
+          )}
+        </SocketProvider>
       </div>
     </main>
   );

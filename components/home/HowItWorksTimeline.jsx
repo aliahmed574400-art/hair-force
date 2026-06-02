@@ -310,13 +310,11 @@ function DesktopCard({ step, isActive, cardWidth }) {
       }}
       animate={{
         opacity: isActive ? 1 : 0.68,
-        scale: isActive ? 1 : 0.96,
-        filter: isActive ? "blur(0px)" : "blur(1.4px)"
+        scale: isActive ? 1 : 0.96
       }}
       transition={{
         opacity: { duration: 0.26, ease: "easeOut" },
-        scale: { type: "spring", stiffness: 220, damping: 24 },
-        filter: { duration: 0.26, ease: "easeOut" }
+        scale: { type: "spring", stiffness: 220, damping: 24 }
       }}
       whileHover={isActive ? { scale: 1.03, y: -8 } : undefined}
     >
@@ -514,11 +512,8 @@ export default function HowItWorksTimeline({ steps }) {
               </div>
             </div>
 
-            <Link href="/discover" className="how-story-cta">
+            <Link href="/discover" className="button button-primary how-story-cta-btn">
               Find your stylist now
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M5 12h14M13 6l6 6-6 6" />
-              </svg>
             </Link>
           </div>
         </div>

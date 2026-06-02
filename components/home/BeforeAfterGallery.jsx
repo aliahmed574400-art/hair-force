@@ -69,6 +69,12 @@ function ComparisonSlider({ transformation, isActive }) {
     if (sweepDoneRef.current) return undefined;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return undefined;
 
+    const afterImage = container.querySelector(".before-after-image-after");
+    const divider = container.querySelector(".before-after-divider");
+    const handle = container.querySelector(".before-after-handle");
+
+    let frame = 0;
+
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
@@ -76,7 +82,7 @@ function ComparisonSlider({ transformation, isActive }) {
             sweepDoneRef.current = true;
             const startTime = performance.now();
             const totalDuration = 2400;
-            let frame = 0;
+
             const tick = (now) => {
               const elapsed = now - startTime;
               const t = Math.min(elapsed / totalDuration, 1);
@@ -91,9 +97,20 @@ function ComparisonSlider({ transformation, isActive }) {
                 const p = (t - 0.8) / 0.2;
                 value = 4 + (50 - 4) * (1 - Math.pow(1 - p, 3));
               }
-              setPosition(value);
+
+              // Update DOM directly — no React re-render
+              if (afterImage) afterImage.style.clipPath = `inset(0 0 0 ${value}%)`;
+              if (divider) divider.style.left = `${value}%`;
+              if (handle) {
+                handle.style.left = `${value}%`;
+                handle.setAttribute("aria-valuenow", Math.round(value));
+              }
+
               if (t < 1) {
                 frame = requestAnimationFrame(tick);
+              } else {
+                // Sync React state once at the end
+                setPosition(value);
               }
             };
             frame = requestAnimationFrame(tick);
@@ -106,7 +123,10 @@ function ComparisonSlider({ transformation, isActive }) {
     );
 
     observer.observe(container);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      window.cancelAnimationFrame(frame);
+    };
   }, []);
 
   function handlePointerDown(event) {

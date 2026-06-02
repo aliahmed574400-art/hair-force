@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { forwardRef, useCallback, useEffect, useState } from "react";
+import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import type { ComponentPropsWithoutRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
@@ -58,13 +58,36 @@ export function FeatureCarousel({ features }: FeatureCarouselProps) {
     }
   };
 
+  const containerRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (isPaused || featureCount <= 1) {
       return undefined;
     }
 
-    const interval = window.setInterval(nextStep, AUTO_PLAY_INTERVAL);
-    return () => window.clearInterval(interval);
+    const node = containerRef.current;
+    let isVisible = false;
+    let interval = 0;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          isVisible = entry.isIntersecting;
+        }
+      },
+      { threshold: 0 }
+    );
+
+    if (node) observer.observe(node);
+
+    interval = window.setInterval(() => {
+      if (isVisible) nextStep();
+    }, AUTO_PLAY_INTERVAL);
+
+    return () => {
+      window.clearInterval(interval);
+      observer.disconnect();
+    };
   }, [featureCount, isPaused, nextStep]);
 
   if (!featureCount) {
@@ -86,7 +109,7 @@ export function FeatureCarousel({ features }: FeatureCarouselProps) {
   };
 
   return (
-    <div className="mx-auto w-full max-w-7xl">
+    <div ref={containerRef} className="mx-auto w-full max-w-7xl">
       <div className="relative overflow-hidden rounded-[2.2rem] border border-slate-200/70 bg-white/80 shadow-[0_24px_70px_rgba(117,148,196,0.16)] backdrop-blur-xl lg:rounded-[3.5rem]">
         <div className="flex min-h-[620px] flex-col lg:min-h-[680px] lg:flex-row">
           <div className="relative z-20 flex min-h-[360px] w-full items-center overflow-hidden bg-[linear-gradient(180deg,#62B2FE_0%,#4797F4_100%)] px-8 py-12 md:min-h-[430px] md:px-14 lg:min-h-0 lg:w-[40%] lg:px-12">

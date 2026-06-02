@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Logo from "@/components/brand/Logo";
 import SiteButton from "@/components/ui/SiteButton";
-import SignOutButton from "@/components/ui/SignOutButton";
+
 
 function getDashboardHref(sessionUser) {
   return sessionUser?.role === "admin" ? "/admin" : "/dashboard";
@@ -119,7 +119,7 @@ export default function NavbarClient({ sessionUser, links }) {
                     {dashboardLabel}
                   </SiteButton>
                 )}
-                {!isVendorDashboardView ? <SignOutButton size="sm" /> : null}
+
               </>
             ) : (
               <>
@@ -177,7 +177,7 @@ export default function NavbarClient({ sessionUser, links }) {
                       {dashboardLabel}
                     </SiteButton>
                   )}
-                  {!isVendorDashboardView ? <SignOutButton fullWidth /> : null}
+
                 </>
               ) : (
                 <>

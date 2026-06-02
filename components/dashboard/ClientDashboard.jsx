@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSocket } from "@/components/providers/SocketProvider";
 import {
   Bell,
   CalendarDays,
@@ -59,8 +60,7 @@ const HEADER_COPY = {
     subtitle: "Manage saved cards, clear booking dues, and review your receipts"
   },
   favorites: {
-    title: "Saved Stylists",
-    subtitle: "Keep your preferred stylists close so your next booking is faster"
+    title: "Saved Stylists"
   },
   messages: {
     title: "Messages",
@@ -613,6 +613,40 @@ export default function ClientDashboard({ user, initialData }) {
     deleteAccount: false
   });
 
+  const { socket, connected } = useSocket();
+
+  // Socket.IO: join conversation rooms and listen for new messages
+  useEffect(() => {
+    if (!socket) return;
+
+    function handleNewMessage({ conversationId: incomingId, messages: incomingMessages }) {
+      if (incomingId === activeConversationId) {
+        setMessageThread((current) => ({
+          ...current,
+          messages: incomingMessages || current.messages,
+          error: ""
+        }));
+      }
+      // Refresh conversation list to update previews/unread counts
+      refreshConversations().catch(() => {});
+    }
+
+    socket.on("message:new", handleNewMessage);
+
+    return () => {
+      socket.off("message:new", handleNewMessage);
+    };
+  }, [socket, activeConversationId]);
+
+  // Socket.IO: join/leave conversation rooms as active conversation changes
+  useEffect(() => {
+    if (!socket || !activeConversationId) return;
+    socket.emit("join_conversation", activeConversationId);
+    return () => {
+      socket.emit("leave_conversation", activeConversationId);
+    };
+  }, [socket, activeConversationId]);
+
   useEffect(() => {
     setActiveTab(getValidTab(searchParams.get("tab")));
   }, [searchParams]);
@@ -771,7 +805,8 @@ export default function ClientDashboard({ user, initialData }) {
         value: String(dashboard?.upcomingBookings?.length || 0),
         detail: nextBooking
           ? `Next: ${formatAppointmentDate(nextBooking.appointmentDate)}`
-          : "No upcoming appointment"
+          : "No upcoming appointment",
+        icon: CalendarDays
       },
       {
         id: "payments",
@@ -780,7 +815,8 @@ export default function ClientDashboard({ user, initialData }) {
         detail:
           dashboard?.overview?.pendingPayments
             ? `${dashboard.overview.pendingPayments} booking item(s) need attention`
-            : "Payments are up to date"
+            : "Payments are up to date",
+        icon: Wallet
       },
       {
         id: "favorites",
@@ -789,8 +825,19 @@ export default function ClientDashboard({ user, initialData }) {
         detail:
           dashboard?.favorites?.length
             ? "Your go-to stylists are ready to rebook"
-            : "Save stylists to speed up rebooking"
+            : "Save stylists to speed up rebooking",
+        icon: Heart
       },
+      {
+        id: "completed",
+        label: "Completed Visits",
+        value: String(dashboard?.overview?.completedVisits || 0),
+        detail:
+          dashboard?.overview?.completedVisits
+            ? "Appointments you have attended"
+            : "No completed visits yet",
+        icon: Sparkles
+      }
     ],
     [dashboard, nextBooking]
   );
@@ -1437,7 +1484,7 @@ export default function ClientDashboard({ user, initialData }) {
 
     const bodyText = typeof eventOrBody === "string" ? eventOrBody : messageThread.draft;
 
-    if (!activeConversationId || !bodyText.trim()) {
+    if (!activeConversationId || !bodyText.trim() || messageThread.sending) {
       return;
     }
 
@@ -1456,7 +1503,11 @@ export default function ClientDashboard({ user, initialData }) {
         messages: data.messages || [],
         error: ""
       }));
-      await refreshConversations();
+      try {
+        await refreshConversations();
+      } catch {
+        // Refresh failure is non-critical; polling will catch up
+      }
       setFeedback({ type: "success", message: "Message sent." });
     } catch (error) {
       setMessageThread((current) => ({ ...current, sending: false, error: error.message }));
@@ -1587,6 +1638,12 @@ export default function ClientDashboard({ user, initialData }) {
                       type="button"
                       onClick={() => {
                         setShowNotifications(false);
+                        if (item.ctaHref === "/dashboard?tab=messages" && item.metadata?.conversationId) {
+                          setActiveConversationId(item.metadata.conversationId);
+                          setWidgetOpen(true);
+                        } else if (item.ctaHref) {
+                          router.push(item.ctaHref);
+                        }
                       }}
                       style={{
                         width: "100%",
@@ -1603,6 +1660,9 @@ export default function ClientDashboard({ user, initialData }) {
                     >
                       <strong style={{ fontSize: 13, color: "#0f172a" }}>{item.title}</strong>
                       <span style={{ fontSize: 12, color: "#64748b", lineHeight: 1.4 }}>{item.message}</span>
+                      {item.ctaLabel ? (
+                        <span style={{ fontSize: 11, color: "#2563eb", fontWeight: 500 }}>{item.ctaLabel}</span>
+                      ) : null}
                     </button>
                   ))
                 )}
@@ -1842,7 +1902,7 @@ export default function ClientDashboard({ user, initialData }) {
         <header className="client-admin-header">
           <div>
             <h1>{activeCopy.title}</h1>
-            <p>{activeCopy.subtitle}</p>
+            {activeCopy.subtitle ? <p>{activeCopy.subtitle}</p> : null}
           </div>
         </header>
 
@@ -1854,6 +1914,24 @@ export default function ClientDashboard({ user, initialData }) {
 
         {activeTab === "overview" ? (
           <div className="client-admin-content-stack">
+            <div className="client-admin-metrics">
+              {metrics.map((metric) => {
+                const Icon = metric.icon;
+                return (
+                  <Card key={metric.id} className="client-admin-metric-card">
+                    <div>
+                      <p style={{ color: "#475569", fontSize: "0.98rem", fontWeight: 500, margin: 0 }}>{metric.label}</p>
+                      <strong style={{ color: "#111827", fontSize: "2rem", lineHeight: 1, letterSpacing: "-0.04em", display: "block", marginTop: 6 }}>{metric.value}</strong>
+                      <p style={{ color: "#94a3b8", fontSize: "0.84rem", margin: "4px 0 0" }}>{metric.detail}</p>
+                    </div>
+                    <div className={`client-admin-metric-icon ${metricTone(metric.id)}`}>
+                      <Icon size={20} />
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+
             <div className="client-admin-overview-grid">
               <Card className="client-admin-panel client-admin-panel-large">
                 <div className="client-admin-panel-head">
@@ -2032,6 +2110,66 @@ export default function ClientDashboard({ user, initialData }) {
                 </div>
               </Card>
             </div>
+
+            {dashboard?.recommendations?.length ? (
+              <Card className="client-admin-panel">
+                <div className="client-admin-panel-head">
+                  <div>
+                    <h2>Recommended for you</h2>
+                    <p>Featured stylists you have not saved yet</p>
+                  </div>
+                  <Link href="/discover" className="client-admin-inline-link">
+                    Browse all
+                    <ChevronRight size={16} />
+                  </Link>
+                </div>
+
+                <div className="client-admin-card-grid">
+                  {dashboard.recommendations.map((vendor) => (
+                    <Card key={vendor.slug} className="client-admin-card">
+                      <div className="client-admin-card-top">
+                        <span className="client-admin-card-icon soft"><Sparkles size={18} /></span>
+                        <Badge variant="secondary" className="client-admin-chip">
+                          From {formatCurrency(vendor.priceFrom || 0)}
+                        </Badge>
+                      </div>
+                      <strong>{vendor.name}</strong>
+                      <p>{vendor.category} - {vendor.city}</p>
+                      <div className="client-admin-action-row">
+                        <Link
+                          href={`/stylists/${vendor.slug}`}
+                          className="client-admin-button client-admin-button-secondary"
+                        >
+                          View profile
+                        </Link>
+                        <Link
+                          href={`/book/${vendor.slug}`}
+                          className="client-admin-button client-admin-button-primary"
+                        >
+                          Book now
+                        </Link>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </Card>
+            ) : (
+              <Card className="client-admin-panel">
+                <div className="client-admin-panel-head">
+                  <div>
+                    <h2>Discover stylists</h2>
+                    <p>Find your next favorite provider</p>
+                  </div>
+                </div>
+                <div className="client-admin-empty">
+                  <strong>Browse local stylists</strong>
+                  <p>Explore providers, compare services, and book your next appointment.</p>
+                  <Link href="/discover" className="client-admin-button client-admin-button-primary">
+                    Browse stylists
+                  </Link>
+                </div>
+              </Card>
+            )}
           </div>
         ) : null}
 
@@ -2716,7 +2854,6 @@ export default function ClientDashboard({ user, initialData }) {
               <div className="client-admin-panel-head">
                 <div>
                   <h2>Your Saved Stylists</h2>
-                  <p>Quick access to the providers you want to revisit</p>
                 </div>
                 <Badge variant="secondary" className="client-admin-badge subtle">
                   {dashboard?.favorites?.length || 0}
@@ -2766,7 +2903,6 @@ export default function ClientDashboard({ user, initialData }) {
                 ) : (
                   <div className="client-admin-empty">
                     <strong>No saved stylists yet</strong>
-                    <p>Once you save providers here, rebooking will stay fast and familiar.</p>
                   </div>
                 )}
               </div>
@@ -2927,7 +3063,7 @@ export default function ClientDashboard({ user, initialData }) {
                       )}
                     </div>
 
-                    <form onSubmit={handleSendMessage} className="client-messenger-input-bar">
+                    <form onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }} className="client-messenger-input-bar">
                       <input
                         ref={(el) => { if (el && !window.clientChatFileInput) window.clientChatFileInput = el; }}
                         type="file"
@@ -3004,7 +3140,7 @@ export default function ClientDashboard({ user, initialData }) {
                             setMessageThread((current) => ({ ...current, draft: event.target.value }))
                           }
                           onKeyDown={(event) => {
-                            if (event.key === "Enter" && !event.shiftKey) {
+                            if ((event.key === "Enter" || event.code === "Enter" || event.code === "NumpadEnter") && !event.shiftKey && !event.isComposing) {
                               event.preventDefault();
                               handleSendMessage();
                             }
@@ -3585,6 +3721,7 @@ export default function ClientDashboard({ user, initialData }) {
           externalError={messageThread.error}
           onSend={(body) => handleSendMessage(body)}
           onDraftChange={(value) => setMessageThread((current) => ({ ...current, draft: value }))}
+          onLoadMessages={() => loadConversation(activeConversationId)}
           onExpand={() => {
             handleTabChange("messages");
             setWidgetOpen(false);

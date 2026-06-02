@@ -19,14 +19,24 @@ export default function CursorCompanion({ scopeRef, label = "" }) {
     let targetY = 0;
     let currentX = 0;
     let currentY = 0;
+    let isVisible = false;
 
     function tick() {
-      currentX += (targetX - currentX) * 0.18;
-      currentY += (targetY - currentY) * 0.18;
-      if (dotRef.current) {
-        dotRef.current.style.transform = `translate3d(${currentX}px, ${currentY}px, 0) translate(-50%, -50%)`;
+      const dx = targetX - currentX;
+      const dy = targetY - currentY;
+
+      // Only animate when there's visible movement
+      if (Math.abs(dx) > 0.1 || Math.abs(dy) > 0.1 || active) {
+        currentX += dx * 0.18;
+        currentY += dy * 0.18;
+        if (dotRef.current) {
+          dotRef.current.style.transform = `translate3d(${currentX.toFixed(1)}px, ${currentY.toFixed(1)}px, 0) translate(-50%, -50%)`;
+        }
       }
-      frame = window.requestAnimationFrame(tick);
+
+      if (isVisible) {
+        frame = window.requestAnimationFrame(tick);
+      }
     }
 
     function onMove(event) {
@@ -47,12 +57,26 @@ export default function CursorCompanion({ scopeRef, label = "" }) {
       setHoveringTarget(false);
     }
 
-    frame = window.requestAnimationFrame(tick);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const wasVisible = isVisible;
+          isVisible = entry.isIntersecting;
+          if (isVisible && !wasVisible) {
+            frame = window.requestAnimationFrame(tick);
+          }
+        }
+      },
+      { threshold: 0 }
+    );
+
+    observer.observe(scope);
     scope.addEventListener("pointermove", onMove);
     scope.addEventListener("pointerleave", onLeave);
 
     return () => {
       window.cancelAnimationFrame(frame);
+      observer.disconnect();
       scope.removeEventListener("pointermove", onMove);
       scope.removeEventListener("pointerleave", onLeave);
     };
