@@ -437,6 +437,18 @@ export default function VendorDashboardManager({ user, initialData }) {
     setActiveSettingsTab((currentTab) => (currentTab === nextTab ? currentTab : nextTab));
   }, [requestedSettingsTab]);
 
+  useEffect(() => {
+    if (!status.message) {
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setStatus({ type: "", message: "" });
+    }, 10000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [status.message]);
+
   function handleSectionSelect(nextSection) {
     const resolvedSection = resolveVendorSection(nextSection) || "overview";
     const params = new URLSearchParams(searchParams.toString());

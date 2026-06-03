@@ -664,6 +664,18 @@ export default function ClientDashboard({ user, initialData }) {
   }, [dashboard, user]);
 
   useEffect(() => {
+    if (!feedback.message) {
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setFeedback({ type: "", message: "" });
+    }, 10000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [feedback.message]);
+
+  useEffect(() => {
     const nextConversations = dashboard?.conversations || [];
 
     if (!nextConversations.length) {
