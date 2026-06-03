@@ -570,7 +570,14 @@ export default function ClientDashboard({ user, initialData }) {
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: "",
     password: "",
-    confirmPassword: ""
+    confirmPassword: "",
+    code: ""
+  });
+  const [passwordChangeMeta, setPasswordChangeMeta] = useState({
+    email: "",
+    secondsLeft: 0,
+    devCode: "",
+    step: "form"
   });
   const [receiptState, setReceiptState] = useState({
     id: "",
@@ -1036,6 +1043,51 @@ export default function ClientDashboard({ user, initialData }) {
     }
   }
 
+  async function requestPasswordChangeCode() {
+    setLoading((current) => ({ ...current, password: true }));
+    setFeedback({ type: "", message: "" });
+
+    try {
+      const response = await fetch("/api/dashboard/security/password/request-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Could not send verification code.");
+      }
+
+      setPasswordChangeMeta({
+        email: data.email,
+        secondsLeft: Number(data.expiresIn || 60),
+        devCode: data.devCode || "",
+        step: "verify"
+      });
+      setFeedback({ type: "success", message: `Verification code sent to ${data.email}.` });
+    } catch (error) {
+      setFeedback({ type: "error", message: error.message });
+    } finally {
+      setLoading((current) => ({ ...current, password: false }));
+    }
+  }
+
+  useEffect(() => {
+    if (passwordChangeMeta.step !== "verify" || passwordChangeMeta.secondsLeft <= 0) {
+      return undefined;
+    }
+
+    const intervalId = window.setInterval(() => {
+      setPasswordChangeMeta((current) =>
+        current.secondsLeft > 0
+          ? { ...current, secondsLeft: current.secondsLeft - 1 }
+          : current
+      );
+    }, 1000);
+
+    return () => window.clearInterval(intervalId);
+  }, [passwordChangeMeta.step, passwordChangeMeta.secondsLeft]);
+
   async function handlePasswordSubmit(event) {
     event.preventDefault();
     setLoading((current) => ({ ...current, password: true }));
@@ -1049,8 +1101,10 @@ export default function ClientDashboard({ user, initialData }) {
       setPasswordForm({
         currentPassword: "",
         password: "",
-        confirmPassword: ""
+        confirmPassword: "",
+        code: ""
       });
+      setPasswordChangeMeta({ email: "", secondsLeft: 0, devCode: "", step: "form" });
       setFeedback({ type: "success", message: "Password updated successfully." });
     } catch (error) {
       setFeedback({ type: "error", message: error.message });
@@ -3513,18 +3567,66 @@ export default function ClientDashboard({ user, initialData }) {
                       />
                     </div>
 
-                    <div className="client-admin-action-row">
-                      <Button
-                        type="submit"
-                        className="client-admin-button client-admin-button-primary"
-                        disabled={loading.password}
-                      >
-                        {loading.password ? "Updating..." : "Change password"}
-                      </Button>
-                      <Badge variant="secondary" className="client-admin-chip">
-                        <LockKeyhole size={15} /> Minimum 8 characters
-                      </Badge>
-                    </div>
+                    {passwordChangeMeta.step === "verify" ? (
+                      <>
+                        <div className="client-admin-field">
+                          <Label htmlFor="password-code">Verification code</Label>
+                          <Input
+                            id="password-code"
+                            type="text"
+                            inputMode="numeric"
+                            maxLength={6}
+                            className="form-control"
+                            placeholder="6-digit code from email"
+                            value={passwordForm.code || ""}
+                            onChange={(event) =>
+                              setPasswordForm((current) => ({
+                                ...current,
+                                code: event.target.value.replace(/\D/g, "").slice(0, 6)
+                              }))
+                            }
+                            autoComplete="one-time-code"
+                          />
+                          <p className="client-admin-field-hint">
+                            Code sent to {passwordChangeMeta.email}
+                            {passwordChangeMeta.devCode ? ` — Dev code: ${passwordChangeMeta.devCode}` : ""}
+                          </p>
+                        </div>
+                        <div className="client-admin-action-row">
+                          <Button
+                            type="submit"
+                            className="client-admin-button client-admin-button-primary"
+                            disabled={loading.password}
+                          >
+                            {loading.password ? "Updating..." : "Change password"}
+                          </Button>
+                          <button
+                            type="button"
+                            className="auth-panel-link signup-link-button"
+                            onClick={requestPasswordChangeCode}
+                            disabled={loading.password || passwordChangeMeta.secondsLeft > 0}
+                          >
+                            {passwordChangeMeta.secondsLeft > 0
+                              ? `Resend in ${passwordChangeMeta.secondsLeft}s`
+                              : "Resend code"}
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="client-admin-action-row">
+                        <Button
+                          type="button"
+                          className="client-admin-button client-admin-button-primary"
+                          disabled={loading.password}
+                          onClick={requestPasswordChangeCode}
+                        >
+                          {loading.password ? "Sending..." : "Send verification code"}
+                        </Button>
+                        <Badge variant="secondary" className="client-admin-chip">
+                          <LockKeyhole size={15} /> Minimum 8 characters
+                        </Badge>
+                      </div>
+                    )}
                   </form>
                 ) : (
                   <div className="client-admin-empty compact">

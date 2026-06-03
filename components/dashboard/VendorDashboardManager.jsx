@@ -168,6 +168,12 @@ export default function VendorDashboardManager({ user, initialData }) {
     email: initialData.accountSecurity?.email || user?.email || ""
   });
   const [passwordForm, setPasswordForm] = useState(createPasswordForm());
+  const [passwordChangeMeta, setPasswordChangeMeta] = useState({
+    email: "",
+    secondsLeft: 0,
+    devCode: "",
+    step: "form"
+  });
   const [status, setStatus] = useState({ type: "", message: "" });
   const [activeConversationId, setActiveConversationId] = useState(initialData.conversations?.[0]?.id || "");
   const [threadState, setThreadState] = useState(initialThreadState());
@@ -1427,6 +1433,51 @@ export default function VendorDashboardManager({ user, initialData }) {
     }
   }
 
+  async function requestPasswordChangeCode() {
+    setLoading((current) => ({ ...current, password: true }));
+    setStatus({ type: "", message: "" });
+
+    try {
+      const response = await fetch("/api/dashboard/security/password/request-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Could not send verification code.");
+      }
+
+      setPasswordChangeMeta({
+        email: data.email,
+        secondsLeft: Number(data.expiresIn || 60),
+        devCode: data.devCode || "",
+        step: "verify"
+      });
+      setStatus({ type: "success", message: `Verification code sent to ${data.email}.` });
+    } catch (error) {
+      setStatus({ type: "error", message: error.message });
+    } finally {
+      setLoading((current) => ({ ...current, password: false }));
+    }
+  }
+
+  useEffect(() => {
+    if (passwordChangeMeta.step !== "verify" || passwordChangeMeta.secondsLeft <= 0) {
+      return undefined;
+    }
+
+    const intervalId = window.setInterval(() => {
+      setPasswordChangeMeta((current) =>
+        current.secondsLeft > 0
+          ? { ...current, secondsLeft: current.secondsLeft - 1 }
+          : current
+      );
+    }, 1000);
+
+    return () => window.clearInterval(intervalId);
+  }, [passwordChangeMeta.step, passwordChangeMeta.secondsLeft]);
+
   async function handlePasswordSubmit(event) {
     event.preventDefault();
     setLoading((current) => ({ ...current, password: true }));
@@ -1438,6 +1489,7 @@ export default function VendorDashboardManager({ user, initialData }) {
         body: JSON.stringify(passwordForm)
       });
       setPasswordForm(createPasswordForm());
+      setPasswordChangeMeta({ email: "", secondsLeft: 0, devCode: "", step: "form" });
       setStatus({ type: "success", message: "Password updated." });
     } catch (error) {
       setStatus({ type: "error", message: error.message });
@@ -4109,9 +4161,52 @@ export default function VendorDashboardManager({ user, initialData }) {
                         required
                       />
                     </label>
-                    <SiteButton type="submit" disabled={loading.password}>
-                      {loading.password ? "Saving..." : "Save"}
-                    </SiteButton>
+
+                    {passwordChangeMeta.step === "verify" ? (
+                      <>
+                        <label className="vendor-profile-field">
+                          <span>Verification code</span>
+                          <input
+                            className="form-control"
+                            type="text"
+                            inputMode="numeric"
+                            maxLength={6}
+                            placeholder="6-digit code from email"
+                            value={passwordForm.code || ""}
+                            onChange={(event) => setPasswordForm((current) => ({ ...current, code: event.target.value.replace(/\D/g, "").slice(0, 6) }))}
+                            autoComplete="one-time-code"
+                            required
+                          />
+                          <small className="vendor-profile-field-hint">
+                            Code sent to {passwordChangeMeta.email}
+                            {passwordChangeMeta.devCode ? ` — Dev code: ${passwordChangeMeta.devCode}` : ""}
+                          </small>
+                        </label>
+                        <div className="vendor-profile-field" style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                          <SiteButton type="submit" disabled={loading.password}>
+                            {loading.password ? "Saving..." : "Change password"}
+                          </SiteButton>
+                          <button
+                            type="button"
+                            className="auth-panel-link"
+                            onClick={requestPasswordChangeCode}
+                            disabled={loading.password || passwordChangeMeta.secondsLeft > 0}
+                          >
+                            {passwordChangeMeta.secondsLeft > 0
+                              ? `Resend in ${passwordChangeMeta.secondsLeft}s`
+                              : "Resend code"}
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <SiteButton
+                        type="button"
+                        disabled={loading.password}
+                        onClick={requestPasswordChangeCode}
+                      >
+                        {loading.password ? "Sending..." : "Send verification code"}
+                      </SiteButton>
+                    )}
                   </form>
                 ) : (
                   <div className="vendor-settings-empty">
