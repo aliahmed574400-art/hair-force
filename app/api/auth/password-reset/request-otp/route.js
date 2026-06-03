@@ -24,20 +24,30 @@ export async function POST(request) {
     }
 
     const otpState = await requestPasswordResetOtp({ email });
-    const delivery = await sendPasswordResetOtpEmail({
-      to: otpState.email,
-      code: otpState.code,
-      expiresInSeconds: otpState.expiresIn
-    });
+
+    try {
+      await sendPasswordResetOtpEmail({
+        to: otpState.email,
+        code: otpState.code,
+        expiresInSeconds: otpState.expiresIn
+      });
+    } catch (emailError) {
+      console.error("[Email] Failed to send password reset OTP:", emailError);
+      if (process.env.NODE_ENV === "production") {
+        throw emailError;
+      }
+    }
 
     return NextResponse.json(
       {
         email: otpState.email,
-        expiresIn: otpState.expiresIn
+        expiresIn: otpState.expiresIn,
+        devCode: process.env.NODE_ENV === "production" ? undefined : otpState.code
       },
       { status: 201 }
     );
   } catch (error) {
-    return NextResponse.json({ error: "Failed to send OTP." }, { status: 400 });
+    console.error("[OTP Error]", error);
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Failed to send OTP." }, { status: 400 });
   }
 }

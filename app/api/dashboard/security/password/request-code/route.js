@@ -13,15 +13,23 @@ export async function POST(request) {
 
     const result = await requestPasswordChangeCode(user);
 
-    await sendPasswordChangeOtpEmail({
-      to: result.email,
-      code: result.code,
-      expiresInSeconds: result.expiresIn
-    });
+    try {
+      await sendPasswordChangeOtpEmail({
+        to: result.email,
+        code: result.code,
+        expiresInSeconds: result.expiresIn
+      });
+    } catch (emailError) {
+      console.error("[Email] Failed to send password change OTP:", emailError);
+      if (process.env.NODE_ENV === "production") {
+        throw emailError;
+      }
+    }
 
     return NextResponse.json({
       email: result.email,
-      expiresIn: result.expiresIn
+      expiresIn: result.expiresIn,
+      devCode: process.env.NODE_ENV === "production" ? undefined : result.code
     });
   } catch (error) {
     return NextResponse.json(
