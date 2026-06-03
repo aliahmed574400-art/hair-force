@@ -832,7 +832,16 @@ function AnimatedCharactersLoginPage({
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex justify-end">
+                <Link
+                  href={forgotPasswordHref}
+                  className="text-sm font-medium text-primary transition-colors hover:text-primary/80"
+                >
+                  Forgot password?
+                </Link>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
                 <div className="flex items-center space-x-3">
                   <Checkbox
                     id="remember"
@@ -846,13 +855,6 @@ function AnimatedCharactersLoginPage({
                     Remember for 30 days
                   </Label>
                 </div>
-
-                <Link
-                  href={forgotPasswordHref}
-                  className="text-sm font-medium text-primary transition-colors hover:text-primary/80"
-                >
-                  Forgot password?
-                </Link>
               </div>
 
               {error ? (
