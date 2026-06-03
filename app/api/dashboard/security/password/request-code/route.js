@@ -21,8 +21,7 @@ export async function POST(request) {
 
     return NextResponse.json({
       email: result.email,
-      expiresIn: result.expiresIn,
-      devCode: result.code
+      expiresIn: result.expiresIn
     });
   } catch (error) {
     return NextResponse.json(

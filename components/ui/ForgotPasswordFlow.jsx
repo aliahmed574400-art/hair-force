@@ -30,8 +30,7 @@ export default function ForgotPasswordFlow({ initialEmail = "" }) {
   const [otpDigits, setOtpDigits] = useState(createEmptyOtpDigits);
   const [otpMeta, setOtpMeta] = useState({
     email: String(initialEmail || "").trim().toLowerCase(),
-    secondsLeft: DEFAULT_OTP_TTL_SECONDS,
-    devCode: ""
+    secondsLeft: DEFAULT_OTP_TTL_SECONDS
   });
   const [resetMeta, setResetMeta] = useState({
     email: String(initialEmail || "").trim().toLowerCase(),
@@ -145,8 +144,7 @@ export default function ForgotPasswordFlow({ initialEmail = "" }) {
       setOtpDigits(createEmptyOtpDigits());
       setOtpMeta({
         email: verifiedEmail,
-        secondsLeft: Number(data.expiresIn || DEFAULT_OTP_TTL_SECONDS),
-        devCode: data.devCode || ""
+        secondsLeft: Number(data.expiresIn || DEFAULT_OTP_TTL_SECONDS)
       });
       setResetMeta({
         email: verifiedEmail,
@@ -356,12 +354,6 @@ export default function ForgotPasswordFlow({ initialEmail = "" }) {
               Resend code
             </button>
           </div>
-
-          {otpMeta.devCode ? (
-            <div className="booking-confirm" style={{ marginTop: 0 }}>
-              <span className="muted">Local testing code: {otpMeta.devCode}</span>
-            </div>
-          ) : null}
 
           <SiteButton className="form-span-2" disabled={status.loading} fullWidth type="submit">
             {status.loading ? "Verifying..." : "Verify"}

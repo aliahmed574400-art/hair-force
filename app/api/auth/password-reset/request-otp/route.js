@@ -33,9 +33,7 @@ export async function POST(request) {
     return NextResponse.json(
       {
         email: otpState.email,
-        expiresIn: otpState.expiresIn,
-        devCode:
-          delivery.delivered || process.env.NODE_ENV === "production" ? undefined : otpState.code
+        expiresIn: otpState.expiresIn
       },
       { status: 201 }
     );

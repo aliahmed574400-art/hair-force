@@ -37,8 +37,7 @@ export default function SignupFlow() {
   const [otpDigits, setOtpDigits] = useState(createEmptyOtpDigits);
   const [otpMeta, setOtpMeta] = useState({
     phone: "",
-    secondsLeft: DEFAULT_OTP_TTL_SECONDS,
-    devCode: ""
+    secondsLeft: DEFAULT_OTP_TTL_SECONDS
   });
 
   useEffect(() => {
@@ -170,8 +169,7 @@ export default function SignupFlow() {
       setOtpDigits(createEmptyOtpDigits());
       setOtpMeta({
         phone: data.phone || phone,
-        secondsLeft: Number(data.expiresIn || DEFAULT_OTP_TTL_SECONDS),
-        devCode: data.devCode || ""
+        secondsLeft: Number(data.expiresIn || DEFAULT_OTP_TTL_SECONDS)
       });
       setStatus({
         loading: false,
@@ -458,12 +456,6 @@ export default function SignupFlow() {
               Resend code
             </button>
           </div>
-
-          {otpMeta.devCode ? (
-            <div className="booking-confirm" style={{ marginTop: 0 }}>
-              <span className="muted">Local testing code: {otpMeta.devCode}</span>
-            </div>
-          ) : null}
 
           <SiteButton className="form-span-2" disabled={status.loading} fullWidth type="submit">
             {status.loading ? "Verifying..." : "Verify"}
