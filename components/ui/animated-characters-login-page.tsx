@@ -832,13 +832,13 @@ function AnimatedCharactersLoginPage({
                 </div>
               </div>
 
-              <div className="flex justify-end">
-                <Link
+              <div className="text-right">
+                <a
                   href={forgotPasswordHref}
-                  className="text-sm font-medium text-primary transition-colors hover:text-primary/80"
+                  className="inline-block text-sm font-semibold text-blue-600 underline underline-offset-4 hover:text-blue-800"
                 >
                   Forgot password?
-                </Link>
+                </a>
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
