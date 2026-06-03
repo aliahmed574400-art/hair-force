@@ -20,7 +20,8 @@ function formatTimer(secondsLeft) {
 export default function PhoneSigninPanel({
   allowedRoles,
   className = "",
-  successNameFallback = "client"
+  successNameFallback = "client",
+  redirectTo = ""
 }) {
   const router = useRouter();
   const otpRefs = useRef([]);
@@ -172,7 +173,7 @@ export default function PhoneSigninPanel({
         tone: "info"
       });
 
-      const nextHref = data.user?.role === "admin" ? "/admin" : "/dashboard";
+      const nextHref = redirectTo || (data.user?.role === "admin" ? "/admin" : "/dashboard");
       router.push(nextHref);
       router.refresh();
     } catch (error) {

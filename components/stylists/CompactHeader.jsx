@@ -26,7 +26,8 @@ export default function CompactHeader({
   onShare,
   onMessage,
   liked = false,
-  showMessage = false
+  showMessage = false,
+  likeLoading = false
 }) {
   const roleLine = buildRoleLine(stylist);
 
@@ -73,8 +74,9 @@ export default function CompactHeader({
           type="button"
           onClick={onLike}
           aria-pressed={liked}
+          disabled={likeLoading}
           aria-label={liked ? "Unsave stylist" : "Save stylist"}
-          className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 transition hover:border-gray-300 hover:text-rose-500"
+          className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 transition hover:border-gray-300 hover:text-rose-500 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Heart
             size={18}

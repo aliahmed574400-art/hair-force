@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 
 import { parseMediaUrl } from "@/lib/chat-helpers";
+import { uploadFile, safeParseResponse, errorFromResponse } from "@/lib/client-upload-utils";
 
 const COMMON_EMOJIS = [
   "😀","😂","🥰","😍","😎","🤔","😢","😡","👍","👎",
@@ -268,16 +269,8 @@ export default function MessengerWidget({
     setIsUploading(true);
     setUploadError("");
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("folder", "messages");
-      const response = await fetch("/api/uploads", {
-        method: "POST",
-        body: formData
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Upload failed.");
-      await handleSend(data.url);
+      const url = await uploadFile(file, "messages");
+      await handleSend(url);
     } catch (error) {
       setUploadError(error.message || "Failed to upload file.");
     } finally {

@@ -92,6 +92,11 @@ import {
   sanitizePortfolioImages,
   sortBookings
 } from "@/components/dashboard/vendorDashboard.helpers";
+import {
+  uploadFile,
+  safeParseResponse,
+  errorFromResponse
+} from "@/lib/client-upload-utils";
 
 // Icon-bearing collections stay here because they reference lucide-react
 // components. The string-only set forms used by helpers live in
@@ -510,12 +515,13 @@ export default function VendorDashboardManager({ user, initialData }) {
   }, [activeConversationId, activeSection]);
 
   async function refreshFromResponse(response) {
-    const data = await response.json();
+    const parsed = await safeParseResponse(response);
 
     if (!response.ok) {
-      throw new Error(data.error || "Request failed.");
+      throw await errorFromResponse(response, "Request failed.");
     }
 
+    const data = parsed.data;
     setDashboard(data);
     setProfileForm(createProfileForm(data.vendor, user));
     setAvailabilityForm(createAvailabilityForm(data.vendor));
@@ -531,32 +537,17 @@ export default function VendorDashboardManager({ user, initialData }) {
       },
       ...options
     });
-    const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.error || "Request failed.");
+      throw await errorFromResponse(response, "Request failed.");
     }
 
-    return data;
+    const parsed = await safeParseResponse(response);
+    return parsed.data;
   }
 
   async function uploadAsset(file, folder) {
-    const payload = new FormData();
-    payload.append("file", file);
-    payload.append("folder", folder);
-
-    const response = await fetch("/api/uploads", {
-      method: "POST",
-      body: payload
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || "Unable to upload image.");
-    }
-
-    return data.url;
+    return uploadFile(file, folder);
   }
 
   function profilePayload(formState = profileForm) {
@@ -631,8 +622,10 @@ export default function VendorDashboardManager({ user, initialData }) {
 
     try {
       const url = await uploadAsset(file, folder);
-      setProfileForm((current) => ({ ...current, [field]: url }));
-      setStatus({ type: "success", message: "Image uploaded. Save profile changes to publish it." });
+      if (url) {
+        setProfileForm((current) => ({ ...current, [field]: url }));
+        setStatus({ type: "success", message: "Image uploaded. Save profile changes to publish it." });
+      }
     } catch (error) {
       setStatus({ type: "error", message: error.message });
     } finally {
@@ -658,6 +651,7 @@ export default function VendorDashboardManager({ user, initialData }) {
       for (const file of files) {
         try {
           const url = await uploadAsset(file, "gallery");
+          if (!url) continue;
           const type = file.type?.startsWith("video/") ? "video" : "image";
           nextItems.push({
             id: createClientId("media"),
@@ -677,7 +671,11 @@ export default function VendorDashboardManager({ user, initialData }) {
       }
 
       if (!nextItems.length) {
-        throw new Error("All uploads failed. Please check file types and sizes.");
+        const errorMessage =
+          errorCount === files.length && files.length === 1
+            ? "Upload failed. Please check the file type and size (max 4 MB)."
+            : `${errorCount} of ${files.length} uploads failed. Please check file types and sizes (max 4 MB).`;
+        throw new Error(errorMessage);
       }
 
       const nextForm = {

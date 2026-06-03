@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -230,6 +230,9 @@ function AnimatedCharactersLoginPage({
   vendorHeroSlides = []
 }: AnimatedCharactersLoginPageProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectParam = searchParams.get("redirect") || "";
+  const saveStylistParam = searchParams.get("saveStylist") || "";
   const isVendorAudience = audience === "vendor";
   const allowedRoles = isVendorAudience ? VENDOR_ALLOWED_ROLES : undefined;
   const googleAccountRole = isVendorAudience ? "vendor" : "client";
@@ -247,6 +250,15 @@ function AnimatedCharactersLoginPage({
   const altHref = isVendorAudience ? "/vendor/signin" : "/vendor/signin";
   const altLabel = isVendorAudience ? "Sign in" : "Stylist sign in";
   const successNameFallback = isVendorAudience ? "stylist" : "client";
+
+  function getPostLoginHref(userRole?: string) {
+    if (redirectParam) {
+      const separator = redirectParam.includes("?") ? "&" : "?";
+      const qs = saveStylistParam ? `${separator}saveStylist=${encodeURIComponent(saveStylistParam)}` : "";
+      return `${redirectParam}${qs}`;
+    }
+    return userRole === "admin" ? "/admin" : "/dashboard";
+  }
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -419,7 +431,7 @@ function AnimatedCharactersLoginPage({
 
       setStatusMessage(`Welcome back, ${data.user?.name || successNameFallback}. Redirecting now...`);
 
-      const nextHref = data.user?.role === "admin" ? "/admin" : "/dashboard";
+      const nextHref = getPostLoginHref(data.user?.role);
       router.push(nextHref);
       router.refresh();
     } catch (nextError) {
@@ -889,12 +901,14 @@ function AnimatedCharactersLoginPage({
                   showHelperText={false}
                   buttonWidth={380}
                   className="google-auth-shell-wide"
+                  redirectTo={getPostLoginHref()}
                 />
 
                 <PhoneSigninPanel
                   allowedRoles={allowedRoles}
                   className="phone-auth-shell-tight"
                   successNameFallback={successNameFallback}
+                  redirectTo={getPostLoginHref()}
                 />
               </div>
             </div>

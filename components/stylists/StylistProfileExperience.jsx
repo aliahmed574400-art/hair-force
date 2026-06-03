@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import CompactHeader from "@/components/stylists/CompactHeader";
 import PortfolioGalleryHero from "@/components/stylists/PortfolioGalleryHero";
 import PortfolioLightbox from "@/components/stylists/PortfolioLightbox";
@@ -45,11 +45,14 @@ function buildPortfolioMedia(stylist, services) {
   ].filter((item) => item.url);
 }
 
-export default function StylistProfileExperience({ stylist, user }) {
+export default function StylistProfileExperience({ stylist, user, isLiked = false }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState("services");
   const [selectedService, setSelectedService] = useState(null);
   const [lightboxIndex, setLightboxIndex] = useState(null);
+  const [liked, setLiked] = useState(isLiked);
+  const [likeLoading, setLikeLoading] = useState(false);
   const [messengerState, setMessengerState] = useState({
     open: false,
     conversationId: null,
@@ -73,9 +76,62 @@ export default function StylistProfileExperience({ stylist, user }) {
 
   const isClient = user?.role === "client";
 
+  useEffect(() => {
+    const saveParam = searchParams.get("saveStylist");
+    if (saveParam && isClient && !liked) {
+      handleLikeToggle(true);
+      router.replace(`/stylists/${stylist.slug}`, { scroll: false });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, isClient, liked, stylist.slug]);
+
   const handleBook = (service) => {
     setSelectedService(service || services[0] || null);
   };
+
+  async function handleLikeToggle(forceSave = false) {
+    if (!user) {
+      router.push(`/signin?redirect=/stylists/${stylist.slug}&saveStylist=true`);
+      return;
+    }
+
+    if (!isClient) {
+      alert("Only clients can save stylists.");
+      return;
+    }
+
+    const nextLiked = forceSave ? true : !liked;
+    if (nextLiked === liked && !forceSave) return;
+
+    setLikeLoading(true);
+
+    try {
+      if (nextLiked) {
+        const response = await fetch("/api/dashboard/favorites", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ vendorSlug: stylist.slug })
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || "Could not save stylist.");
+        }
+      } else {
+        const response = await fetch(`/api/dashboard/favorites/${stylist.slug}`, {
+          method: "DELETE"
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || "Could not unsave stylist.");
+        }
+      }
+      setLiked(nextLiked);
+    } catch (error) {
+      alert(error.message);
+    } finally {
+      setLikeLoading(false);
+    }
+  }
 
   async function handleMessage() {
     if (!user) {
@@ -131,6 +187,9 @@ export default function StylistProfileExperience({ stylist, user }) {
         <CompactHeader
           stylist={stylist}
           onMessage={handleMessage}
+          onLike={handleLikeToggle}
+          liked={liked}
+          likeLoading={likeLoading}
           showMessage={true}
         />
 

@@ -40,7 +40,8 @@ export default function GoogleAuthButton({
   buttonWidth = 320,
   accountRole = "client",
   allowedRoles,
-  className = ""
+  className = "",
+  redirectTo = ""
 }) {
   const shellRef = useRef(null);
   const buttonRef = useRef(null);
@@ -118,7 +119,7 @@ export default function GoogleAuthButton({
           throw new Error(data.error || "Google sign in failed.");
         }
 
-        const nextHref = data.user?.role === "admin" ? "/admin" : "/dashboard";
+        const nextHref = redirectTo || (data.user?.role === "admin" ? "/admin" : "/dashboard");
 
         onStatusChange?.({
           loading: false,
@@ -158,7 +159,7 @@ export default function GoogleAuthButton({
       width: resolvedButtonWidth,
       logo_alignment: "left"
     });
-  }, [accountRole, allowedRoles, isScriptReady, isSignup, onStatusChange, resolvedButtonWidth, router]);
+  }, [accountRole, allowedRoles, isScriptReady, isSignup, onStatusChange, redirectTo, resolvedButtonWidth, router]);
 
   return (
     <>

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import StylistProfileExperience from "@/components/stylists/StylistProfileExperience";
-import { getStylistBySlug } from "@/lib/postgres-repositories";
+import { getStylistBySlug, isFavoriteStylist } from "@/lib/postgres-repositories";
 import { getSessionFromServer } from "@/lib/session";
 
 export default async function StylistProfilePage({ params }) {
@@ -13,5 +13,7 @@ export default async function StylistProfilePage({ params }) {
     notFound();
   }
 
-  return <StylistProfileExperience stylist={stylist} user={user} />;
+  const isLiked = user?.role === "client" ? await isFavoriteStylist(user, params.slug) : false;
+
+  return <StylistProfileExperience stylist={stylist} user={user} isLiked={isLiked} />;
 }

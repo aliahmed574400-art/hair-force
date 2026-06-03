@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { parseMediaUrl, formatMessageTime, formatMessageDate, isSameDay } from "@/lib/chat-helpers";
+import { uploadFile, safeParseResponse, errorFromResponse } from "@/lib/client-upload-utils";
 import MessengerWidget from "@/components/ui/MessengerWidget";
 
 const TAB_OPTIONS = [
@@ -905,13 +906,13 @@ export default function ClientDashboard({ user, initialData }) {
       },
       ...options
     });
-    const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.error || "Request failed.");
+      throw await errorFromResponse(response, "Request failed.");
     }
 
-    return data;
+    const parsed = await safeParseResponse(response);
+    return parsed.data;
   }
 
   async function refreshDashboard() {
@@ -3073,13 +3074,8 @@ export default function ClientDashboard({ user, initialData }) {
                           const file = event.target.files?.[0];
                           if (!file) return;
                           try {
-                            const formData = new FormData();
-                            formData.append("file", file);
-                            formData.append("folder", "messages");
-                            const response = await fetch("/api/uploads", { method: "POST", body: formData });
-                            const data = await response.json();
-                            if (!response.ok) throw new Error(data.error || "Upload failed.");
-                            await handleSendMessage(data.url);
+                            const url = await uploadFile(file, "messages");
+                            await handleSendMessage(url);
                           } catch (error) {
                             setMessageThread((current) => ({ ...current, error: error.message }));
                           }
