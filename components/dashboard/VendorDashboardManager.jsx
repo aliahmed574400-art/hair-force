@@ -2586,10 +2586,7 @@ export default function VendorDashboardManager({ user, initialData }) {
               <div>
                 <h4>Gallery</h4>
                 <p>Add photos and videos to highlight your work. Tag them to services so clients know what you specialize in.</p>
-                <div className="vendor-gallery-video-note">
-                  <Video size={16} />
-                  <strong>New!</strong> Add videos into your gallery
-                </div>
+
               </div>
               <label className="vendor-icon-action" title="Add to gallery">
                 <Plus size={28} />
