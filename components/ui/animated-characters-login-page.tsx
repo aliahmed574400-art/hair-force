@@ -8,7 +8,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import GoogleAuthButton from "@/components/ui/GoogleAuthButton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import PhoneSigninPanel from "@/components/ui/PhoneSigninPanel";
 import VendorSigninHeroSlider from "@/components/ui/vendor-signin-hero-slider";
 import { cn } from "@/lib/utils";
 import { ArrowRight, Eye, EyeOff, Sparkles } from "lucide-react";
@@ -904,12 +903,6 @@ function AnimatedCharactersLoginPage({
                   redirectTo={getPostLoginHref()}
                 />
 
-                <PhoneSigninPanel
-                  allowedRoles={allowedRoles}
-                  className="phone-auth-shell-tight"
-                  successNameFallback={successNameFallback}
-                  redirectTo={getPostLoginHref()}
-                />
               </div>
             </div>
 
