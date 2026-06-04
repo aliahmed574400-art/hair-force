@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
-import Logo from "@/components/brand/Logo";
 import SiteButton from "@/components/ui/SiteButton";
 
 const OTP_LENGTH = 6;
@@ -252,10 +251,6 @@ export default function ForgotPasswordFlow({ initialEmail = "" }) {
   function renderRequestStep() {
     return (
       <>
-        <div className="signup-flow-brand">
-          <Logo />
-        </div>
-
         <div className="signup-flow-copy">
           <h1>Reset your password</h1>
           <p>Enter the email linked to your Hair Force account and we&apos;ll send a 6-digit code.</p>
@@ -284,7 +279,7 @@ export default function ForgotPasswordFlow({ initialEmail = "" }) {
           </div>
 
           <SiteButton className="form-span-2" disabled={status.loading} fullWidth type="submit">
-            {status.loading ? "Sending code..." : "Send OTP"}
+            {status.loading ? "Sending code..." : "Send Code"}
           </SiteButton>
         </form>
 
@@ -447,9 +442,6 @@ export default function ForgotPasswordFlow({ initialEmail = "" }) {
   function renderSuccessStep() {
     return (
       <div className="signup-success-state">
-        <div className="signup-flow-brand">
-          <Logo />
-        </div>
         <div className="signup-success-icon" aria-hidden="true">
           <span />
         </div>
@@ -465,7 +457,7 @@ export default function ForgotPasswordFlow({ initialEmail = "" }) {
   }
 
   return (
-    <section className="surface signup-flow-shell password-reset-shell">
+    <section className="signup-flow-shell password-reset-shell forgot-password-light">
       {step === "request" ? renderRequestStep() : null}
       {step === "verify" ? renderVerifyStep() : null}
       {step === "reset" ? renderResetStep() : null}
