@@ -576,7 +576,6 @@ export default function ClientDashboard({ user, initialData }) {
   const [passwordChangeMeta, setPasswordChangeMeta] = useState({
     email: "",
     secondsLeft: 0,
-    devCode: "",
     step: "form"
   });
   const [receiptState, setReceiptState] = useState({
@@ -1061,7 +1060,6 @@ export default function ClientDashboard({ user, initialData }) {
       setPasswordChangeMeta({
         email: data.email,
         secondsLeft: Number(data.expiresIn || 60),
-        devCode: data.devCode || "",
         step: "verify"
       });
       setFeedback({ type: "success", message: `Verification code sent to ${data.email}.` });
@@ -1104,7 +1102,7 @@ export default function ClientDashboard({ user, initialData }) {
         confirmPassword: "",
         code: ""
       });
-      setPasswordChangeMeta({ email: "", secondsLeft: 0, devCode: "", step: "form" });
+      setPasswordChangeMeta({ email: "", secondsLeft: 0, step: "form" });
       setFeedback({ type: "success", message: "Password updated successfully." });
     } catch (error) {
       setFeedback({ type: "error", message: error.message });
@@ -3589,7 +3587,6 @@ export default function ClientDashboard({ user, initialData }) {
                           />
                           <p className="client-admin-field-hint">
                             Code sent to {passwordChangeMeta.email}
-                            {passwordChangeMeta.devCode ? ` — Dev code: ${passwordChangeMeta.devCode}` : ""}
                           </p>
                         </div>
                         <div className="client-admin-action-row">

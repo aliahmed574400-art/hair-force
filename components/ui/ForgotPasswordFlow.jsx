@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Eye, EyeOff } from "lucide-react";
 import Logo from "@/components/brand/Logo";
 import SiteButton from "@/components/ui/SiteButton";
 
@@ -30,8 +31,7 @@ export default function ForgotPasswordFlow({ initialEmail = "" }) {
   const [otpDigits, setOtpDigits] = useState(createEmptyOtpDigits);
   const [otpMeta, setOtpMeta] = useState({
     email: String(initialEmail || "").trim().toLowerCase(),
-    secondsLeft: DEFAULT_OTP_TTL_SECONDS,
-    devCode: ""
+    secondsLeft: DEFAULT_OTP_TTL_SECONDS
   });
   const [resetMeta, setResetMeta] = useState({
     email: String(initialEmail || "").trim().toLowerCase(),
@@ -41,6 +41,8 @@ export default function ForgotPasswordFlow({ initialEmail = "" }) {
     password: "",
     confirmPassword: ""
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     if (step !== "verify") {
@@ -145,8 +147,7 @@ export default function ForgotPasswordFlow({ initialEmail = "" }) {
       setOtpDigits(createEmptyOtpDigits());
       setOtpMeta({
         email: verifiedEmail,
-        secondsLeft: Number(data.expiresIn || DEFAULT_OTP_TTL_SECONDS),
-        devCode: data.devCode || ""
+        secondsLeft: Number(data.expiresIn || DEFAULT_OTP_TTL_SECONDS)
       });
       setResetMeta({
         email: verifiedEmail,
@@ -282,12 +283,6 @@ export default function ForgotPasswordFlow({ initialEmail = "" }) {
             />
           </div>
 
-          {otpMeta.devCode ? (
-            <div className="booking-confirm" style={{ marginTop: 0 }}>
-              <span className="muted">Dev code: {otpMeta.devCode}</span>
-            </div>
-          ) : null}
-
           <SiteButton className="form-span-2" disabled={status.loading} fullWidth type="submit">
             {status.loading ? "Sending code..." : "Send OTP"}
           </SiteButton>
@@ -391,34 +386,54 @@ export default function ForgotPasswordFlow({ initialEmail = "" }) {
             <label className="form-label" htmlFor="new-password">
               Create new password
             </label>
-            <input
-              id="new-password"
-              className="form-control"
-              type="password"
-              placeholder="Create new password"
-              value={passwordForm.password}
-              onChange={(event) =>
-                setPasswordForm({ ...passwordForm, password: event.target.value })
-              }
-              required
-            />
+            <div className="relative">
+              <input
+                id="new-password"
+                className="form-control"
+                type={showPassword ? "text" : "password"}
+                placeholder="Create new password"
+                value={passwordForm.password}
+                onChange={(event) =>
+                  setPasswordForm({ ...passwordForm, password: event.target.value })
+                }
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((current) => !current)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-700"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
+            </div>
           </div>
 
           <div className="form-field form-span-2">
             <label className="form-label" htmlFor="confirm-new-password">
               Re-enter new password
             </label>
-            <input
-              id="confirm-new-password"
-              className="form-control"
-              type="password"
-              placeholder="Re-enter new password"
-              value={passwordForm.confirmPassword}
-              onChange={(event) =>
-                setPasswordForm({ ...passwordForm, confirmPassword: event.target.value })
-              }
-              required
-            />
+            <div className="relative">
+              <input
+                id="confirm-new-password"
+                className="form-control"
+                type={showConfirmPassword ? "text" : "password"}
+                placeholder="Re-enter new password"
+                value={passwordForm.confirmPassword}
+                onChange={(event) =>
+                  setPasswordForm({ ...passwordForm, confirmPassword: event.target.value })
+                }
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword((current) => !current)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-700"
+                aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+              >
+                {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
+            </div>
           </div>
 
           <SiteButton className="form-span-2" disabled={status.loading} fullWidth type="submit">

@@ -30,8 +30,7 @@ export default function PhoneSigninPanel({
   const [otpDigits, setOtpDigits] = useState(createEmptyOtpDigits);
   const [otpMeta, setOtpMeta] = useState({
     phone: "",
-    secondsLeft: DEFAULT_OTP_TTL_SECONDS,
-    devCode: ""
+    secondsLeft: DEFAULT_OTP_TTL_SECONDS
   });
   const [status, setStatus] = useState({ loading: false, message: "", tone: "info" });
 
@@ -56,8 +55,7 @@ export default function PhoneSigninPanel({
     setOtpDigits(createEmptyOtpDigits());
     setOtpMeta({
       phone: "",
-      secondsLeft: DEFAULT_OTP_TTL_SECONDS,
-      devCode: ""
+      secondsLeft: DEFAULT_OTP_TTL_SECONDS
     });
     setStatus({ loading: false, message: "", tone: "info" });
   }
@@ -120,8 +118,7 @@ export default function PhoneSigninPanel({
       setOtpDigits(createEmptyOtpDigits());
       setOtpMeta({
         phone: data.phone || nextPhone,
-        secondsLeft: Number(data.expiresIn || DEFAULT_OTP_TTL_SECONDS),
-        devCode: data.devCode || ""
+        secondsLeft: Number(data.expiresIn || DEFAULT_OTP_TTL_SECONDS)
       });
       setStep("verify");
       setStatus({
@@ -228,12 +225,6 @@ export default function PhoneSigninPanel({
                   required
                 />
               </div>
-
-              {otpMeta.devCode ? (
-                <div className="booking-confirm" style={{ marginTop: 0 }}>
-                  <span className="muted">Dev code: {otpMeta.devCode}</span>
-                </div>
-              ) : null}
 
               <SiteButton className="form-span-2" disabled={status.loading} fullWidth type="submit">
                 {status.loading ? "Sending code..." : "Send OTP"}

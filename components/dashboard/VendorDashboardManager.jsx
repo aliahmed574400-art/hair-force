@@ -171,7 +171,6 @@ export default function VendorDashboardManager({ user, initialData }) {
   const [passwordChangeMeta, setPasswordChangeMeta] = useState({
     email: "",
     secondsLeft: 0,
-    devCode: "",
     step: "form"
   });
   const [status, setStatus] = useState({ type: "", message: "" });
@@ -1451,7 +1450,6 @@ export default function VendorDashboardManager({ user, initialData }) {
       setPasswordChangeMeta({
         email: data.email,
         secondsLeft: Number(data.expiresIn || 60),
-        devCode: data.devCode || "",
         step: "verify"
       });
       setStatus({ type: "success", message: `Verification code sent to ${data.email}.` });
@@ -1489,7 +1487,7 @@ export default function VendorDashboardManager({ user, initialData }) {
         body: JSON.stringify(passwordForm)
       });
       setPasswordForm(createPasswordForm());
-      setPasswordChangeMeta({ email: "", secondsLeft: 0, devCode: "", step: "form" });
+      setPasswordChangeMeta({ email: "", secondsLeft: 0, step: "form" });
       setStatus({ type: "success", message: "Password updated." });
     } catch (error) {
       setStatus({ type: "error", message: error.message });
@@ -4179,7 +4177,6 @@ export default function VendorDashboardManager({ user, initialData }) {
                           />
                           <small className="vendor-profile-field-hint">
                             Code sent to {passwordChangeMeta.email}
-                            {passwordChangeMeta.devCode ? ` — Dev code: ${passwordChangeMeta.devCode}` : ""}
                           </small>
                         </label>
                         <div className="vendor-profile-field" style={{ display: "flex", gap: 8, alignItems: "center" }}>

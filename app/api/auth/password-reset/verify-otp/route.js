@@ -24,14 +24,12 @@ export async function POST(request) {
     }
 
     const resetState = await verifyPasswordResetOtp({ email, code });
-    
-    // SECURITY: Do not expose sensitive reset tokens in response
-    // Only return whether verification was successful
+
     return NextResponse.json({
       verified: true,
       email: resetState.email,
+      resetToken: resetState.resetToken,
       expiresIn: resetState.expiresIn
-      // Note: Do NOT return resetState.token or resetState.verifier here
     });
   } catch (error) {
     return NextResponse.json({ error: "Invalid or expired verification code." }, { status: 400 });
