@@ -843,7 +843,7 @@ function AnimatedCharactersLoginPage({
                     htmlFor="remember"
                     className="cursor-pointer text-sm font-normal text-muted-foreground"
                   >
-                    Remember for 30 days
+                    Remember me
                   </Label>
                 </div>
                 <a
