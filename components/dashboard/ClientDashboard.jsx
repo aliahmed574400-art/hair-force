@@ -2915,63 +2915,52 @@ export default function ClientDashboard({ user, initialData }) {
 
         {activeTab === "favorites" ? (
           <div className="client-admin-content-stack">
-            <Card className="client-admin-panel">
-              <div className="client-admin-panel-head">
-                <div>
-                  <h2>Your Saved Stylists</h2>
+            <div className="client-admin-card-grid">
+              {dashboard?.favorites?.length ? (
+                dashboard.favorites.map((vendor) => (
+                  <Card key={vendor.slug} className="client-admin-card">
+                    <div className="client-admin-card-top">
+                      <span className="client-admin-card-icon soft"><Heart size={18} /></span>
+                      <Badge variant="secondary" className="client-admin-chip">
+                        From {formatCurrency(vendor.priceFrom || 0)}
+                      </Badge>
+                    </div>
+                    <strong>{vendor.name}</strong>
+                    <p>{vendor.category} - {vendor.city}</p>
+                    <div className="client-admin-meta">
+                      <span><MapPin size={15} /> {vendor.location}</span>
+                    </div>
+                    <div className="client-admin-action-row">
+                      <Link
+                        href={`/stylists/${vendor.slug}`}
+                        className="client-admin-button client-admin-button-secondary"
+                      >
+                        View profile
+                      </Link>
+                      <Link
+                        href={`/book/${vendor.slug}`}
+                        className="client-admin-button client-admin-button-primary"
+                      >
+                        Book now
+                      </Link>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="client-admin-button client-admin-button-ghost"
+                        onClick={() => handleRemoveFavorite(vendor.slug)}
+                        disabled={loading.favorite === vendor.slug}
+                      >
+                        {loading.favorite === vendor.slug ? "Removing..." : "Remove"}
+                      </Button>
+                    </div>
+                  </Card>
+                ))
+              ) : (
+                <div className="client-admin-empty">
+                  <strong>No saved stylists yet</strong>
                 </div>
-                <Badge variant="secondary" className="client-admin-badge subtle">
-                  {dashboard?.favorites?.length || 0}
-                </Badge>
-              </div>
-
-              <div className="client-admin-card-grid">
-                {dashboard?.favorites?.length ? (
-                  dashboard.favorites.map((vendor) => (
-                    <Card key={vendor.slug} className="client-admin-card">
-                      <div className="client-admin-card-top">
-                        <span className="client-admin-card-icon soft"><Heart size={18} /></span>
-                        <Badge variant="secondary" className="client-admin-chip">
-                          From {formatCurrency(vendor.priceFrom || 0)}
-                        </Badge>
-                      </div>
-                      <strong>{vendor.name}</strong>
-                      <p>{vendor.category} - {vendor.city}</p>
-                      <div className="client-admin-meta">
-                        <span><MapPin size={15} /> {vendor.location}</span>
-                      </div>
-                      <div className="client-admin-action-row">
-                        <Link
-                          href={`/stylists/${vendor.slug}`}
-                          className="client-admin-button client-admin-button-secondary"
-                        >
-                          View profile
-                        </Link>
-                        <Link
-                          href={`/book/${vendor.slug}`}
-                          className="client-admin-button client-admin-button-primary"
-                        >
-                          Book now
-                        </Link>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          className="client-admin-button client-admin-button-ghost"
-                          onClick={() => handleRemoveFavorite(vendor.slug)}
-                          disabled={loading.favorite === vendor.slug}
-                        >
-                          {loading.favorite === vendor.slug ? "Removing..." : "Remove"}
-                        </Button>
-                      </div>
-                    </Card>
-                  ))
-                ) : (
-                  <div className="client-admin-empty">
-                    <strong>No saved stylists yet</strong>
-                  </div>
-                )}
-              </div>
-            </Card>
+              )}
+            </div>
           </div>
         ) : null}
 
