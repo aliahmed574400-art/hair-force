@@ -253,7 +253,6 @@ export default function ForgotPasswordFlow({ initialEmail = "" }) {
       <>
         <div className="signup-flow-copy">
           <h1>Reset your password</h1>
-          <p>Enter the email linked to your Hair Force account and we&apos;ll send a 6-digit code.</p>
         </div>
 
         <form
