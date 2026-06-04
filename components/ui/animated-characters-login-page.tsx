@@ -848,8 +848,7 @@ function AnimatedCharactersLoginPage({
                 </div>
                 <a
                   href={forgotPasswordHref}
-                  className="text-sm font-semibold text-blue-600 underline underline-offset-4 hover:text-blue-800"
-                  style={{ display: "inline-block", backgroundColor: "#dbeafe", padding: "4px 8px", borderRadius: "6px" }}
+                  className="text-sm font-semibold text-black underline underline-offset-4 hover:text-slate-700"
                 >
                   Forgot password?
                 </a>
