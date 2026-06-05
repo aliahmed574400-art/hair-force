@@ -22898,7 +22898,11 @@ button[type="submit"]:active {
 
 
 /* Light theme overrides for forgot password flow */
-.forgot-password-light .signup-flow-copy h1,
+.forgot-password-light .signup-flow-copy h1 {
+  color: #0f172a;
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+}
+
 .forgot-password-light .signup-flow-copy h2 {
   color: #0f172a;
 }
