@@ -95,8 +95,7 @@ import {
 } from "@/components/dashboard/vendorDashboard.helpers";
 import {
   uploadFile,
-  safeParseResponse,
-  errorFromResponse
+  safeParseResponse
 } from "@/lib/client-upload-utils";
 
 // Icon-bearing collections stay here because they reference lucide-react
@@ -158,6 +157,7 @@ export default function VendorDashboardManager({ user, initialData }) {
     clientName: "",
     caption: ""
   });
+  const [bookingDetailModal, setBookingDetailModal] = useState(null);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showConversations, setShowConversations] = useState(false);
@@ -366,7 +366,12 @@ export default function VendorDashboardManager({ user, initialData }) {
   );
   const overviewBookings = useMemo(() => {
     const todayKey = new Date().toISOString().slice(0, 10);
+    const closedStatuses = new Set(["cancelled", "declined"]);
     const filtered = bookings.filter((booking) => {
+      if (overviewBookingFilter === "all") {
+        return true;
+      }
+
       if (overviewBookingFilter === "today") {
         return booking.appointmentDate === todayKey;
       }
@@ -375,7 +380,12 @@ export default function VendorDashboardManager({ user, initialData }) {
         return isPastBooking(booking);
       }
 
-      return !isPastBooking(booking);
+      if (overviewBookingFilter === "cancelled") {
+        return closedStatuses.has(booking.status);
+      }
+
+      // upcoming
+      return !isPastBooking(booking) && !closedStatuses.has(booking.status);
     });
 
     return [...filtered]
@@ -383,7 +393,7 @@ export default function VendorDashboardManager({ user, initialData }) {
         const leftTime = getAppointmentDateTime(left.appointmentDate, left.appointmentSlot)?.getTime() || 0;
         const rightTime = getAppointmentDateTime(right.appointmentDate, right.appointmentSlot)?.getTime() || 0;
 
-        if (overviewBookingFilter === "past") {
+        if (overviewBookingFilter === "past" || overviewBookingFilter === "cancelled") {
           return rightTime - leftTime;
         }
 
@@ -535,8 +545,9 @@ export default function VendorDashboardManager({ user, initialData }) {
   async function refreshFromResponse(response) {
     const parsed = await safeParseResponse(response);
 
-    if (!response.ok) {
-      throw await errorFromResponse(response, "Request failed.");
+    if (!parsed.ok) {
+      const message = parsed.data?.error || parsed.text || "Request failed.";
+      throw new Error(message);
     }
 
     const data = parsed.data;
@@ -556,11 +567,13 @@ export default function VendorDashboardManager({ user, initialData }) {
       ...options
     });
 
-    if (!response.ok) {
-      throw await errorFromResponse(response, "Request failed.");
+    const parsed = await safeParseResponse(response);
+
+    if (!parsed.ok) {
+      const message = parsed.data?.error || parsed.text || "Request failed.";
+      throw new Error(message);
     }
 
-    const parsed = await safeParseResponse(response);
     return parsed.data;
   }
 
@@ -2051,7 +2064,13 @@ export default function VendorDashboardManager({ user, initialData }) {
           </div>
         ) : null}
         {activeSection === "overview" ? (
-          <div className="vendor-reference-overview">
+          <div className="vendor-dashboard-tab vendor-reference-overview">
+            <div className="vendor-dashboard-header">
+              <div>
+                <div className="vendor-dashboard-header-eyebrow">Dashboard</div>
+                <h3 className="vendor-dashboard-header-title">Overview</h3>
+              </div>
+            </div>
             <div className="vendor-reference-stat-grid">
               {metrics.map((metric) => (
                 <article key={metric.label} className="vendor-reference-stat-card">
@@ -2161,6 +2180,62 @@ export default function VendorDashboardManager({ user, initialData }) {
                           </div>
                           <span className="vendor-reference-lineup-service">{booking.serviceName}</span>
                           <span className="vendor-reference-lineup-time">{booking.appointmentSlot}</span>
+                          <div style={{ display: "flex", gap: "6px", alignItems: "center", marginLeft: "auto" }}>
+                            {booking.status === "pending_approval" ? (
+                              <>
+                                <button
+                                  type="button"
+                                  disabled={loading.bookingAction === booking.id}
+                                  onClick={() => performBookingAction(booking.id, { action: "approve" }, "Booking approved.")}
+                                  style={{
+                                    padding: "4px 10px",
+                                    borderRadius: "6px",
+                                    border: "none",
+                                    background: "#16a34a",
+                                    color: "#fff",
+                                    fontSize: "0.72rem",
+                                    fontWeight: 600,
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  Accept
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={loading.bookingAction === booking.id}
+                                  onClick={() => performBookingAction(booking.id, { action: "decline", reason: "" }, "Booking declined.")}
+                                  style={{
+                                    padding: "4px 10px",
+                                    borderRadius: "6px",
+                                    border: "1px solid #dc2626",
+                                    background: "#fff",
+                                    color: "#dc2626",
+                                    fontSize: "0.72rem",
+                                    fontWeight: 600,
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  Reject
+                                </button>
+                              </>
+                            ) : null}
+                            <button
+                              type="button"
+                              onClick={() => setBookingDetailModal(booking)}
+                              style={{
+                                padding: "4px 10px",
+                                borderRadius: "6px",
+                                border: "1px solid #e2e8f0",
+                                background: "#fff",
+                                color: "#475569",
+                                fontSize: "0.72rem",
+                                fontWeight: 600,
+                                cursor: "pointer",
+                              }}
+                            >
+                              See details
+                            </button>
+                          </div>
                         </div>
                       );
                     })
@@ -2178,23 +2253,23 @@ export default function VendorDashboardManager({ user, initialData }) {
         ) : null}
 
       {activeSection === "profile" ? (
-        <div className="vendor-profile-workspace" style={{ marginTop: 18 }}>
-          <div className="vendor-profile-header">
+        <div className="vendor-dashboard-tab vendor-profile-workspace">
+          <div className="vendor-dashboard-header">
             <div>
-              <div className="eyebrow">Profile</div>
-              <h3>Update storefront content</h3>
+              <div className="vendor-dashboard-header-eyebrow">Profile</div>
+              <h3 className="vendor-dashboard-header-title">Update storefront content</h3>
             </div>
             <SiteButton href={`/stylists/${dashboard.vendor.slug}`} variant="secondary">
               View live profile
             </SiteButton>
           </div>
 
-          <div className="vendor-profile-tabs" role="tablist" aria-label="Profile sections">
+          <div className="vendor-dashboard-tabs" role="tablist" aria-label="Profile sections">
             {PROFILE_TABS.map((tab) => (
               <button
                 key={tab.id}
                 type="button"
-                className={`vendor-profile-tab ${activeProfileTab === tab.id ? "active" : ""}`}
+                className={`vendor-dashboard-tab-item ${activeProfileTab === tab.id ? "active" : ""}`}
                 onClick={() => handleProfileTabSelect(tab.id)}
               >
                 {tab.label}
@@ -2203,7 +2278,7 @@ export default function VendorDashboardManager({ user, initialData }) {
           </div>
 
           {activeProfileTab === "personal" ? (
-            <form className="vendor-profile-form" onSubmit={handleProfileSubmit}>
+            <form className="vendor-profile-form vendor-dashboard-card" onSubmit={handleProfileSubmit}>
               <div className="vendor-profile-form-head">
                 <h4>Personal Info</h4>
                 <SiteButton disabled={loading.profile} size="sm" type="submit">
@@ -2379,7 +2454,7 @@ export default function VendorDashboardManager({ user, initialData }) {
           ) : null}
 
           {activeProfileTab === "business" ? (
-            <form className="vendor-profile-form" onSubmit={handleProfileSubmit}>
+            <form className="vendor-profile-form vendor-dashboard-card" onSubmit={handleProfileSubmit}>
               <div className="vendor-profile-form-head">
                 <h4>Edit Business Info</h4>
                 <SiteButton disabled={loading.profile} size="sm" type="submit">
@@ -2560,7 +2635,7 @@ export default function VendorDashboardManager({ user, initialData }) {
           ) : null}
 
           {activeProfileTab === "social" ? (
-            <form className="vendor-profile-form" onSubmit={handleProfileSubmit}>
+            <form className="vendor-profile-form vendor-dashboard-card" onSubmit={handleProfileSubmit}>
               <div className="vendor-profile-form-head">
                 <h4>Edit Social Media Info</h4>
                 <SiteButton disabled={loading.profile} size="sm" type="submit">
@@ -2618,7 +2693,7 @@ export default function VendorDashboardManager({ user, initialData }) {
           
 
           {activeProfileTab === "products" ? (
-            <div className="vendor-products-manager">
+            <div className="vendor-products-manager vendor-dashboard-card">
               <div className="vendor-profile-form-head">
                 <div>
                   <h4>Product Menu</h4>
@@ -2675,18 +2750,18 @@ export default function VendorDashboardManager({ user, initialData }) {
       ) : null}
 
       {activeSection === "gallery" ? (
-        <div className="vendor-profile-workspace" style={{ marginTop: 18 }}>
-          <div className="vendor-profile-header">
+        <div className="vendor-dashboard-tab vendor-profile-workspace">
+          <div className="vendor-dashboard-header">
             <div>
-              <div className="eyebrow">Gallery</div>
-              <h3>Manage Photos and Videos</h3>
+              <div className="vendor-dashboard-header-eyebrow">Gallery</div>
+              <h3 className="vendor-dashboard-header-title">Manage Photos and Videos</h3>
             </div>
             <SiteButton href={`/stylists/${dashboard.vendor.slug}`} variant="secondary">
               View live profile
             </SiteButton>
           </div>
 
-          <div className="vendor-gallery-manager">
+          <div className="vendor-gallery-manager vendor-dashboard-card">
             <div className="vendor-gallery-hero">
               <div>
                 <h4>Gallery</h4>
@@ -2805,22 +2880,11 @@ export default function VendorDashboardManager({ user, initialData }) {
       ) : null}
 
       {activeSection === "services" ? (
-        <div className="vendor-services-page">
-          <div className="vendor-services-head">
+        <div className="vendor-dashboard-tab vendor-services-page">
+          <div className="vendor-dashboard-header">
             <div>
-              <h2>Services &amp; Add-ons</h2>
-              <div className="vendor-service-tabs" role="tablist" aria-label="Services and add-ons">
-                {SERVICE_MENU_TABS.map((tab) => (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    className={serviceMenuTab === tab.id ? "active" : ""}
-                    onClick={() => setServiceMenuTab(tab.id)}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
+              <div className="vendor-dashboard-header-eyebrow">Services</div>
+              <h3 className="vendor-dashboard-header-title">Services &amp; Add-ons</h3>
             </div>
             <SiteButton
               type="button"
@@ -2832,10 +2896,21 @@ export default function VendorDashboardManager({ user, initialData }) {
             </SiteButton>
           </div>
 
-          <div className="vendor-services-rule" />
+          <div className="vendor-dashboard-tabs" role="tablist" aria-label="Services and add-ons">
+            {SERVICE_MENU_TABS.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                className={`vendor-dashboard-tab-item ${serviceMenuTab === tab.id ? "active" : ""}`}
+                onClick={() => setServiceMenuTab(tab.id)}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
 
           {serviceMenuTab === "services" ? (
-            <div className="vendor-service-menu-list">
+            <div className="vendor-service-menu-list vendor-dashboard-card">
               {serviceSections.map((section) => (
                 <section
                   key={section.id || "default"}
@@ -2903,7 +2978,7 @@ export default function VendorDashboardManager({ user, initialData }) {
               ) : null}
             </div>
           ) : (
-            <div className="vendor-addon-tab">
+            <div className="vendor-addon-tab vendor-dashboard-card">
               <div className="vendor-addon-info">
                 <Info size={24} />
                 <div>
@@ -3436,22 +3511,27 @@ export default function VendorDashboardManager({ user, initialData }) {
           onDashboardResponse={refreshFromResponse}
           onStatusChange={setStatus}
           setAvailabilityForm={setAvailabilityForm}
+          onViewBookingDetails={setBookingDetailModal}
         />
       ) : null}
 
       {activeSection === "bookings" ? (
-        <div className="vendor-dashboard-bookings" style={{ marginTop: 18 }}>
-          <section className="vendor-reference-panel vendor-reference-bookings-panel">
+        <div className="vendor-dashboard-tab vendor-dashboard-bookings">
+          <div className="vendor-dashboard-header">
+            <div>
+              <div className="vendor-dashboard-header-eyebrow">Bookings</div>
+              <h3 className="vendor-dashboard-header-title">Booking list</h3>
+            </div>
+          </div>
+
+          <section className="vendor-reference-panel vendor-reference-bookings-panel vendor-dashboard-card">
             <div className="vendor-reference-panel-head vendor-reference-panel-head-wrap">
-              <div>
-                <h2>Booking list</h2>
-              </div>
-              <div className="vendor-reference-filter-group">
+              <div className="vendor-dashboard-tabs">
                 {OVERVIEW_BOOKING_FILTERS.map((option) => (
                   <button
                     key={option.id}
                     type="button"
-                    className={`vendor-reference-filter-button ${overviewBookingFilter === option.id ? "active" : ""}`}
+                    className={`vendor-dashboard-tab-item ${overviewBookingFilter === option.id ? "active" : ""}`}
                     onClick={() => setOverviewBookingFilter(option.id)}
                   >
                     {option.label}
@@ -3581,6 +3661,25 @@ export default function VendorDashboardManager({ user, initialData }) {
                               <button
                                 type="button"
                                 className="vendor-reference-icon-button"
+                                title="See details"
+                                onClick={() => setBookingDetailModal(booking)}
+                                style={{
+                                  width: 28,
+                                  height: 28,
+                                  display: "grid",
+                                  placeItems: "center",
+                                  borderRadius: "6px",
+                                  border: "1px solid #e2e8f0",
+                                  background: "#fff",
+                                  color: "#475569",
+                                  cursor: "pointer",
+                                }}
+                              >
+                                <Info size={14} />
+                              </button>
+                              <button
+                                type="button"
+                                className="vendor-reference-icon-button"
                                 title="Message customer"
                                 onClick={() => openConversationForBooking(booking.id)}
                                 style={{
@@ -3617,7 +3716,14 @@ export default function VendorDashboardManager({ user, initialData }) {
       ) : null}
 
       {activeSection === "messages" ? (
-        <div className="vendor-dashboard-messages" style={{ marginTop: 18 }}>
+        <div className="vendor-dashboard-tab vendor-dashboard-messages">
+          <div className="vendor-dashboard-header">
+            <div>
+              <div className="vendor-dashboard-header-eyebrow">Messages</div>
+              <h3 className="vendor-dashboard-header-title">Chats</h3>
+            </div>
+          </div>
+
           {/* Conversation List */}
           <div className="dashboard-card vendor-messenger-list">
             <div className="vendor-messenger-list-header">
@@ -3936,10 +4042,10 @@ export default function VendorDashboardManager({ user, initialData }) {
 
       {activeSection === "settings" ? (
         <div className="vendor-settings-shell">
-          <aside className="dashboard-card vendor-settings-nav" aria-label="Account settings tabs">
+          <aside className="dashboard-card vendor-settings-nav vendor-dashboard-card" aria-label="Account settings tabs">
             <div>
-              <div className="eyebrow">Account</div>
-              <h3>Settings</h3>
+              <div className="vendor-dashboard-header-eyebrow">Account</div>
+              <h3 className="vendor-dashboard-header-title">Settings</h3>
             </div>
             <div className="vendor-settings-tab-list" role="tablist" aria-label="Vendor settings">
               {SETTINGS_TABS.map((tab) => {
@@ -3962,13 +4068,13 @@ export default function VendorDashboardManager({ user, initialData }) {
             </div>
           </aside>
 
-          <section className="dashboard-card vendor-settings-panel">
+          <section className="dashboard-card vendor-settings-panel vendor-dashboard-card">
             {activeSettingsTab === "notification" ? (
               <form onSubmit={handleNotificationSubmit} className="vendor-settings-form">
-                <div className="vendor-settings-head">
+                <div className="vendor-settings-head vendor-dashboard-header" style={{ borderBottom: '1px solid #e5e5e5', borderRadius: 0, border: 'none', padding: '0 0 20px' }}>
                   <div>
-                    <div className="eyebrow">Notification</div>
-                    <h3>My Notifications</h3>
+                    <div className="vendor-dashboard-header-eyebrow">Notification</div>
+                    <h3 className="vendor-dashboard-header-title">My Notifications</h3>
                     <p>You will receive updates about your account, client bookings, reschedules, and cancellations.</p>
                   </div>
                   <SiteButton type="submit" disabled={loading.notificationPreferences}>
@@ -4073,10 +4179,10 @@ export default function VendorDashboardManager({ user, initialData }) {
 
             {activeSettingsTab === "billing" ? (
               <div className="vendor-settings-form">
-                <div className="vendor-settings-head">
+                <div className="vendor-settings-head vendor-dashboard-header" style={{ borderBottom: '1px solid #e5e5e5', borderRadius: 0, border: 'none', padding: '0 0 20px' }}>
                   <div>
-                    <div className="eyebrow">Plan & Billing</div>
-                    <h3>Plan & Billing Details</h3>
+                    <div className="vendor-dashboard-header-eyebrow">Plan & Billing</div>
+                    <h3 className="vendor-dashboard-header-title">Plan & Billing Details</h3>
                     <p>Manage your Premium Plan and the card used for monthly billing.</p>
                   </div>
                 </div>
@@ -4235,10 +4341,10 @@ export default function VendorDashboardManager({ user, initialData }) {
 
             {activeSettingsTab === "email" ? (
               <div className="vendor-settings-form">
-                <div className="vendor-settings-head">
+                <div className="vendor-settings-head vendor-dashboard-header" style={{ borderBottom: '1px solid #e5e5e5', borderRadius: 0, border: 'none', padding: '0 0 20px' }}>
                   <div>
-                    <div className="eyebrow">Login Email</div>
-                    <h3>Change Email</h3>
+                    <div className="vendor-dashboard-header-eyebrow">Login Email</div>
+                    <h3 className="vendor-dashboard-header-title">Change Email</h3>
                     <p>Email sign-in accounts can update the login email used for this stylist dashboard.</p>
                   </div>
                 </div>
@@ -4270,10 +4376,10 @@ export default function VendorDashboardManager({ user, initialData }) {
 
             {activeSettingsTab === "password" ? (
               <div className="vendor-settings-form">
-                <div className="vendor-settings-head">
+                <div className="vendor-settings-head vendor-dashboard-header" style={{ borderBottom: '1px solid #e5e5e5', borderRadius: 0, border: 'none', padding: '0 0 20px' }}>
                   <div>
-                    <div className="eyebrow">Password</div>
-                    <h3>Change Password</h3>
+                    <div className="vendor-dashboard-header-eyebrow">Password</div>
+                    <h3 className="vendor-dashboard-header-title">Change Password</h3>
                     <p>Password changes are available for email sign-in accounts.</p>
                   </div>
                 </div>
@@ -4372,10 +4478,10 @@ export default function VendorDashboardManager({ user, initialData }) {
 
             {activeSettingsTab === "delete" ? (
               <div className="vendor-settings-form">
-                <div className="vendor-settings-head">
+                <div className="vendor-settings-head vendor-dashboard-header" style={{ borderBottom: '1px solid #e5e5e5', borderRadius: 0, border: 'none', padding: '0 0 20px' }}>
                   <div>
-                    <div className="eyebrow">Danger zone</div>
-                    <h3>Delete stylist account</h3>
+                    <div className="vendor-dashboard-header-eyebrow">Danger zone</div>
+                    <h3 className="vendor-dashboard-header-title">Delete stylist account</h3>
                     <p>Delete this stylist account only when you want this login to stop belonging to the vendor side.</p>
                   </div>
                 </div>
@@ -4513,6 +4619,137 @@ export default function VendorDashboardManager({ user, initialData }) {
               Delete Image
             </button>
           </form>
+        </div>
+      ) : null}
+
+      {bookingDetailModal ? (
+        <div className="vendor-profile-modal-backdrop" onClick={() => setBookingDetailModal(null)}>
+          <div className="vendor-profile-modal" onClick={(event) => event.stopPropagation()} style={{ maxWidth: 420 }}>
+            <div className="vendor-profile-modal-head">
+              <h4>Booking Details</h4>
+              <button type="button" onClick={() => setBookingDetailModal(null)} aria-label="Close booking details">
+                <X size={22} />
+              </button>
+            </div>
+
+            <div style={{ display: "grid", gap: "14px", padding: "4px 0" }}>
+              <div className="vendor-availability-detail-row" style={{ display: "flex", justifyContent: "space-between", gap: "12px" }}>
+                <span style={{ color: "#6b7280" }}>Client</span>
+                <strong style={{ color: "#111827", textAlign: "right" }}>{bookingDetailModal.customerName}</strong>
+              </div>
+              <div className="vendor-availability-detail-row" style={{ display: "flex", justifyContent: "space-between", gap: "12px" }}>
+                <span style={{ color: "#6b7280" }}>Email</span>
+                <strong style={{ color: "#111827", textAlign: "right" }}>{bookingDetailModal.customerEmail}</strong>
+              </div>
+              {bookingDetailModal.customerPhone ? (
+                <div className="vendor-availability-detail-row" style={{ display: "flex", justifyContent: "space-between", gap: "12px" }}>
+                  <span style={{ color: "#6b7280" }}>Phone</span>
+                  <strong style={{ color: "#111827", textAlign: "right" }}>{bookingDetailModal.customerPhone}</strong>
+                </div>
+              ) : null}
+              <div className="vendor-availability-detail-row" style={{ display: "flex", justifyContent: "space-between", gap: "12px" }}>
+                <span style={{ color: "#6b7280" }}>Service</span>
+                <strong style={{ color: "#111827", textAlign: "right" }}>{bookingDetailModal.serviceName}</strong>
+              </div>
+              <div className="vendor-availability-detail-row" style={{ display: "flex", justifyContent: "space-between", gap: "12px" }}>
+                <span style={{ color: "#6b7280" }}>Date</span>
+                <strong style={{ color: "#111827", textAlign: "right" }}>{formatLineupDate(bookingDetailModal.appointmentDate)}</strong>
+              </div>
+              <div className="vendor-availability-detail-row" style={{ display: "flex", justifyContent: "space-between", gap: "12px" }}>
+                <span style={{ color: "#6b7280" }}>Time</span>
+                <strong style={{ color: "#111827", textAlign: "right" }}>{bookingDetailModal.appointmentSlot}</strong>
+              </div>
+              <div className="vendor-availability-detail-row" style={{ display: "flex", justifyContent: "space-between", gap: "12px" }}>
+                <span style={{ color: "#6b7280" }}>Status</span>
+                <strong style={{ color: "#111827", textAlign: "right" }}>{bookingDetailModal.status}</strong>
+              </div>
+              <div className="vendor-availability-detail-row" style={{ display: "flex", justifyContent: "space-between", gap: "12px" }}>
+                <span style={{ color: "#6b7280" }}>Total</span>
+                <strong style={{ color: "#111827", textAlign: "right" }}>{formatCurrency(bookingDetailModal.total)}</strong>
+              </div>
+              {bookingDetailModal.depositAmount ? (
+                <div className="vendor-availability-detail-row" style={{ display: "flex", justifyContent: "space-between", gap: "12px" }}>
+                  <span style={{ color: "#6b7280" }}>Deposit</span>
+                  <strong style={{ color: "#111827", textAlign: "right" }}>{formatCurrency(bookingDetailModal.depositAmount)}</strong>
+                </div>
+              ) : null}
+              {bookingDetailModal.notes ? (
+                <div style={{ padding: "10px 0", borderTop: "1px solid #e5e7eb" }}>
+                  <span style={{ color: "#6b7280", fontSize: "0.85rem" }}>Notes</span>
+                  <p style={{ margin: "6px 0 0", color: "#374151", fontSize: "0.9rem" }}>{bookingDetailModal.notes}</p>
+                </div>
+              ) : null}
+
+              <div style={{ display: "flex", gap: "8px", paddingTop: "8px" }}>
+                {bookingDetailModal.status === "pending_approval" ? (
+                  <>
+                    <button
+                      type="button"
+                      disabled={loading.bookingAction === bookingDetailModal.id}
+                      onClick={() => {
+                        performBookingAction(bookingDetailModal.id, { action: "approve" }, "Booking approved.");
+                        setBookingDetailModal(null);
+                      }}
+                      style={{
+                        flex: 1,
+                        padding: "10px",
+                        borderRadius: "10px",
+                        border: "none",
+                        background: "#16a34a",
+                        color: "#fff",
+                        fontSize: "0.85rem",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                      }}
+                    >
+                      Accept
+                    </button>
+                    <button
+                      type="button"
+                      disabled={loading.bookingAction === bookingDetailModal.id}
+                      onClick={() => {
+                        performBookingAction(bookingDetailModal.id, { action: "decline", reason: "" }, "Booking declined.");
+                        setBookingDetailModal(null);
+                      }}
+                      style={{
+                        flex: 1,
+                        padding: "10px",
+                        borderRadius: "10px",
+                        border: "1px solid #dc2626",
+                        background: "#fff",
+                        color: "#dc2626",
+                        fontSize: "0.85rem",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                      }}
+                    >
+                      Reject
+                    </button>
+                  </>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => {
+                    openConversationForBooking(bookingDetailModal.id);
+                    setBookingDetailModal(null);
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: "10px",
+                    borderRadius: "10px",
+                    border: "1px solid #e2e8f0",
+                    background: "#fff",
+                    color: "#475569",
+                    fontSize: "0.85rem",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  Message
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       ) : null}
       </div>

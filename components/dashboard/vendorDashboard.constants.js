@@ -304,9 +304,11 @@ export const SERVICE_CATALOG_GROUPS = [
 export const CALENDAR_WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 export const OVERVIEW_BOOKING_FILTERS = [
+  { id: "all", label: "All" },
   { id: "upcoming", label: "Upcoming" },
   { id: "today", label: "Ongoing" },
-  { id: "past", label: "Past appointments" }
+  { id: "past", label: "Past appointments" },
+  { id: "cancelled", label: "Cancelled" }
 ];
 
 export const AVATAR_SWATCHES = [

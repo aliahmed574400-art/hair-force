@@ -11363,8 +11363,7 @@ textarea {
 .vendor-settings-shell {
   display: grid;
   grid-template-columns: 320px minmax(0, 1fr);
-  gap: 18px;
-  margin-top: 18px;
+  gap: 20px;
   align-items: start;
 }
 
@@ -11813,6 +11812,108 @@ textarea {
   background: rgba(254, 242, 242, 0.98);
   color: #dc2626;
 }
+
+/* ================================================================
+   UNIFIED DASHBOARD DESIGN SYSTEM
+   Shared classes to keep all vendor dashboard tabs consistent.
+   ================================================================ */
+
+/* === Tab wrapper === */
+.vendor-dashboard-tab {
+  display: grid;
+  gap: 20px;
+}
+
+/* === Page header === */
+.vendor-dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 22px 24px;
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.vendor-dashboard-header-title {
+  margin: 6px 0 0;
+  font-family: var(--font-body), sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.2;
+}
+
+.vendor-dashboard-header-eyebrow {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6b7280;
+}
+
+/* === Inner tabs (horizontal pill) === */
+.vendor-dashboard-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 6px;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.vendor-dashboard-tab-item {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: #525252;
+  font-weight: 500;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.vendor-dashboard-tab-item:hover {
+  background: #f5f5f5;
+  color: #111827;
+}
+
+.vendor-dashboard-tab-item.active {
+  background: #f0f7ff;
+  border-color: rgba(0, 112, 243, 0.15);
+  color: #0070f3;
+}
+
+/* === Card / Panel === */
+.vendor-dashboard-card {
+  padding: 24px;
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.vendor-dashboard-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.vendor-dashboard-card-head h2 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+/* ================================================================
+   LEGACY TAB STYLES (kept for compatibility)
+   ================================================================ */
 
 .vendor-reference-overview {
   display: grid;
@@ -12787,7 +12888,6 @@ textarea {
 
 .vendor-services-page {
   width: 100%;
-  margin: 48px auto 0;
   color: #111827;
 }
 
@@ -13590,8 +13690,7 @@ textarea {
   gap: 10px;
 }
 
-.vendor-agenda-legend span,
-.vendor-agenda-details-pill {
+.vendor-agenda-legend span {
   min-height: 34px;
   padding: 0 12px;
   display: inline-flex;
@@ -14147,8 +14246,7 @@ textarea {
 
 .vendor-agenda-block.tone-booking,
 .vendor-agenda-month-pill.tone-booking,
-.vendor-agenda-legend .tone-booking,
-.vendor-agenda-details-pill.tone-booking {
+.vendor-agenda-legend .tone-booking {
   background: #eefcf5;
   color: #1d9a52;
 }
@@ -14167,24 +14265,21 @@ textarea {
 
 .vendor-agenda-block.tone-reserved,
 .vendor-agenda-month-pill.tone-reserved,
-.vendor-agenda-legend .tone-reserved,
-.vendor-agenda-details-pill.tone-reserved {
+.vendor-agenda-legend .tone-reserved {
   background: #edf4ff;
   color: #1d4ed8;
 }
 
 .vendor-agenda-block.tone-off-time,
 .vendor-agenda-month-pill.tone-off-time,
-.vendor-agenda-legend .tone-off-time,
-.vendor-agenda-details-pill.tone-off-time {
+.vendor-agenda-legend .tone-off-time {
   background: #fff3e8;
   color: #c96b22;
 }
 
 .vendor-agenda-block.tone-extra-hours,
 .vendor-agenda-month-pill.tone-extra-hours,
-.vendor-agenda-legend .tone-extra-hours,
-.vendor-agenda-details-pill.tone-extra-hours {
+.vendor-agenda-legend .tone-extra-hours {
   background: #ecf7ff;
   color: #0f84c7;
 }
@@ -16216,10 +16311,8 @@ textarea {
 }
 
 .vendor-availability-rail-head h3,
-.vendor-availability-detail-card h4,
 .vendor-availability-stage-head h3,
 .vendor-availability-vacation-listing h4,
-.vendor-availability-jump-ahead h4,
 .vendor-availability-manage-day-head h4,
 .vendor-availability-modal-head h4 {
   margin: 0;
@@ -16234,7 +16327,6 @@ textarea {
 
 .vendor-availability-rail-head p,
 .vendor-availability-stage-head p,
-.vendor-availability-detail-card p,
 .vendor-availability-empty-copy,
 .vendor-availability-vacation-notice p {
   color: #6b7280;
@@ -16246,7 +16338,6 @@ textarea {
 }
 
 .vendor-availability-stage-head p,
-.vendor-availability-detail-card p,
 .vendor-availability-empty-copy,
 .vendor-availability-vacation-notice p {
   margin: 10px 0 0;
@@ -16302,7 +16393,7 @@ textarea {
 }
 
 .vendor-availability-stage {
-  padding: 42px 44px 48px;
+  padding: 24px;
   background: #ffffff;
 }
 
@@ -16335,7 +16426,6 @@ textarea {
 .vendor-availability-primary-button,
 .vendor-availability-today-button,
 .vendor-availability-ghost-button,
-.vendor-availability-jump-chip,
 .vendor-availability-add-break,
 .vendor-availability-remove-break,
 .vendor-availability-delete-link {
@@ -16393,12 +16483,6 @@ textarea {
 .vendor-availability-view-select,
 .vendor-availability-timezone-select,
 .vendor-availability-time-select,
-.vendor-availability-jump-chip {
-  border: 1px solid rgba(209, 213, 219, 0.9);
-  background: #ffffff;
-  color: #374151;
-}
-
 .vendor-availability-today-button {
   padding: 0 18px;
   font-size: 0.96rem;
@@ -16424,7 +16508,7 @@ textarea {
 
 .vendor-availability-calendar-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 330px;
+  grid-template-columns: 1fr;
   gap: 24px;
   align-items: start;
 }
@@ -16443,25 +16527,13 @@ textarea {
 .vendor-availability-manage-list,
 .vendor-availability-vacation-listing,
 .vendor-availability-vacation-list,
-.vendor-availability-detail-list,
 .vendor-availability-vacation-summary {
   display: grid;
   gap: 18px;
 }
 
-.vendor-availability-mini-card,
-.vendor-availability-detail-card {
-  padding: 22px;
-  border: 1px solid rgba(226, 232, 240, 0.96);
-  border-radius: 24px;
-  background: #ffffff;
-  box-shadow: none;
-}
-
-.vendor-availability-mini-head,
 .vendor-availability-picker-head,
 .vendor-availability-manage-day-head,
-.vendor-availability-detail-row,
 .vendor-availability-vacation-item {
   display: flex;
   align-items: center;
@@ -16469,14 +16541,12 @@ textarea {
   gap: 14px;
 }
 
-.vendor-availability-mini-head strong,
 .vendor-availability-picker-head strong {
   color: #374151;
   font-size: 1.15rem;
   font-weight: 700;
 }
 
-.vendor-availability-mini-weekdays,
 .vendor-availability-picker-weekdays {
   margin-top: 18px;
   display: grid;
@@ -16484,7 +16554,6 @@ textarea {
   gap: 6px;
 }
 
-.vendor-availability-mini-weekdays span,
 .vendor-availability-picker-weekdays span {
   color: #6b7280;
   font-size: 0.88rem;
@@ -16492,7 +16561,6 @@ textarea {
   text-align: center;
 }
 
-.vendor-availability-mini-grid,
 .vendor-availability-picker-grid {
   margin-top: 14px;
   display: grid;
@@ -16500,7 +16568,6 @@ textarea {
   gap: 8px;
 }
 
-.vendor-availability-mini-day,
 .vendor-availability-picker-day {
   min-height: 42px;
   border-radius: 999px;
@@ -16515,13 +16582,7 @@ textarea {
     transform 0.2s ease;
 }
 
-.vendor-availability-mini-day {
-  background: transparent;
-}
-
-.vendor-availability-mini-day:hover,
 .vendor-availability-picker-day:hover,
-.vendor-availability-jump-chip:hover,
 .vendor-availability-primary-button:hover,
 .vendor-availability-today-button:hover,
 .vendor-availability-ghost-button:hover,
@@ -16531,62 +16592,16 @@ textarea {
   transform: translateY(-1px);
 }
 
-.vendor-availability-mini-day.is-outside,
 .vendor-availability-picker-day.is-outside {
   opacity: 0.36;
 }
 
-.vendor-availability-mini-day.tone-available {
-  background: #eff6ff;
-  color: #1d4ed8;
-}
-
-.vendor-availability-mini-day.tone-booked,
-.vendor-availability-mini-day.is-selected {
-  background: #0f4fd2;
-  color: #ffffff;
-}
-
-.vendor-availability-mini-day.tone-reserved {
-  background: #dbeafe;
-  color: #1d4ed8;
-}
-
-.vendor-availability-mini-day.tone-partial {
-  background: #f3f4f6;
-  color: #374151;
-}
-
-.vendor-availability-jump-ahead h4 {
-  font-size: 1rem;
-}
-
-.vendor-availability-jump-grid {
-  margin-top: 14px;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.vendor-availability-jump-chip {
-  min-height: 80px;
-  padding: 12px;
-  border-radius: 14px;
-  display: grid;
-  place-items: center;
-  text-align: center;
-}
-
-.vendor-availability-jump-chip strong,
-.vendor-availability-detail-row strong,
 .vendor-availability-vacation-item strong,
 .vendor-availability-vacation-summary strong {
   color: #111827;
   font-weight: 700;
 }
 
-.vendor-availability-jump-chip span,
-.vendor-availability-detail-row span,
 .vendor-availability-vacation-item span,
 .vendor-availability-vacation-item em,
 .vendor-availability-vacation-summary span {
@@ -16828,12 +16843,6 @@ textarea {
   cursor: pointer;
 }
 
-@media (max-width: 1320px) {
-  .vendor-availability-calendar-layout {
-    grid-template-columns: 1fr;
-  }
-}
-
 @media (max-width: 1080px) {
   .vendor-availability-frame {
     grid-template-columns: 1fr;
@@ -16884,9 +16893,6 @@ textarea {
     min-width: 860px;
   }
 
-  .vendor-availability-jump-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 
 @media (max-width: 720px) {
@@ -16905,7 +16911,6 @@ textarea {
     padding-right: 14px;
   }
 
-  .vendor-availability-mini-grid,
   .vendor-availability-picker-grid {
     gap: 6px;
   }
@@ -16921,9 +16926,6 @@ textarea {
     padding-right: 16px;
   }
 
-  .vendor-availability-jump-grid {
-    grid-template-columns: 1fr;
-  }
 }
 
 .vendor-join-page {

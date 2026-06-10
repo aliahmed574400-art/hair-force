@@ -57,8 +57,6 @@ const COMMON_TIMEZONES = [
   "Australia/Sydney"
 ];
 
-const JUMP_AHEAD_WEEKS = [1, 2, 3, 4, 6];
-
 function normalizeDateOnly(value) {
   const input = String(value || "").trim().slice(0, 10);
   return /^\d{4}-\d{2}-\d{2}$/.test(input) ? input : "";
@@ -549,58 +547,6 @@ function getSavedDayMap(days = []) {
   return new Map(days.map((day) => [Number(day.dayOfWeek), day]));
 }
 
-function buildMiniMonthDays({
-  referenceDate,
-  savedDays,
-  overrides,
-  bookings,
-  blackoutDates,
-  selectedDate,
-  todayKey
-}) {
-  const monthStart = createDateOnly(getMonthStartKey(referenceDate)) || createDateOnly(todayKey);
-
-  if (!monthStart) {
-    return [];
-  }
-
-  const gridStart = new Date(monthStart);
-  gridStart.setDate(monthStart.getDate() - monthStart.getDay());
-
-  const savedDayMap = getSavedDayMap(savedDays);
-
-  return Array.from({ length: 42 }, (_, index) => {
-    const date = new Date(gridStart);
-    date.setDate(gridStart.getDate() + index);
-    const dateKey = normalizeDateOnly(date.toISOString());
-    const weekday = date.getDay();
-    const dayConfig = savedDayMap.get(weekday);
-    const bookingCount = countBookingsOnDate(bookings, dateKey);
-    const reserved = hasReserveOnDate(dateKey, overrides, blackoutDates);
-    const hasExtraHours = hasExtraHoursOnDate(dateKey, overrides);
-    const hasOffTime = hasOffTimeOnDate(dateKey, overrides);
-
-    let tone = "closed";
-
-    if (reserved) {
-      tone = "reserved";
-    } else if (bookingCount > 0) {
-      tone = "booked";
-    } else if (hasExtraHours || dayConfig?.enabled) {
-      tone = hasOffTime ? "partial" : "available";
-    }
-
-    return {
-      dateKey,
-      dayLabel: date.getDate(),
-      tone,
-      bookingCount,
-      currentMonth: date.getMonth() === monthStart.getMonth(),
-      isToday: dateKey === todayKey,
-      isSelected: dateKey === selectedDate
-    };
-  });
-}
 
 function buildVacationPickerDays({
   monthKey,
@@ -657,8 +603,10 @@ function AgendaCalendarView({
   agenda,
   selectedDate,
   selectedBlockId,
+  dashboardBookings,
   onSelectDate,
-  onSelectBlock
+  onSelectBlock,
+  onViewBookingDetails
 }) {
   if (!agenda) {
     return null;
@@ -753,6 +701,38 @@ function AgendaCalendarView({
                   </div>
                   {block.type === "booking" ? (
                     <span className="vendor-agenda-block-avatar">{getBlockAvatarLabel(block)}</span>
+                  ) : null}
+                  {block.type === "booking" && onViewBookingDetails && dashboardBookings?.length ? (
+                    <button
+                      type="button"
+                      className="vendor-agenda-block-details"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        const booking = dashboardBookings.find((b) => String(b.id) === String(block.details?.bookingId || block.id));
+                        if (booking) onViewBookingDetails(booking);
+                      }}
+                      title="See details"
+                      style={{
+                        position: "absolute",
+                        top: "4px",
+                        right: "4px",
+                        width: "20px",
+                        height: "20px",
+                        display: "grid",
+                        placeItems: "center",
+                        borderRadius: "4px",
+                        border: "none",
+                        background: "rgba(255,255,255,0.85)",
+                        color: "#475569",
+                        fontSize: "0.65rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        zIndex: 2,
+                        padding: 0,
+                      }}
+                    >
+                      i
+                    </button>
                   ) : null}
                   {block.preview ? (
                     <div className="vendor-agenda-block-tooltip">
@@ -963,7 +943,8 @@ export default function VendorAvailabilityAgenda({
   setAvailabilityForm,
   blackoutDatesText,
   onDashboardResponse,
-  onStatusChange
+  onStatusChange,
+  onViewBookingDetails
 }) {
   const todayKey = formatDateInputFallback(new Date().toISOString());
   const [activeTab, setActiveTab] = useState("calendar");
@@ -1024,34 +1005,6 @@ export default function VendorAvailabilityAgenda({
       agenda.days[0]
     );
   }, [agenda, selectedDate]);
-  const selectedBlock = useMemo(() => {
-    if (!selectedDay?.blocks?.length) {
-      return null;
-    }
-
-    return selectedDay.blocks.find((block) => String(block.id) === String(selectedBlockId)) || null;
-  }, [selectedBlockId, selectedDay]);
-  const selectedOverride = useMemo(
-    () =>
-      selectedBlock
-        ? overrides.find((override) => String(override.id) === String(selectedBlock.id)) || null
-        : null,
-    [overrides, selectedBlock]
-  );
-  const miniMonthDays = useMemo(
-    () =>
-      buildMiniMonthDays({
-        referenceDate,
-        savedDays: savedManageDays,
-        overrides,
-        bookings,
-        blackoutDates,
-        selectedDate,
-        todayKey
-      }),
-    [blackoutDates, bookings, overrides, referenceDate, savedManageDays, selectedDate, todayKey]
-  );
-
   useEffect(() => {
     setManageDraft(buildManageDraftFromRules(availabilityForm));
   }, [availabilityForm]);
@@ -1267,93 +1220,12 @@ export default function VendorAvailabilityAgenda({
     }
   }
 
-  function renderCalendarDetails() {
-    if (selectedBlock) {
-      return (
-        <div className="vendor-availability-detail-card">
-          <div className={`vendor-agenda-details-pill ${blockToneClass(selectedBlock)}`}>
-            {blockKindLabel(selectedBlock)}
-          </div>
-          <h4>{selectedBlock.title}</h4>
-          <p>{formatTimeRange(selectedBlock)}</p>
-
-          {selectedBlock.type === "booking" ? (
-            <div className="vendor-availability-detail-list">
-              <div className="vendor-availability-detail-row">
-                <span>Client</span>
-                <strong>{selectedBlock.details?.customerName || selectedBlock.preview?.customerName || "Client"}</strong>
-              </div>
-              <div className="vendor-availability-detail-row">
-                <span>Service</span>
-                <strong>{selectedBlock.details?.serviceName || selectedBlock.preview?.serviceName || selectedBlock.title}</strong>
-              </div>
-              <div className="vendor-availability-detail-row">
-                <span>Time</span>
-                <strong>{selectedBlock.preview?.timeLabel || formatTimeRange(selectedBlock)}</strong>
-              </div>
-              <div className="vendor-availability-detail-row">
-                <span>Status</span>
-                <strong>{selectedBlock.details?.status || selectedBlock.preview?.status || "confirmed"}</strong>
-              </div>
-              <div className="vendor-availability-detail-row">
-                <span>Total</span>
-                <strong>{formatCurrency(selectedBlock.details?.total || selectedBlock.preview?.amount || 0)}</strong>
-              </div>
-            </div>
-          ) : (
-            <div className="vendor-availability-detail-list">
-              <div className="vendor-availability-detail-row">
-                <span>Date</span>
-                <strong>{formatLongDate(selectedDate)}</strong>
-              </div>
-              <div className="vendor-availability-detail-row">
-                <span>Note</span>
-                <strong>{selectedOverride?.note || selectedBlock.preview?.note || "No note added"}</strong>
-              </div>
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    if (!selectedDay) {
-      return (
-        <div className="vendor-availability-detail-card">
-          <h4>Booking details</h4>
-          <p>Hover over a booking block to preview it, then click it to pin the full details here.</p>
-        </div>
-      );
-    }
-
-    return (
-      <div className="vendor-availability-detail-card">
-        <h4>{formatLongDate(selectedDay.date)}</h4>
-        <p>{dayStatusLabel(selectedDay)}</p>
-
-        <div className="vendor-availability-detail-list">
-          <div className="vendor-availability-detail-row">
-            <span>Open slots</span>
-            <strong>{selectedDay.slotCount}</strong>
-          </div>
-          <div className="vendor-availability-detail-row">
-            <span>Bookings</span>
-            <strong>{selectedDay.bookingCount}</strong>
-          </div>
-          <div className="vendor-availability-detail-row">
-            <span>Available spans</span>
-            <strong>{selectedDay.availableSpans.length}</strong>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <>
-      <div className="vendor-availability-shell" style={{ marginTop: 18 }}>
+      <div className="vendor-dashboard-tab vendor-availability-shell">
         <div className="dashboard-card vendor-availability-frame">
           <aside className="vendor-availability-rail">
-            <div className="vendor-availability-rail-list">
+            <div className="vendor-dashboard-tabs">
               {INTERNAL_TABS.map((tab) => {
                 const Icon = tab.icon;
 
@@ -1361,7 +1233,7 @@ export default function VendorAvailabilityAgenda({
                   <button
                     key={tab.id}
                     type="button"
-                    className={`vendor-availability-rail-tab ${activeTab === tab.id ? "active" : ""}`}
+                    className={`vendor-dashboard-tab-item ${activeTab === tab.id ? "active" : ""}`}
                     onClick={() => setActiveTab(tab.id)}
                   >
                     <span className="vendor-availability-rail-tab-icon">
@@ -1377,9 +1249,9 @@ export default function VendorAvailabilityAgenda({
           <section className="vendor-availability-stage">
             {activeTab === "calendar" ? (
               <div className="vendor-availability-stage-panel">
-                <div className="vendor-availability-stage-head">
+                <div className="vendor-availability-stage-head vendor-dashboard-header" style={{ marginBottom: 24 }}>
                   <div>
-                    <h3>{agenda?.rangeLabel || "Calendar"}</h3>
+                    <h3 className="vendor-dashboard-header-title">{agenda?.rangeLabel || "Calendar"}</h3>
                     <p>See bookings, off times, vacations, and open slots in the same live calendar.</p>
                   </div>
                   <div className="vendor-availability-toolbar">
@@ -1442,90 +1314,27 @@ export default function VendorAvailabilityAgenda({
                         agenda={agenda}
                         selectedDate={selectedDate}
                         selectedBlockId={selectedBlockId}
+                        dashboardBookings={bookings}
                         onSelectDate={(nextDate) => {
                           setSelectedDate(nextDate);
                           startTransition(() => setReferenceDate(nextDate));
                         }}
                         onSelectBlock={setSelectedBlockId}
+                        onViewBookingDetails={onViewBookingDetails}
                       />
                     )}
                   </div>
 
-                  <aside className="vendor-availability-calendar-side">
-                    <div className="vendor-availability-mini-card">
-                      <div className="vendor-availability-mini-head">
-                        <strong>{formatMonthLabel(referenceDate)}</strong>
-                        <div className="vendor-availability-inline-actions">
-                          <button
-                            type="button"
-                            className="vendor-availability-ghost-button"
-                            onClick={() => startTransition(() => setReferenceDate((current) => addMonths(current, -1)))}
-                          >
-                            <ChevronLeft size={18} />
-                          </button>
-                          <button
-                            type="button"
-                            className="vendor-availability-ghost-button"
-                            onClick={() => startTransition(() => setReferenceDate((current) => addMonths(current, 1)))}
-                          >
-                            <ChevronRight size={18} />
-                          </button>
-                        </div>
-                      </div>
 
-                      <div className="vendor-availability-mini-weekdays">
-                        {["S", "M", "T", "W", "T", "F", "S"].map((label, index) => (
-                          <span key={`${label}-${index}`}>{label}</span>
-                        ))}
-                      </div>
-
-                      <div className="vendor-availability-mini-grid">
-                        {miniMonthDays.map((day) => (
-                          <button
-                            key={day.dateKey}
-                            type="button"
-                            className={`vendor-availability-mini-day ${day.currentMonth ? "" : "is-outside"} ${day.isSelected ? "is-selected" : ""} tone-${day.tone}`}
-                            onClick={() => {
-                              setSelectedDate(day.dateKey);
-                              startTransition(() => setReferenceDate(day.dateKey));
-                            }}
-                          >
-                            <span>{day.dayLabel}</span>
-                          </button>
-                        ))}
-                      </div>
-
-                      <div className="vendor-availability-jump-ahead">
-                        <h4>Jump ahead</h4>
-                        <div className="vendor-availability-jump-grid">
-                          {JUMP_AHEAD_WEEKS.map((weeks) => (
-                            <button
-                              key={weeks}
-                              type="button"
-                              className="vendor-availability-jump-chip"
-                              onClick={() =>
-                                startTransition(() => setReferenceDate(addDays(referenceDate, weeks * 7)))
-                              }
-                            >
-                              <strong>+{weeks}</strong>
-                              <span>{weeks === 1 ? "Week" : "Weeks"}</span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    {renderCalendarDetails()}
-                  </aside>
                 </div>
               </div>
             ) : null}
 
             {activeTab === "manage" ? (
               <div className="vendor-availability-stage-panel vendor-availability-manage-panel">
-                <div className="vendor-availability-stage-head">
+                <div className="vendor-availability-stage-head vendor-dashboard-header" style={{ marginBottom: 24 }}>
                   <div>
-                    <h3>Edit Availability</h3>
+                    <h3 className="vendor-dashboard-header-title">Edit Availability</h3>
                     <p>Set weekly opening hours, choose 15-minute times, and add one break per day.</p>
                   </div>
                   <button
@@ -1720,9 +1529,9 @@ export default function VendorAvailabilityAgenda({
 
             {activeTab === "vacation" ? (
               <div className="vendor-availability-stage-panel vendor-availability-vacation-panel">
-                <div className="vendor-availability-stage-head">
+                <div className="vendor-availability-stage-head vendor-dashboard-header" style={{ marginBottom: 24 }}>
                   <div>
-                    <h3>Vacation Time</h3>
+                    <h3 className="vendor-dashboard-header-title">Vacation Time</h3>
                     <p>Setting vacation time will block off your availability for the selected time span.</p>
                   </div>
                 </div>

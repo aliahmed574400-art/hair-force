@@ -47,7 +47,7 @@ export default function BookingForm({ vendor, initialSelection = {} }) {
     () => calculateDeposit(selectedService, selectedService?.price),
     [selectedService]
   );
-  const isApprovalBooking = selectedService?.bookingMethod === "approval";
+  const isApprovalBooking = true;
 
   /* hydrate user from session */
   useEffect(() => {
