@@ -2067,7 +2067,6 @@ export default function VendorDashboardManager({ user, initialData }) {
           <div className="vendor-dashboard-tab vendor-reference-overview">
             <div className="vendor-dashboard-header">
               <div>
-                <div className="vendor-dashboard-header-eyebrow">Dashboard</div>
                 <h3 className="vendor-dashboard-header-title">Overview</h3>
               </div>
             </div>
@@ -2256,7 +2255,6 @@ export default function VendorDashboardManager({ user, initialData }) {
         <div className="vendor-dashboard-tab vendor-profile-workspace">
           <div className="vendor-dashboard-header">
             <div>
-              <div className="vendor-dashboard-header-eyebrow">Profile</div>
               <h3 className="vendor-dashboard-header-title">Update storefront content</h3>
             </div>
             <SiteButton href={`/stylists/${dashboard.vendor.slug}`} variant="secondary">
@@ -2753,7 +2751,6 @@ export default function VendorDashboardManager({ user, initialData }) {
         <div className="vendor-dashboard-tab vendor-profile-workspace">
           <div className="vendor-dashboard-header">
             <div>
-              <div className="vendor-dashboard-header-eyebrow">Gallery</div>
               <h3 className="vendor-dashboard-header-title">Manage Photos and Videos</h3>
             </div>
             <SiteButton href={`/stylists/${dashboard.vendor.slug}`} variant="secondary">
@@ -2883,7 +2880,6 @@ export default function VendorDashboardManager({ user, initialData }) {
         <div className="vendor-dashboard-tab vendor-services-page">
           <div className="vendor-dashboard-header">
             <div>
-              <div className="vendor-dashboard-header-eyebrow">Services</div>
               <h3 className="vendor-dashboard-header-title">Services &amp; Add-ons</h3>
             </div>
             <SiteButton
@@ -3519,7 +3515,6 @@ export default function VendorDashboardManager({ user, initialData }) {
         <div className="vendor-dashboard-tab vendor-dashboard-bookings">
           <div className="vendor-dashboard-header">
             <div>
-              <div className="vendor-dashboard-header-eyebrow">Bookings</div>
               <h3 className="vendor-dashboard-header-title">Booking list</h3>
             </div>
           </div>
@@ -3719,7 +3714,6 @@ export default function VendorDashboardManager({ user, initialData }) {
         <div className="vendor-dashboard-tab vendor-dashboard-messages">
           <div className="vendor-dashboard-header">
             <div>
-              <div className="vendor-dashboard-header-eyebrow">Messages</div>
               <h3 className="vendor-dashboard-header-title">Chats</h3>
             </div>
           </div>
@@ -4044,7 +4038,6 @@ export default function VendorDashboardManager({ user, initialData }) {
         <div className="vendor-settings-shell">
           <aside className="dashboard-card vendor-settings-nav vendor-dashboard-card" aria-label="Account settings tabs">
             <div>
-              <div className="vendor-dashboard-header-eyebrow">Account</div>
               <h3 className="vendor-dashboard-header-title">Settings</h3>
             </div>
             <div className="vendor-settings-tab-list" role="tablist" aria-label="Vendor settings">
@@ -4073,7 +4066,6 @@ export default function VendorDashboardManager({ user, initialData }) {
               <form onSubmit={handleNotificationSubmit} className="vendor-settings-form">
                 <div className="vendor-settings-head vendor-dashboard-header" style={{ borderBottom: '1px solid #e5e5e5', borderRadius: 0, border: 'none', padding: '0 0 20px' }}>
                   <div>
-                    <div className="vendor-dashboard-header-eyebrow">Notification</div>
                     <h3 className="vendor-dashboard-header-title">My Notifications</h3>
                     <p>You will receive updates about your account, client bookings, reschedules, and cancellations.</p>
                   </div>
@@ -4181,7 +4173,6 @@ export default function VendorDashboardManager({ user, initialData }) {
               <div className="vendor-settings-form">
                 <div className="vendor-settings-head vendor-dashboard-header" style={{ borderBottom: '1px solid #e5e5e5', borderRadius: 0, border: 'none', padding: '0 0 20px' }}>
                   <div>
-                    <div className="vendor-dashboard-header-eyebrow">Plan & Billing</div>
                     <h3 className="vendor-dashboard-header-title">Plan & Billing Details</h3>
                     <p>Manage your Premium Plan and the card used for monthly billing.</p>
                   </div>
@@ -4343,7 +4334,6 @@ export default function VendorDashboardManager({ user, initialData }) {
               <div className="vendor-settings-form">
                 <div className="vendor-settings-head vendor-dashboard-header" style={{ borderBottom: '1px solid #e5e5e5', borderRadius: 0, border: 'none', padding: '0 0 20px' }}>
                   <div>
-                    <div className="vendor-dashboard-header-eyebrow">Login Email</div>
                     <h3 className="vendor-dashboard-header-title">Change Email</h3>
                     <p>Email sign-in accounts can update the login email used for this stylist dashboard.</p>
                   </div>
@@ -4378,7 +4368,6 @@ export default function VendorDashboardManager({ user, initialData }) {
               <div className="vendor-settings-form">
                 <div className="vendor-settings-head vendor-dashboard-header" style={{ borderBottom: '1px solid #e5e5e5', borderRadius: 0, border: 'none', padding: '0 0 20px' }}>
                   <div>
-                    <div className="vendor-dashboard-header-eyebrow">Password</div>
                     <h3 className="vendor-dashboard-header-title">Change Password</h3>
                     <p>Password changes are available for email sign-in accounts.</p>
                   </div>
@@ -4480,7 +4469,6 @@ export default function VendorDashboardManager({ user, initialData }) {
               <div className="vendor-settings-form">
                 <div className="vendor-settings-head vendor-dashboard-header" style={{ borderBottom: '1px solid #e5e5e5', borderRadius: 0, border: 'none', padding: '0 0 20px' }}>
                   <div>
-                    <div className="vendor-dashboard-header-eyebrow">Danger zone</div>
                     <h3 className="vendor-dashboard-header-title">Delete stylist account</h3>
                     <p>Delete this stylist account only when you want this login to stop belonging to the vendor side.</p>
                   </div>

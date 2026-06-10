@@ -1223,29 +1223,27 @@ export default function VendorAvailabilityAgenda({
   return (
     <>
       <div className="vendor-dashboard-tab vendor-availability-shell">
-        <div className="dashboard-card vendor-availability-frame">
-          <aside className="vendor-availability-rail">
-            <div className="vendor-dashboard-tabs">
-              {INTERNAL_TABS.map((tab) => {
-                const Icon = tab.icon;
+        <div className="vendor-dashboard-tabs">
+          {INTERNAL_TABS.map((tab) => {
+            const Icon = tab.icon;
 
-                return (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    className={`vendor-dashboard-tab-item ${activeTab === tab.id ? "active" : ""}`}
-                    onClick={() => setActiveTab(tab.id)}
-                  >
-                    <span className="vendor-availability-rail-tab-icon">
-                      <Icon size={18} />
-                    </span>
-                    <span>{tab.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </aside>
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                className={`vendor-dashboard-tab-item ${activeTab === tab.id ? "active" : ""}`}
+                onClick={() => setActiveTab(tab.id)}
+              >
+                <span className="vendor-availability-rail-tab-icon">
+                  <Icon size={18} />
+                </span>
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
 
+        <div className="vendor-dashboard-card vendor-availability-frame">
           <section className="vendor-availability-stage">
             {activeTab === "calendar" ? (
               <div className="vendor-availability-stage-panel">
