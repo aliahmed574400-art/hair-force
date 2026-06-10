@@ -16,7 +16,7 @@ import {
   Star,
   X
 } from "lucide-react";
-import DiscoverMap from "@/components/discover/DiscoverMap";
+
 import SiteButton from "@/components/ui/SiteButton";
 import {
   DISCOVER_PRICE_OPTIONS,
@@ -47,16 +47,14 @@ function getLocationErrorMessage(error) {
   return "Unable to fetch your location right now.";
 }
 
-function StylistResultCard({ stylist, active, onActivate }) {
+function StylistResultCard({ stylist }) {
   const [liked, setLiked] = useState(false);
   const mainService = stylist.topServices?.[0];
   const extraServices = (stylist.topServices || []).slice(1, 3);
 
   return (
     <article
-      className={`discover-card ${active ? "active" : ""}`}
-      onMouseEnter={() => onActivate(stylist.slug)}
-      onFocus={() => onActivate(stylist.slug)}
+      className="discover-card"
     >
       <Link href={`/stylists/${stylist.slug}`} className="discover-card-media">
         {stylist.avatar || stylist.coverImage ? (
@@ -159,8 +157,7 @@ export default function DiscoverExperience({ initialFilters, initialResults }) {
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
-  const [activeSlug, setActiveSlug] = useState(initialResults.stylists?.[0]?.slug || "");
-  const [mobileMapOpen, setMobileMapOpen] = useState(false);
+
   const [locationPromptVisible, setLocationPromptVisible] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [nearby, setNearby] = useState({
@@ -170,8 +167,6 @@ export default function DiscoverExperience({ initialFilters, initialResults }) {
     label: ""
   });
   const deferredQuery = useDeferredValue(filters.query);
-  const activeStylist =
-    results.stylists.find((stylist) => stylist.slug === activeSlug) || results.stylists[0] || null;
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -181,11 +176,7 @@ export default function DiscoverExperience({ initialFilters, initialResults }) {
     setLocationPromptVisible(!dismissed);
   }, []);
 
-  useEffect(() => {
-    if (!results.stylists.some((stylist) => stylist.slug === activeSlug)) {
-      setActiveSlug(results.stylists[0]?.slug || "");
-    }
-  }, [activeSlug, results.stylists]);
+
 
   useEffect(() => {
     const params = new URLSearchParams();
@@ -607,7 +598,7 @@ export default function DiscoverExperience({ initialFilters, initialResults }) {
         </div>
       ) : null}
 
-      {/* Results + Map */}
+      {/* Results */}
       <div className="container">
         <section className="discover-layout">
           <div className="discover-results-panel">
@@ -644,8 +635,6 @@ export default function DiscoverExperience({ initialFilters, initialResults }) {
                 <StylistResultCard
                   key={stylist.slug}
                   stylist={stylist}
-                  active={stylist.slug === activeSlug}
-                  onActivate={setActiveSlug}
                 />
               ))}
             </div>
@@ -659,41 +648,11 @@ export default function DiscoverExperience({ initialFilters, initialResults }) {
             ) : null}
           </div>
 
-          <aside className="discover-map-panel">
-            <div className="discover-map-panel-frame">
-              <DiscoverMap
-                stylists={results.stylists}
-                activeSlug={activeSlug}
-                onSelectStylist={setActiveSlug}
-                userCoords={nearby.coords}
-              />
-            </div>
-          </aside>
+
         </section>
       </div>
 
-      {/* Mobile Map */}
-      {mobileMapOpen ? (
-        <div className="discover-mobile-map-backdrop" onClick={() => setMobileMapOpen(false)}>
-          <div className="discover-mobile-map-sheet" onClick={(event) => event.stopPropagation()}>
-            <div className="discover-mobile-map-head">
-              <div>
-                <span className="eyebrow">Map</span>
-                <h3>Nearby stylist pins</h3>
-              </div>
-              <button type="button" className="discover-mobile-map-close" onClick={() => setMobileMapOpen(false)}>
-                Close
-              </button>
-            </div>
-            <DiscoverMap
-              stylists={results.stylists}
-              activeSlug={activeSlug}
-              onSelectStylist={setActiveSlug}
-              userCoords={nearby.coords}
-            />
-          </div>
-        </div>
-      ) : null}
+
     </main>
   );
 }

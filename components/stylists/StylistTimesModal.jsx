@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
   ChevronLeft,
@@ -65,6 +66,7 @@ function buildBookingHref(slug, serviceId, date, slot) {
 }
 
 export default function StylistTimesModal({ stylist, service, onClose }) {
+  const router = useRouter();
   const todayIso = useMemo(() => getTodayIso(), []);
   const todayParts = useMemo(() => parseIsoDate(todayIso), [todayIso]);
 
@@ -77,6 +79,7 @@ export default function StylistTimesModal({ stylist, service, onClose }) {
   const [error, setError] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedSlot, setSelectedSlot] = useState("");
+  const [checkingAuth, setCheckingAuth] = useState(false);
 
   const referenceAnchor = getMonthAnchor({ ...reference, day: 15 });
 
@@ -186,6 +189,27 @@ export default function StylistTimesModal({ stylist, service, onClose }) {
   const continueDisabled = !selectedDate || !selectedSlot;
   const rating = Number(stylist.rating);
 
+  async function handleContinueBooking(event) {
+    event.preventDefault();
+    if (continueDisabled) return;
+
+    setCheckingAuth(true);
+    try {
+      const response = await fetch("/api/auth/me");
+      const data = await response.json();
+
+      if (data.user) {
+        router.push(continueHref);
+      } else {
+        router.push(`/signin?redirect=${encodeURIComponent(continueHref)}`);
+      }
+    } catch {
+      router.push(`/signin?redirect=${encodeURIComponent(continueHref)}`);
+    } finally {
+      setCheckingAuth(false);
+    }
+  }
+
   return (
     <div
       className="stm-backdrop"
@@ -294,14 +318,17 @@ export default function StylistTimesModal({ stylist, service, onClose }) {
               <div className="stm-cal-grid">
                 {currentMonthDays.map((day) => {
                   const isPast = day.date < todayIso;
-                  const isAvailable = day.slotCount > 0 && !isPast && day.isCurrentMonth;
+                  const isCurrentMonth = day.isCurrentMonth;
+                  const isAvailable = day.slotCount > 0 && !isPast && isCurrentMonth;
+                  const isFullyBooked = day.slotCount === 0 && !isPast && isCurrentMonth;
                   const isSelected = day.date === selectedDate;
                   const isGoingFast = day.slotCount > 0 && day.slotCount <= 2 && !isPast;
                   const classes = ["stm-cal-cell"];
-                  if (!day.isCurrentMonth) classes.push("is-outside");
+                  if (!isCurrentMonth) classes.push("is-outside");
                   if (isPast) classes.push("is-past");
                   if (isAvailable) classes.push("is-available");
-                  if (!isAvailable) classes.push("is-unavailable");
+                  if (!isAvailable && !isFullyBooked) classes.push("is-unavailable");
+                  if (isFullyBooked) classes.push("is-fully-booked");
                   if (isSelected) classes.push("is-selected");
                   if (day.isToday) classes.push("is-today");
 
@@ -312,11 +339,13 @@ export default function StylistTimesModal({ stylist, service, onClose }) {
                       className={classes.join(" ")}
                       onClick={() => handleSelectDay(day)}
                       disabled={!isAvailable}
-                      aria-label={`${day.date}${isAvailable ? "" : ", unavailable"}`}
+                      aria-label={`${day.date}${isAvailable ? "" : isFullyBooked ? ", fully booked" : ", unavailable"}`}
                       aria-pressed={isSelected}
                     >
                       <span>{Number(day.dayNumber)}</span>
-                      {isGoingFast ? (
+                      {isFullyBooked ? (
+                        <span className="stm-cal-cross" aria-hidden="true">×</span>
+                      ) : isGoingFast ? (
                         <span className="stm-cal-going-dot" aria-hidden="true" />
                       ) : null}
                     </button>
@@ -400,16 +429,14 @@ export default function StylistTimesModal({ stylist, service, onClose }) {
               <MessageCircle size={14} strokeWidth={1.9} aria-hidden="true" />
               Message
             </Link>
-            <Link
-              href={continueHref}
-              className={`stm-continue ${continueDisabled ? "is-disabled" : ""}`}
-              aria-disabled={continueDisabled}
-              onClick={(event) => {
-                if (continueDisabled) event.preventDefault();
-              }}
+            <button
+              type="button"
+              className={`stm-continue ${continueDisabled || checkingAuth ? "is-disabled" : ""}`}
+              disabled={continueDisabled || checkingAuth}
+              onClick={handleContinueBooking}
             >
-              Continue booking
-            </Link>
+              {checkingAuth ? "Checking…" : "Continue booking"}
+            </button>
           </div>
         </footer>
       </div>

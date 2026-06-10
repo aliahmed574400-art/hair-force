@@ -27,7 +27,8 @@ export async function POST(request) {
     ];
 
     for (const field of requiredFields) {
-      if (!payload[field]) {
+      const value = payload[field];
+      if (value === undefined || value === null || value === "") {
         return NextResponse.json({ error: `${field} is required.` }, { status: 400 });
       }
     }
@@ -44,14 +45,27 @@ export async function POST(request) {
     const payloadEmail = String(payload.customerEmail || "").toLowerCase().trim();
     const isAdminOverride = sessionUser.role === "admin" && payloadEmail && payloadEmail !== sessionEmail;
 
+    const sessionName = String(sessionUser.name || "").trim();
+    const payloadName = String(payload.customerName || "").trim();
+    const customerName = isAdminOverride ? (payloadName || sessionName) : (sessionName || payloadName);
+
+    if (!customerName) {
+      return NextResponse.json(
+        { error: "Please enter your name before booking." },
+        { status: 400 }
+      );
+    }
+
     const booking = await createBooking({
       ...payload,
       customerId: isAdminOverride ? (payload.customerId || null) : sessionUser.id,
       customerEmail: isAdminOverride ? payloadEmail : sessionEmail,
-      customerName: isAdminOverride ? (payload.customerName || sessionUser.name) : sessionUser.name
+      customerName
     });
     return NextResponse.json({ booking }, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: "Failed to create booking." }, { status: 400 });
+    const message = error?.message || "Failed to create booking.";
+    console.error("[POST /api/bookings] error:", message, error);
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 }

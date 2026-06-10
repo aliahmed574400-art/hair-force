@@ -45,6 +45,7 @@ import {
 import SiteButton from "@/components/ui/SiteButton";
 import VendorAvailabilityAgenda from "@/components/dashboard/VendorAvailabilityAgenda";
 import MessengerWidget from "@/components/ui/MessengerWidget";
+import AddServiceModal from "@/components/dashboard/AddServiceModal";
 import { formatCurrency } from "@/lib/utils";
 import { parseMediaUrl, formatMessageTime, formatMessageDate, isSameDay } from "@/lib/chat-helpers";
 import {
@@ -1215,6 +1216,37 @@ export default function VendorDashboardManager({ user, initialData }) {
     }
   }
 
+  async function markAllNotificationsRead() {
+    if (!dashboard.notifications?.length) return;
+    try {
+      const response = await fetch("/api/dashboard/notifications", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "markAllRead" })
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data.notifications) {
+          setDashboard((current) => ({
+            ...current,
+            notifications: data.notifications,
+            unreadNotificationCount: data.unreadNotificationCount ?? 0
+          }));
+        } else {
+          setDashboard((current) => ({
+            ...current,
+            unreadNotificationCount: 0,
+            notifications: (current.notifications || []).map((n) =>
+              n.readAt ? n : { ...n, readAt: new Date().toISOString() }
+            )
+          }));
+        }
+      }
+    } catch {
+      // Ignore mark-read errors
+    }
+  }
+
   async function handleNotificationClick(notification) {
     if (!notification) return;
 
@@ -1224,6 +1256,13 @@ export default function VendorDashboardManager({ user, initialData }) {
       await fetch(`/api/dashboard/notifications/${notification.id}`, {
         method: "PATCH"
       });
+      setDashboard((current) => ({
+        ...current,
+        unreadNotificationCount: Math.max(0, (current.unreadNotificationCount || 0) - 1),
+        notifications: (current.notifications || []).map((n) =>
+          n.id === notification.id && !n.readAt ? { ...n, readAt: new Date().toISOString() } : n
+        )
+      }));
     } catch {
       // Ignore mark-read errors
     }
@@ -1650,8 +1689,12 @@ export default function VendorDashboardManager({ user, initialData }) {
             <button
               type="button"
               onClick={() => {
-                setShowNotifications((c) => !c);
+                const next = !showNotifications;
+                setShowNotifications(next);
                 setShowUserMenu(false);
+                if (next && unreadNotificationCount > 0) {
+                  markAllNotificationsRead();
+                }
               }}
               style={{
                 position: "relative",
@@ -3005,64 +3048,87 @@ export default function VendorDashboardManager({ user, initialData }) {
         </div>
       ) : null}
 
-      {serviceModal.view ? (
+      {serviceModal.view === "chooser" ? (
+        <AddServiceModal
+          isOpen
+          onClose={() => setServiceModal({ view: "", mode: "create" })}
+          initialServices={bookableServices}
+          initialAddOns={addOns}
+          initialCategories={serviceCategories}
+          onSaveService={async (payload, isEdit) => {
+            await saveServiceForm(
+              {
+                serviceType: "service",
+                title: payload.title,
+                duration: payload.duration,
+                price: String(payload.price ?? ""),
+                description: payload.description || "",
+                parentCategoryId: payload.parentCategoryId || "",
+                depositType: "percentage",
+                depositValue: 0,
+                imageUrl: "",
+                featured: false,
+                bookingMethod: "instant",
+                isActive: true,
+                includedServiceIds: [],
+                sortOrder: 0,
+                metadata: { priceIsStartingAt: true, timeAdded: "after", limitedDays: false, requireDeposit: false }
+              },
+              isEdit ? payload.id : ""
+            );
+          }}
+          onSaveAddon={async (payload, isEdit) => {
+            await saveServiceForm(
+              {
+                serviceType: "addon",
+                title: payload.title,
+                duration: payload.duration || "30 Minutes",
+                price: String(payload.price ?? ""),
+                description: payload.description || "",
+                parentCategoryId: "",
+                depositType: "percentage",
+                depositValue: 0,
+                imageUrl: "",
+                featured: false,
+                bookingMethod: "instant",
+                isActive: true,
+                includedServiceIds: [],
+                sortOrder: 0,
+                metadata: payload.metadata || { timeAdded: "after", limitedDays: false, requireDeposit: false }
+              },
+              isEdit ? payload.id : ""
+            );
+          }}
+          onSaveCategory={async (payload, isEdit) => {
+            await saveServiceForm(
+              {
+                serviceType: "category",
+                title: payload.title,
+                duration: "",
+                price: "0",
+                description: payload.description || "",
+                parentCategoryId: "",
+                depositType: "percentage",
+                depositValue: 0,
+                imageUrl: "",
+                featured: false,
+                bookingMethod: "instant",
+                isActive: true,
+                includedServiceIds: [],
+                sortOrder: 0,
+                metadata: {}
+              },
+              isEdit ? payload.id : ""
+            );
+          }}
+          onDelete={(id) => handleDeleteService(id)}
+        />
+      ) : serviceModal.view ? (
         <div className="vendor-service-modal-backdrop" onClick={() => setServiceModal({ view: "", mode: "create" })}>
           <div
-            className={`vendor-service-modal ${serviceModal.view === "chooser" ? "is-choice" : ""}`}
+            className="vendor-service-modal"
             onClick={(event) => event.stopPropagation()}
           >
-            {serviceModal.view === "chooser" ? (
-              <>
-                <div className="vendor-service-modal-title">
-                  <span />
-                  <h3>Add To The Service Menu</h3>
-                  <button type="button" onClick={() => setServiceModal({ view: "", mode: "create" })} aria-label="Close add menu">
-                    <X size={34} />
-                  </button>
-                </div>
-                <div className="vendor-service-choice-list">
-                  {[
-                    {
-                      title: "Service",
-                      text: "Services are the individual services you provide at your business",
-                      icon: Scissors,
-                      action: openServiceCatalog
-                    },
-                    {
-                      title: "Add-On",
-                      text: "Add-ons are optional extras that can be booked with any service",
-                      icon: Layers2,
-                      action: () => openAddonEditor()
-                    },
-                    {
-                      title: "Service Categories",
-                      text: "Categories allow you to organize your services into groups",
-                      icon: Tag,
-                      action: () => openCategoryEditor()
-                    },
-                    {
-                      title: "Combined Service",
-                      text: "Combined services include more than one service",
-                      icon: ClipboardList,
-                      action: openCombinedSelector
-                    }
-                  ].map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <button key={item.title} type="button" className="vendor-service-choice" onClick={item.action}>
-                        <div>
-                          <strong>{item.title}</strong>
-                          <span>{item.text}</span>
-                        </div>
-                        <Icon size={22} />
-                        <Plus size={28} />
-                      </button>
-                    );
-                  })}
-                </div>
-              </>
-            ) : null}
-
             {serviceModal.view === "catalog" ? (
               <>
                 <div className="vendor-service-catalog-head">
@@ -3405,6 +3471,7 @@ export default function VendorDashboardManager({ user, initialData }) {
                     <th>Time</th>
                     <th>Status</th>
                     <th>Amount</th>
+                    <th style={{ textAlign: "right" }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -3443,12 +3510,101 @@ export default function VendorDashboardManager({ user, initialData }) {
                             </span>
                           </td>
                           <td>{formatCurrency(booking.total)}</td>
+                          <td>
+                            <div style={{ display: "flex", gap: "6px", justifyContent: "flex-end" }}>
+                              {booking.status === "pending_approval" ? (
+                                <>
+                                  <button
+                                    type="button"
+                                    disabled={loading.bookingAction === booking.id}
+                                    onClick={() =>
+                                      performBookingAction(booking.id, { action: "approve" }, "Booking approved.")
+                                    }
+                                    style={{
+                                      padding: "5px 12px",
+                                      borderRadius: "8px",
+                                      border: "none",
+                                      background: "#16a34a",
+                                      color: "#fff",
+                                      fontSize: "0.78rem",
+                                      fontWeight: 600,
+                                      cursor: "pointer",
+                                      opacity: loading.bookingAction === booking.id ? 0.6 : 1,
+                                    }}
+                                  >
+                                    {loading.bookingAction === booking.id ? "…" : "Accept"}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    disabled={loading.bookingAction === booking.id}
+                                    onClick={() =>
+                                      performBookingAction(booking.id, { action: "decline", reason: "" }, "Booking declined.")
+                                    }
+                                    style={{
+                                      padding: "5px 12px",
+                                      borderRadius: "8px",
+                                      border: "1px solid #dc2626",
+                                      background: "#fff",
+                                      color: "#dc2626",
+                                      fontSize: "0.78rem",
+                                      fontWeight: 600,
+                                      cursor: "pointer",
+                                      opacity: loading.bookingAction === booking.id ? 0.6 : 1,
+                                    }}
+                                  >
+                                    {loading.bookingAction === booking.id ? "…" : "Reject"}
+                                  </button>
+                                </>
+                              ) : null}
+                              {(booking.status === "confirmed" || booking.status === "pending_approval") ? (
+                                <button
+                                  type="button"
+                                  disabled={loading.bookingAction === booking.id}
+                                  onClick={() =>
+                                    performBookingAction(booking.id, { action: "cancel", reason: "" }, "Booking cancelled.")
+                                  }
+                                  style={{
+                                    padding: "5px 12px",
+                                    borderRadius: "8px",
+                                    border: "1px solid #64748b",
+                                    background: "#fff",
+                                    color: "#64748b",
+                                    fontSize: "0.78rem",
+                                    fontWeight: 600,
+                                    cursor: "pointer",
+                                    opacity: loading.bookingAction === booking.id ? 0.6 : 1,
+                                  }}
+                                >
+                                  {loading.bookingAction === booking.id ? "…" : "Cancel"}
+                                </button>
+                              ) : null}
+                              <button
+                                type="button"
+                                className="vendor-reference-icon-button"
+                                title="Message customer"
+                                onClick={() => openConversationForBooking(booking.id)}
+                                style={{
+                                  width: 28,
+                                  height: 28,
+                                  display: "grid",
+                                  placeItems: "center",
+                                  borderRadius: "6px",
+                                  border: "1px solid #e2e8f0",
+                                  background: "#fff",
+                                  color: "#475569",
+                                  cursor: "pointer",
+                                }}
+                              >
+                                <MessageSquareText size={14} />
+                              </button>
+                            </div>
+                          </td>
                         </tr>
                       );
                     })
                   ) : (
                     <tr>
-                      <td colSpan="7">
+                      <td colSpan="8">
                         <div className="vendor-reference-empty-state">No bookings in this view yet.</div>
                       </td>
                     </tr>

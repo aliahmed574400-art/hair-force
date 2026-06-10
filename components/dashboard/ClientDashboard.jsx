@@ -945,6 +945,37 @@ export default function ClientDashboard({ user, initialData }) {
     }
   }
 
+  async function markAllNotificationsRead() {
+    if (!dashboard?.notifications?.length) return;
+    try {
+      const response = await fetch("/api/dashboard/notifications", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "markAllRead" })
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data.notifications) {
+          setDashboard((current) => ({
+            ...current,
+            notifications: data.notifications,
+            overview: { ...current.overview, unreadNotifications: data.unreadNotificationCount ?? 0 }
+          }));
+        } else {
+          setDashboard((current) => ({
+            ...current,
+            overview: { ...current.overview, unreadNotifications: 0 },
+            notifications: (current.notifications || []).map((n) =>
+              n.readAt ? n : { ...n, readAt: new Date().toISOString() }
+            )
+          }));
+        }
+      }
+    } catch {
+      // Ignore mark-read errors
+    }
+  }
+
   async function refreshConversations() {
     const data = await fetchJson("/api/dashboard/messages", { method: "GET" });
     setDashboard((current) => ({ ...current, conversations: data.conversations || [] }));
@@ -1626,8 +1657,12 @@ export default function ClientDashboard({ user, initialData }) {
             <button
               type="button"
               onClick={() => {
-                setShowNotifications((c) => !c);
+                const next = !showNotifications;
+                setShowNotifications(next);
                 setShowUserMenu(false);
+                if (next && unreadNotifications > 0) {
+                  markAllNotificationsRead();
+                }
               }}
               style={{
                 position: "relative",
@@ -1701,8 +1736,25 @@ export default function ClientDashboard({ user, initialData }) {
                     <button
                       key={item.id}
                       type="button"
-                      onClick={() => {
+                      onClick={async () => {
                         setShowNotifications(false);
+                        if (!item.readAt) {
+                          try {
+                            await fetch(`/api/dashboard/notifications/${item.id}`, { method: "PATCH" });
+                            setDashboard((current) => ({
+                              ...current,
+                              overview: {
+                                ...current.overview,
+                                unreadNotifications: Math.max(0, (current.overview?.unreadNotifications || 0) - 1)
+                              },
+                              notifications: (current.notifications || []).map((n) =>
+                                n.id === item.id && !n.readAt ? { ...n, readAt: new Date().toISOString() } : n
+                              )
+                            }));
+                          } catch {
+                            // Ignore mark-read errors
+                          }
+                        }
                         if (item.ctaHref === "/dashboard?tab=messages" && item.metadata?.conversationId) {
                           setActiveConversationId(item.metadata.conversationId);
                           setWidgetOpen(true);
