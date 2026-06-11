@@ -110,9 +110,6 @@ function NotificationDetailModal({ detail, onClose, onOpenSection }) {
       >
         <div className="vendor-notification-modal-head">
           <div>
-            <div className="vendor-notification-modal-eyebrow">
-              {conversation ? "Client message" : "Booking activity"}
-            </div>
             <h3 id="vendor-notification-modal-title">{notification?.title || "Notification"}</h3>
           </div>
           <button
@@ -469,7 +466,6 @@ export default function VendorNotificationsPopover({ className = "" }) {
         <div ref={popoverRef} className="vendor-notifications-popover-card" style={popoverStyle}>
           <div className="vendor-notifications-popover-head">
             <div>
-              <span className="vendor-notifications-popover-eyebrow">Activity</span>
               <h3>Notifications</h3>
             </div>
             <span className="vendor-notifications-popover-count">

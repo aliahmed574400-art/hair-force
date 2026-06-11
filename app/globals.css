@@ -11409,14 +11409,15 @@ textarea {
 }
 
 .vendor-settings-tab:hover {
-  background: #fafafa;
+  background: transparent;
   color: #111827;
 }
 
 .vendor-settings-tab.active {
-  border-color: rgba(0, 112, 243, 0.2);
-  background: #f0f7ff;
+  border-color: transparent;
+  background: transparent;
   color: #0070f3;
+  font-weight: 700;
 }
 
 .vendor-settings-tab svg {
@@ -11527,8 +11528,8 @@ textarea {
   align-items: center;
   min-height: 32px;
   padding: 0 12px;
-  border-radius: 999px;
-  background: #f7fee7;
+  border-radius: 0;
+  background: transparent;
   color: #365314;
   font-size: 0.86rem;
   white-space: nowrap;
@@ -11878,14 +11879,15 @@ textarea {
 }
 
 .vendor-dashboard-tab-item:hover {
-  background: #f5f5f5;
+  background: transparent;
   color: #111827;
 }
 
 .vendor-dashboard-tab-item.active {
-  background: #f0f7ff;
-  border-color: rgba(0, 112, 243, 0.15);
+  background: transparent;
+  border-color: transparent;
   color: #0070f3;
+  font-weight: 700;
 }
 
 /* === Card / Panel === */
@@ -11965,14 +11967,33 @@ textarea {
   display: inline-flex;
   align-items: center;
   width: fit-content;
-  padding: 5px 9px;
-  border-radius: 999px;
-  background: #f8fafc;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
   color: #94a3b8;
   font-size: 0.68rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
+}
+
+/* Remove background/border-radius from small text labels across vendor dashboard */
+.vendor-reference-stat-meta,
+.vendor-reference-calendar-weekdays span,
+.vendor-reference-calendar-legend span,
+.vendor-reference-lineup-service,
+.vendor-reference-lineup-time,
+.vendor-service-row span,
+.vendor-service-row em,
+.vendor-addon-row span,
+.vendor-agenda-weekday span,
+.vendor-agenda-weekday em,
+.vendor-agenda-time-label span,
+.vendor-availability-calendar-grid .vendor-agenda-weekday span,
+.vendor-availability-calendar-grid .vendor-agenda-weekday em,
+.vendor-availability-calendar-grid .vendor-agenda-time-label span {
+  background: transparent !important;
+  border-radius: 0 !important;
 }
 
 .vendor-reference-stat-icon {
@@ -12057,8 +12078,8 @@ textarea {
   display: grid;
   align-content: space-between;
   justify-items: center;
-  border-radius: 18px;
-  background: #f8fafc;
+  border-radius: 0;
+  background: transparent;
   color: #334155;
   font-size: 0.82rem;
   font-weight: 600;
@@ -12075,22 +12096,22 @@ textarea {
 }
 
 .vendor-reference-calendar-cell.is-booked {
-  background: #dbeafe;
+  background: transparent;
   color: #1d4ed8;
 }
 
 .vendor-reference-calendar-cell.is-pending {
-  background: #e0f2fe;
+  background: transparent;
   color: #0369a1;
 }
 
 .vendor-reference-calendar-cell.is-completed {
-  background: #eff6ff;
+  background: transparent;
   color: #1e3a8a;
 }
 
 .vendor-reference-calendar-cell.is-cancelled {
-  background: #e5eefc;
+  background: transparent;
   color: #64748b;
 }
 
@@ -12200,9 +12221,9 @@ textarea {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 4px;
-  border-radius: 999px;
-  background: #f8fafc;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
 }
 
 .vendor-reference-filter-button {
@@ -12219,8 +12240,9 @@ textarea {
 }
 
 .vendor-reference-filter-button.active {
-  background: #111827;
-  color: #ffffff;
+  background: transparent;
+  color: #111827;
+  font-weight: 700;
 }
 
 .vendor-reference-table-wrap {
@@ -12268,17 +12290,17 @@ textarea {
 }
 
 .vendor-reference-status-pill.warning {
-  background: #e0f2fe;
+  background: transparent;
   color: #0369a1;
 }
 
 .vendor-reference-status-pill.success {
-  background: #dbeafe;
+  background: transparent;
   color: #1d4ed8;
 }
 
 .vendor-reference-status-pill.muted {
-  background: #f1f5f9;
+  background: transparent;
   color: #64748b;
 }
 
@@ -12324,15 +12346,26 @@ textarea {
 
 .vendor-reference-shell .surface,
 .vendor-reference-shell .timeline-item,
-.vendor-reference-shell .table-item,
 .vendor-reference-shell .vendor-portfolio-item,
 .vendor-reference-shell .vendor-reschedule-panel,
 .vendor-reference-shell .vendor-conversation-card,
-.vendor-reference-shell .vendor-message-bubble,
-.vendor-reference-shell .chip {
+.vendor-reference-shell .vendor-message-bubble {
   border-color: #e5e5e5;
   background: #fafafa;
   color: #334155;
+}
+
+.vendor-reference-shell .table-item {
+  border-color: #e5e5e5;
+  background: transparent;
+  color: #334155;
+}
+
+.vendor-reference-shell .chip {
+  background: transparent;
+  color: #334155;
+  border-radius: 0;
+  border: 0;
 }
 
 .vendor-reference-shell .form-control {
@@ -12350,7 +12383,12 @@ textarea {
 .vendor-reference-shell .badge,
 .vendor-reference-shell .badge-accent,
 .vendor-reference-shell .chip {
-  border-radius: 999px;
+  background: transparent;
+  border-radius: 0;
+}
+
+.vendor-reference-shell .badge-accent {
+  color: #0369a1;
 }
 
 .vendor-reference-shell [data-slot="button"] {
@@ -12427,14 +12465,15 @@ textarea {
 }
 
 .vendor-profile-tab:hover {
-  background: #f5f5f5;
+  background: transparent;
   color: #111827;
 }
 
 .vendor-profile-tab.active {
-  background: #f0f7ff;
-  border-color: rgba(0, 112, 243, 0.15);
+  background: transparent;
+  border-color: transparent;
   color: #0070f3;
+  font-weight: 700;
 }
 
 .vendor-profile-form,
@@ -12466,6 +12505,7 @@ textarea {
   color: #334155;
   font-size: 0.875rem;
   font-weight: 500;
+  background: transparent;
 }
 
 .vendor-profile-field em,
@@ -12930,14 +12970,15 @@ textarea {
 }
 
 .vendor-service-tabs button:hover {
-  background: #f5f5f5;
+  background: transparent;
   color: #111827;
 }
 
 .vendor-service-tabs button.active {
-  background: #f0f7ff;
-  border-color: rgba(0, 112, 243, 0.15);
+  background: transparent;
+  border-color: transparent;
   color: #0070f3;
+  font-weight: 700;
 }
 
 .vendor-services-rule {
@@ -13789,7 +13830,7 @@ textarea {
 .vendor-agenda-month-cell.active,
 .vendor-agenda-day-column.active {
   border-color: rgba(147, 197, 253, 0.98);
-  background: #eef6ff;
+  background: transparent;
   box-shadow: none;
 }
 
@@ -14043,7 +14084,7 @@ textarea {
   min-height: 92px;
   padding: 14px 16px;
   border-left: 0;
-  background: #fbfdff;
+  background: transparent;
   text-align: left;
 }
 
@@ -14247,40 +14288,40 @@ textarea {
 .vendor-agenda-block.tone-booking,
 .vendor-agenda-month-pill.tone-booking,
 .vendor-agenda-legend .tone-booking {
-  background: #eefcf5;
+  background: transparent;
   color: #1d9a52;
 }
 
 .vendor-agenda-block.tone-warning,
 .vendor-agenda-month-pill.tone-warning {
-  background: #fff9eb;
+  background: transparent;
   color: #d6a209;
 }
 
 .vendor-agenda-block.tone-muted,
 .vendor-agenda-month-pill.tone-muted {
-  background: #f7f2ff;
+  background: transparent;
   color: #8657d2;
 }
 
 .vendor-agenda-block.tone-reserved,
 .vendor-agenda-month-pill.tone-reserved,
 .vendor-agenda-legend .tone-reserved {
-  background: #edf4ff;
+  background: transparent;
   color: #1d4ed8;
 }
 
 .vendor-agenda-block.tone-off-time,
 .vendor-agenda-month-pill.tone-off-time,
 .vendor-agenda-legend .tone-off-time {
-  background: #fff3e8;
+  background: transparent;
   color: #c96b22;
 }
 
 .vendor-agenda-block.tone-extra-hours,
 .vendor-agenda-month-pill.tone-extra-hours,
 .vendor-agenda-legend .tone-extra-hours {
-  background: #ecf7ff;
+  background: transparent;
   color: #0f84c7;
 }
 
@@ -16266,6 +16307,10 @@ textarea {
   display: grid;
 }
 
+.vendor-availability-shell > .vendor-dashboard-tabs {
+  margin-top: 0;
+}
+
 .vendor-availability-frame {
   padding: 0;
   display: grid;
@@ -16515,11 +16560,6 @@ textarea {
 
 .vendor-availability-calendar-main {
   min-width: 0;
-  padding: 18px;
-  border: 1px solid rgba(226, 232, 240, 0.96);
-  border-radius: 28px;
-  background: #ffffff;
-  box-shadow: none;
   overflow-x: auto;
 }
 

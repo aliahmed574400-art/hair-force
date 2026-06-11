@@ -1247,7 +1247,7 @@ export default function VendorAvailabilityAgenda({
           <section className="vendor-availability-stage">
             {activeTab === "calendar" ? (
               <div className="vendor-availability-stage-panel">
-                <div className="vendor-availability-stage-head vendor-dashboard-header" style={{ marginBottom: 24 }}>
+                <div className="vendor-availability-stage-head" style={{ marginBottom: 24 }}>
                   <div>
                     <h3 className="vendor-dashboard-header-title">{agenda?.rangeLabel || "Calendar"}</h3>
                     <p>See bookings, off times, vacations, and open slots in the same live calendar.</p>

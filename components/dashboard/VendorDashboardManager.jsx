@@ -3026,7 +3026,6 @@ export default function VendorDashboardManager({ user, initialData }) {
       {false && activeSection === "services" ? (
         <div className="dashboard-layout" style={{ marginTop: 18 }}>
           <div className="dashboard-card">
-            <div className="eyebrow">Service manager</div>
             <h3 style={{ margin: "12px 0 16px", fontFamily: "var(--font-display)", fontSize: "2rem" }}>
               Add or edit bookable services
             </h3>
@@ -3073,7 +3072,6 @@ export default function VendorDashboardManager({ user, initialData }) {
           <div className="dashboard-card">
             <div className="row-between" style={{ marginBottom: 14 }}>
               <div>
-                <div className="eyebrow">Published services</div>
                 <h3 style={{ margin: "10px 0 0", fontFamily: "var(--font-display)", fontSize: "2rem" }}>
                   Current booking menu
                 </h3>
@@ -3711,13 +3709,7 @@ export default function VendorDashboardManager({ user, initialData }) {
       ) : null}
 
       {activeSection === "messages" ? (
-        <div className="vendor-dashboard-tab vendor-dashboard-messages">
-          <div className="vendor-dashboard-header">
-            <div>
-              <h3 className="vendor-dashboard-header-title">Chats</h3>
-            </div>
-          </div>
-
+        <div className="vendor-dashboard-messages" style={{ marginTop: 18 }}>
           {/* Conversation List */}
           <div className="dashboard-card vendor-messenger-list">
             <div className="vendor-messenger-list-header">
@@ -3736,22 +3728,37 @@ export default function VendorDashboardManager({ user, initialData }) {
               />
             </div>
             <div className="vendor-messenger-conversations">
-              {conversations.filter((c) => {
+              {(() => {
                 const term = conversationSearch.toLowerCase();
-                if (!term) return true;
-                return (
-                  (c.customerName || "").toLowerCase().includes(term) ||
-                  (c.serviceName || "").toLowerCase().includes(term)
-                );
-              }).length ? (
-                conversations.filter((c) => {
-                  const term = conversationSearch.toLowerCase();
+                const filtered = conversations.filter((c) => {
                   if (!term) return true;
                   return (
                     (c.customerName || "").toLowerCase().includes(term) ||
                     (c.serviceName || "").toLowerCase().includes(term)
                   );
-                }).map((conversation) => (
+                });
+                // Deduplicate by clientId — keep the most recent conversation per client
+                const seen = new Map();
+                filtered.forEach((c) => {
+                  const key = c.clientId || c.id;
+                  const existing = seen.get(key);
+                  if (!existing) {
+                    seen.set(key, c);
+                  } else if ((c.lastMessageAt || c.createdAt) > (existing.lastMessageAt || existing.createdAt)) {
+                    seen.set(key, c);
+                  }
+                });
+                const uniqueConversations = Array.from(seen.values());
+
+                if (!uniqueConversations.length) {
+                  return (
+                    <div className="vendor-messenger-empty">
+                      <p>No conversations found.</p>
+                    </div>
+                  );
+                }
+
+                return uniqueConversations.map((conversation) => (
                   <button
                     key={conversation.id}
                     type="button"
@@ -3778,12 +3785,8 @@ export default function VendorDashboardManager({ user, initialData }) {
                       </div>
                     </div>
                   </button>
-                ))
-              ) : (
-                <div className="vendor-messenger-empty">
-                  <p>No conversations found.</p>
-                </div>
-              )}
+                ));
+              })()}
             </div>
           </div>
 
