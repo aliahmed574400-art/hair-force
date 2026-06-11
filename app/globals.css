@@ -11200,18 +11200,6 @@ textarea {
   color: #173064;
 }
 
-.vendor-dashboard-tab span {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 22px;
-  height: 22px;
-  padding: 0 6px;
-  border-radius: 999px;
-  background: rgba(59, 130, 246, 0.18);
-  font-size: 0.78rem;
-}
-
 .vendor-dashboard-panel,
 .vendor-dashboard-messages-list,
 .vendor-dashboard-messages-thread {
