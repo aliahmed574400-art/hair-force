@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useSocket } from "@/components/providers/SocketProvider";
 import {
@@ -50,7 +50,15 @@ import { useWebRTCCall } from "@/hooks/useWebRTCCall";
 import { VoiceCallUI, MicPermissionModal } from "@/components/VoiceCallUI";
 import { VendorStatusToggle } from "@/components/VendorStatusToggle";
 import { formatCurrency } from "@/lib/utils";
-import { parseMediaUrl, formatMessageTime, formatMessageDate, isSameDay } from "@/lib/chat-helpers";
+import {
+  parseMediaUrl,
+  formatMessageTime,
+  formatMessageDate,
+  isSameDay,
+  groupConversations,
+  getConversationGroupById,
+  isInConversationGroup
+} from "@/lib/chat-helpers";
 import {
   CALENDAR_WEEKDAYS,
   DURATION_OPTIONS,
@@ -185,6 +193,7 @@ export default function VendorDashboardManager({ user, initialData }) {
   const [lightboxImage, setLightboxImage] = useState("");
   const [showAttachmentMenu, setShowAttachmentMenu] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const vendorMessagesRef = useRef(null);
   const [rescheduleState, setRescheduleState] = useState({
     bookingId: "",
     loading: false,
@@ -245,44 +254,44 @@ export default function VendorDashboardManager({ user, initialData }) {
     }
   }, [callAPI.error, callAPI.callState]);
 
-  // Socket.IO: join conversation rooms and listen for new messages
+
+  const joinedConversationRoomsRef = useRef(new Set());
+
+  // Socket.IO: join every conversation room so messages arrive in real time
   useEffect(() => {
     if (!socket) return;
 
-    function handleNewMessage({ conversationId: incomingId, messages: incomingMessages }) {
-      if (incomingId === activeConversationId) {
-        setThreadState((current) => ({
-          ...current,
-          messages: incomingMessages || current.messages,
-          sending: false,
-          error: ""
-        }));
-      }
-      // Refresh conversation list to update previews/unread counts
-      refreshConversations().catch(() => {});
+    const joined = joinedConversationRoomsRef.current;
+
+    function joinAllRooms() {
+      const ids = (dashboard.conversations || []).map((conversation) => conversation.id);
+
+      ids.forEach((id) => {
+        if (!joined.has(id)) {
+          socket.emit("join_conversation", id);
+          joined.add(id);
+        }
+      });
+
+      joined.forEach((id) => {
+        if (!ids.includes(id)) {
+          socket.emit("leave_conversation", id);
+          joined.delete(id);
+        }
+      });
     }
 
-    function handleNewNotification() {
-      refreshNotifications().catch(() => {});
-    }
-
-    socket.on("message:new", handleNewMessage);
-    socket.on("notification:new", handleNewNotification);
+    joinAllRooms();
+    socket.on("connect", joinAllRooms);
 
     return () => {
-      socket.off("message:new", handleNewMessage);
-      socket.off("notification:new", handleNewNotification);
+      socket.off("connect", joinAllRooms);
+      joined.forEach((id) => {
+        socket.emit("leave_conversation", id);
+      });
+      joined.clear();
     };
-  }, [socket, activeConversationId]);
-
-  // Socket.IO: join/leave conversation rooms as active conversation changes
-  useEffect(() => {
-    if (!socket || !activeConversationId) return;
-    socket.emit("join_conversation", activeConversationId);
-    return () => {
-      socket.emit("leave_conversation", activeConversationId);
-    };
-  }, [socket, activeConversationId]);
+  }, [socket, dashboard.conversations]);
 
   const bookings = dashboard.bookings || [];
   const services = dashboard.services || [];
@@ -333,8 +342,16 @@ export default function VendorDashboardManager({ user, initialData }) {
       .filter((group) => group.items.length);
   }, [serviceSearch]);
   const conversations = dashboard.conversations || [];
-  const unreadMessages = conversations.reduce(
-    (sum, item) => sum + Number(item.vendorUnreadCount || 0),
+  const displayedConversations = useMemo(
+    () => groupConversations(conversations, (c) => c.clientId, "vendorUnreadCount"),
+    [conversations]
+  );
+  const displayedConversationsRef = useRef(displayedConversations);
+  useEffect(() => {
+    displayedConversationsRef.current = displayedConversations;
+  }, [displayedConversations]);
+  const unreadMessages = displayedConversations.reduce(
+    (sum, item) => sum + Number(item.aggregatedUnread || 0),
     0
   );
   const uniqueClientCount = useMemo(
@@ -385,7 +402,8 @@ export default function VendorDashboardManager({ user, initialData }) {
     ],
     [closedBookings.length, completedBookings.length, uniqueClientCount]
   );
-  const activeConversation = conversations.find((item) => item.id === activeConversationId) || null;
+  const activeConversation =
+    getConversationGroupById(displayedConversations, activeConversationId) || null;
 
   const handleCallClick = useCallback(() => {
     if (!activeConversation?.clientId) return;
@@ -581,18 +599,20 @@ export default function VendorDashboardManager({ user, initialData }) {
   }, [initialData, user]);
 
   useEffect(() => {
-    if (!activeConversationId && conversations.length) {
-      setActiveConversationId(conversations[0].id);
-    }
-  }, [activeConversationId, conversations]);
-
-  useEffect(() => {
-    if (activeSection !== "messages" || !activeConversationId) {
+    if (!activeConversationId && displayedConversations.length) {
+      setActiveConversationId(displayedConversations[0].id);
       return;
     }
 
-    loadConversation(activeConversationId);
-  }, [activeConversationId, activeSection]);
+    if (
+      activeConversationId &&
+      displayedConversations.length &&
+      !displayedConversations.some((conversation) => conversation.id === activeConversationId)
+    ) {
+      setActiveConversationId(displayedConversations[0].id);
+    }
+  }, [activeConversationId, displayedConversations]);
+
 
   async function refreshFromResponse(response) {
     const parsed = await safeParseResponse(response);
@@ -1354,32 +1374,36 @@ export default function VendorDashboardManager({ user, initialData }) {
     setActiveConversationId(conversationId);
   }
 
-  async function loadConversation(conversationId) {
+  const loadConversation = useCallback(async (conversationId) => {
     if (!conversationId) {
       return;
     }
 
+    const group = getConversationGroupById(displayedConversationsRef.current, conversationId);
+    const ids = group?.relatedIds?.length ? group.relatedIds : [conversationId];
+
     setThreadState((current) => ({ ...current, loading: true, error: "" }));
 
     try {
-      const response = await fetch(`/api/dashboard/messages/${conversationId}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Unable to load conversation.");
-      }
+      const results = await Promise.all(
+        ids.map((id) => fetch(`/api/dashboard/messages/${id}`).then((res) => res.json()))
+      );
+      const merged = results
+        .flatMap((result) => result.messages || [])
+        .sort((left, right) => new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime());
 
       setThreadState((current) => ({
         ...current,
         loading: false,
-        messages: data.messages || [],
+        messages: merged,
         error: ""
       }));
       await refreshConversations();
     } catch (error) {
       setThreadState((current) => ({ ...current, loading: false, error: error.message }));
     }
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleDeleteAccount() {
     if (typeof window !== "undefined") {
@@ -1650,11 +1674,25 @@ export default function VendorDashboardManager({ user, initialData }) {
       return;
     }
 
+    const optimisticId = `optimistic-${Date.now()}`;
+    const now = new Date().toISOString();
+
     setThreadState((current) => ({
       ...current,
       sending: true,
       error: "",
-      draft: ""
+      draft: "",
+      messages: [
+        ...current.messages,
+        {
+          id: optimisticId,
+          conversationId: activeConversationId,
+          senderRole: "vendor",
+          body: bodyText.trim(),
+          createdAt: now,
+          updatedAt: now
+        }
+      ]
     }));
 
     try {
@@ -1673,8 +1711,15 @@ export default function VendorDashboardManager({ user, initialData }) {
         ...current,
         sending: false,
         draft: "",
-        messages: data.messages || [],
-        error: ""
+        error: "",
+        messages: [
+          ...current.messages.filter((message) => message.id !== optimisticId),
+          ...(data.messages || [])
+        ]
+          .filter((message, index, array) =>
+            array.findIndex((item) => item.id === message.id) === index
+          )
+          .sort((left, right) => new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime())
       }));
       try {
         await refreshConversations();
@@ -1682,7 +1727,12 @@ export default function VendorDashboardManager({ user, initialData }) {
         // Refresh failure is non-critical; polling will catch up
       }
     } catch (error) {
-      setThreadState((current) => ({ ...current, sending: false, error: error.message }));
+      setThreadState((current) => ({
+        ...current,
+        sending: false,
+        error: error.message,
+        messages: current.messages.filter((message) => message.id !== optimisticId)
+      }));
     }
   }
 
@@ -1733,6 +1783,63 @@ export default function VendorDashboardManager({ user, initialData }) {
     handleSectionSelect("messages");
     setWidgetOpen(false);
   }, [handleSectionSelect]);
+
+  // Load conversation thread when active conversation/section changes
+  useEffect(() => {
+    if (activeSection !== "messages" || !activeConversationId) {
+      return;
+    }
+
+    loadConversation(activeConversationId);
+  }, [activeConversationId, activeSection, loadConversation]);
+
+  // Scroll to the latest message when a conversation loads or messages change
+  useEffect(() => {
+    const container = vendorMessagesRef.current;
+    if (!container) return;
+    container.scrollTop = container.scrollHeight;
+  }, [threadState.messages.length, activeConversationId]);
+
+  // Socket.IO: join conversation rooms and listen for new messages
+  useEffect(() => {
+    if (!socket) return;
+
+    function handleNewMessage({ conversationId: incomingId, messages: incomingMessages }) {
+      if (isInConversationGroup(displayedConversationsRef.current, activeConversationId, incomingId)) {
+        if (incomingId === activeConversationId) {
+          setThreadState((current) => {
+            const related = current.messages.filter((message) => message.conversationId !== incomingId);
+            const merged = [...related, ...(incomingMessages || [])]
+              .filter((message, index, array) => array.findIndex((item) => item.id === message.id) === index)
+              .sort((left, right) => new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime());
+            return {
+              ...current,
+              messages: merged,
+              sending: false,
+              error: ""
+            };
+          });
+        } else {
+          // A related conversation was updated; reload the merged thread
+          loadConversation(activeConversationId).catch(() => {});
+        }
+      }
+      // Refresh conversation list to update previews/unread counts
+      refreshConversations().catch(() => {});
+    }
+
+    function handleNewNotification() {
+      refreshNotifications().catch(() => {});
+    }
+
+    socket.on("message:new", handleNewMessage);
+    socket.on("notification:new", handleNewNotification);
+
+    return () => {
+      socket.off("message:new", handleNewMessage);
+      socket.off("notification:new", handleNewNotification);
+    };
+  }, [socket, activeConversationId, loadConversation]);
 
   return (
     <div className="vendor-reference-shell">
@@ -3815,27 +3922,15 @@ export default function VendorDashboardManager({ user, initialData }) {
             <div className="vendor-messenger-conversations">
               {(() => {
                 const term = conversationSearch.toLowerCase();
-                const filtered = conversations.filter((c) => {
+                const visible = displayedConversations.filter((c) => {
                   if (!term) return true;
                   return (
                     (c.customerName || "").toLowerCase().includes(term) ||
                     (c.serviceName || "").toLowerCase().includes(term)
                   );
                 });
-                // Deduplicate by clientId — keep the most recent conversation per client
-                const seen = new Map();
-                filtered.forEach((c) => {
-                  const key = c.clientId || c.id;
-                  const existing = seen.get(key);
-                  if (!existing) {
-                    seen.set(key, c);
-                  } else if ((c.lastMessageAt || c.createdAt) > (existing.lastMessageAt || existing.createdAt)) {
-                    seen.set(key, c);
-                  }
-                });
-                const uniqueConversations = Array.from(seen.values());
 
-                if (!uniqueConversations.length) {
+                if (!visible.length) {
                   return (
                     <div className="vendor-messenger-empty">
                       <p>No conversations found.</p>
@@ -3843,7 +3938,7 @@ export default function VendorDashboardManager({ user, initialData }) {
                   );
                 }
 
-                return uniqueConversations.map((conversation) => (
+                return visible.map((conversation) => (
                   <button
                     key={conversation.id}
                     type="button"
@@ -3864,8 +3959,8 @@ export default function VendorDashboardManager({ user, initialData }) {
                         <span className="vendor-messenger-chat-preview">
                           {conversation.lastMessagePreview || "No messages yet"}
                         </span>
-                        {conversation.vendorUnreadCount ? (
-                          <span className="vendor-messenger-unread-badge">{conversation.vendorUnreadCount}</span>
+                        {conversation.aggregatedUnread ? (
+                          <span className="vendor-messenger-unread-badge">{conversation.aggregatedUnread}</span>
                         ) : null}
                       </div>
                     </div>
@@ -3904,7 +3999,7 @@ export default function VendorDashboardManager({ user, initialData }) {
                   </div>
                 </div>
 
-                <div className="vendor-messenger-messages">
+                <div ref={vendorMessagesRef} className="vendor-messenger-messages">
                   {threadState.loading ? (
                     <p className="muted tiny" style={{ textAlign: "center", margin: "auto" }}>Loading conversation...</p>
                   ) : null}

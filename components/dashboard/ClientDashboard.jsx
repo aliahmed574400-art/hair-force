@@ -34,7 +34,15 @@ import {
   X
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
-import { parseMediaUrl, formatMessageTime, formatMessageDate, isSameDay } from "@/lib/chat-helpers";
+import {
+  parseMediaUrl,
+  formatMessageTime,
+  formatMessageDate,
+  isSameDay,
+  groupConversations,
+  getConversationGroupById,
+  isInConversationGroup
+} from "@/lib/chat-helpers";
 import { uploadFile, safeParseResponse, errorFromResponse } from "@/lib/client-upload-utils";
 import MessengerWidget from "@/components/ui/MessengerWidget";
 import { PushNotificationToggle } from "@/components/PushNotificationToggle";
@@ -600,6 +608,7 @@ export default function ClientDashboard({ user, initialData }) {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showConversations, setShowConversations] = useState(false);
+  const clientMessagesRef = useRef(null);
   const [expandedBookingId, setExpandedBookingId] = useState("");
   const [rescheduleState, setRescheduleState] = useState({
     bookingId: "",
@@ -679,44 +688,44 @@ export default function ClientDashboard({ user, initialData }) {
     }
   }, [callAPI.error, callAPI.callState]);
 
-  // Socket.IO: join conversation rooms and listen for new messages
+
+  const joinedConversationRoomsRef = useRef(new Set());
+
+  // Socket.IO: join every conversation room so messages arrive in real time
   useEffect(() => {
     if (!socket) return;
 
-    function handleNewMessage({ conversationId: incomingId, messages: incomingMessages }) {
-      if (incomingId === activeConversationId) {
-        setMessageThread((current) => ({
-          ...current,
-          messages: incomingMessages || current.messages,
-          sending: false,
-          error: ""
-        }));
-      }
-      // Refresh conversation list to update previews/unread counts
-      refreshConversations().catch(() => {});
+    const joined = joinedConversationRoomsRef.current;
+
+    function joinAllRooms() {
+      const ids = (dashboard?.conversations || []).map((conversation) => conversation.id);
+
+      ids.forEach((id) => {
+        if (!joined.has(id)) {
+          socket.emit("join_conversation", id);
+          joined.add(id);
+        }
+      });
+
+      joined.forEach((id) => {
+        if (!ids.includes(id)) {
+          socket.emit("leave_conversation", id);
+          joined.delete(id);
+        }
+      });
     }
 
-    function handleNewNotification() {
-      refreshNotifications().catch(() => {});
-    }
-
-    socket.on("message:new", handleNewMessage);
-    socket.on("notification:new", handleNewNotification);
+    joinAllRooms();
+    socket.on("connect", joinAllRooms);
 
     return () => {
-      socket.off("message:new", handleNewMessage);
-      socket.off("notification:new", handleNewNotification);
+      socket.off("connect", joinAllRooms);
+      joined.forEach((id) => {
+        socket.emit("leave_conversation", id);
+      });
+      joined.clear();
     };
-  }, [socket, activeConversationId]);
-
-  // Socket.IO: join/leave conversation rooms as active conversation changes
-  useEffect(() => {
-    if (!socket || !activeConversationId) return;
-    socket.emit("join_conversation", activeConversationId);
-    return () => {
-      socket.emit("leave_conversation", activeConversationId);
-    };
-  }, [socket, activeConversationId]);
+  }, [socket, dashboard?.conversations]);
 
   useEffect(() => {
     setActiveTab(getValidTab(searchParams.get("tab")));
@@ -745,20 +754,6 @@ export default function ClientDashboard({ user, initialData }) {
     return () => window.clearTimeout(timeoutId);
   }, [feedback.message]);
 
-  useEffect(() => {
-    const nextConversations = dashboard?.conversations || [];
-
-    if (!nextConversations.length) {
-      if (activeConversationId) {
-        setActiveConversationId("");
-      }
-      return;
-    }
-
-    if (!nextConversations.some((conversation) => conversation.id === activeConversationId)) {
-      setActiveConversationId(nextConversations[0].id);
-    }
-  }, [activeConversationId, dashboard?.conversations]);
 
   useEffect(() => {
     if (activeTab !== "payments") {
@@ -803,13 +798,6 @@ export default function ClientDashboard({ user, initialData }) {
     };
   }, [avatarEditor.open]);
 
-  useEffect(() => {
-    if (activeTab !== "messages" || !activeConversationId) {
-      return;
-    }
-
-    loadConversation(activeConversationId);
-  }, [activeConversationId, activeTab]);
 
   useEffect(() => {
     if (!showNotifications && !showUserMenu && !showConversations) return;
@@ -836,8 +824,16 @@ export default function ClientDashboard({ user, initialData }) {
   const activeCopy = HEADER_COPY[activeTab] || HEADER_COPY.overview;
   const displayName = dashboard?.profile?.name || user.name || "Client";
   const conversations = dashboard?.conversations || [];
+  const displayedConversations = useMemo(
+    () => groupConversations(conversations, (c) => c.vendorSlug, "clientUnreadCount"),
+    [conversations]
+  );
+  const displayedConversationsRef = useRef(displayedConversations);
+  useEffect(() => {
+    displayedConversationsRef.current = displayedConversations;
+  }, [displayedConversations]);
   const activeConversation =
-    conversations.find((conversation) => conversation.id === activeConversationId) || null;
+    getConversationGroupById(displayedConversations, activeConversationId) || null;
 
   // Fetch vendor call status when conversation changes
   useEffect(() => {
@@ -1672,26 +1668,36 @@ export default function ClientDashboard({ user, initialData }) {
     }
   }
 
-  async function loadConversation(conversationId) {
+  const loadConversation = useCallback(async (conversationId) => {
     if (!conversationId) {
       return;
     }
 
+    const group = getConversationGroupById(displayedConversationsRef.current, conversationId);
+    const ids = group?.relatedIds?.length ? group.relatedIds : [conversationId];
+
     setMessageThread((current) => ({ ...current, loading: true, error: "" }));
 
     try {
-      const data = await fetchJson(`/api/dashboard/messages/${conversationId}`, { method: "GET" });
+      const results = await Promise.all(
+        ids.map((id) => fetchJson(`/api/dashboard/messages/${id}`, { method: "GET" }))
+      );
+      const merged = results
+        .flatMap((result) => result.messages || [])
+        .sort((left, right) => new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime());
+
       setMessageThread((current) => ({
         ...current,
         loading: false,
-        messages: data.messages || [],
+        messages: merged,
         error: ""
       }));
       await refreshConversations();
     } catch (error) {
       setMessageThread((current) => ({ ...current, loading: false, error: error.message }));
     }
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleOpenConversationForBooking(bookingId) {
     handleTabChange("messages");
@@ -1726,11 +1732,25 @@ export default function ClientDashboard({ user, initialData }) {
       return;
     }
 
+    const optimisticId = `optimistic-${Date.now()}`;
+    const now = new Date().toISOString();
+
     setMessageThread((current) => ({
       ...current,
       sending: true,
       error: "",
-      draft: ""
+      draft: "",
+      messages: [
+        ...current.messages,
+        {
+          id: optimisticId,
+          conversationId: activeConversationId,
+          senderRole: "client",
+          body: bodyText.trim(),
+          createdAt: now,
+          updatedAt: now
+        }
+      ]
     }));
 
     try {
@@ -1743,8 +1763,15 @@ export default function ClientDashboard({ user, initialData }) {
         ...current,
         sending: false,
         draft: "",
-        messages: data.messages || [],
-        error: ""
+        error: "",
+        messages: [
+          ...current.messages.filter((message) => message.id !== optimisticId),
+          ...(data.messages || [])
+        ]
+          .filter((message, index, array) =>
+            array.findIndex((item) => item.id === message.id) === index
+          )
+          .sort((left, right) => new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime())
       }));
       try {
         await refreshConversations();
@@ -1753,7 +1780,12 @@ export default function ClientDashboard({ user, initialData }) {
       }
       setFeedback({ type: "success", message: "Message sent." });
     } catch (error) {
-      setMessageThread((current) => ({ ...current, sending: false, error: error.message }));
+      setMessageThread((current) => ({
+        ...current,
+        sending: false,
+        error: error.message,
+        messages: current.messages.filter((message) => message.id !== optimisticId)
+      }));
     }
   }
 
@@ -1773,6 +1805,79 @@ export default function ClientDashboard({ user, initialData }) {
     handleTabChange("messages");
     setWidgetOpen(false);
   }, [handleTabChange]);
+
+  // Keep active conversation inside the deduplicated list
+  useEffect(() => {
+    const nextConversations = displayedConversations;
+
+    if (!nextConversations.length) {
+      if (activeConversationId) {
+        setActiveConversationId("");
+      }
+      return;
+    }
+
+    if (!nextConversations.some((conversation) => conversation.id === activeConversationId)) {
+      setActiveConversationId(nextConversations[0].id);
+    }
+  }, [activeConversationId, displayedConversations]);
+
+  // Load conversation thread when active conversation/tab changes
+  useEffect(() => {
+    if (activeTab !== "messages" || !activeConversationId) {
+      return;
+    }
+
+    loadConversation(activeConversationId);
+  }, [activeConversationId, activeTab, loadConversation]);
+
+  // Scroll to the latest message when a conversation loads or messages change
+  useEffect(() => {
+    const container = clientMessagesRef.current;
+    if (!container) return;
+    container.scrollTop = container.scrollHeight;
+  }, [messageThread.messages.length, activeConversationId]);
+
+  // Socket.IO: join conversation rooms and listen for new messages
+  useEffect(() => {
+    if (!socket) return;
+
+    function handleNewMessage({ conversationId: incomingId, messages: incomingMessages }) {
+      if (isInConversationGroup(displayedConversationsRef.current, activeConversationId, incomingId)) {
+        if (incomingId === activeConversationId) {
+          setMessageThread((current) => {
+            const related = current.messages.filter((message) => message.conversationId !== incomingId);
+            const merged = [...related, ...(incomingMessages || [])]
+              .filter((message, index, array) => array.findIndex((item) => item.id === message.id) === index)
+              .sort((left, right) => new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime());
+            return {
+              ...current,
+              messages: merged,
+              sending: false,
+              error: ""
+            };
+          });
+        } else {
+          // A related conversation was updated; reload the merged thread
+          loadConversation(activeConversationId).catch(() => {});
+        }
+      }
+      // Refresh conversation list to update previews/unread counts
+      refreshConversations().catch(() => {});
+    }
+
+    function handleNewNotification() {
+      refreshNotifications().catch(() => {});
+    }
+
+    socket.on("message:new", handleNewMessage);
+    socket.on("notification:new", handleNewNotification);
+
+    return () => {
+      socket.off("message:new", handleNewMessage);
+      socket.off("notification:new", handleNewNotification);
+    };
+  }, [socket, activeConversationId, loadConversation]);
 
   return (
     <div className="client-admin-shell">
@@ -2023,12 +2128,12 @@ export default function ClientDashboard({ user, initialData }) {
                 <div style={{ padding: "12px 16px", borderBottom: "1px solid #e5e5e5" }}>
                   <strong style={{ fontSize: 14, color: "#0f172a" }}>Messages</strong>
                 </div>
-                {conversations.length === 0 ? (
+                {displayedConversations.length === 0 ? (
                   <div style={{ padding: 20, textAlign: "center", color: "#94a3b8", fontSize: 13 }}>
                     No conversations yet.
                   </div>
                 ) : (
-                  conversations.map((conversation) => (
+                  displayedConversations.map((conversation) => (
                     <button
                       key={conversation.id}
                       type="button"
@@ -2043,7 +2148,7 @@ export default function ClientDashboard({ user, initialData }) {
                         padding: "12px 16px",
                         border: "none",
                         borderBottom: "1px solid #f1f5f9",
-                        background: conversation.clientUnreadCount > 0 ? "#f0f7ff" : "#fff",
+                        background: conversation.aggregatedUnread > 0 ? "#f0f7ff" : "#fff",
                         cursor: "pointer",
                         display: "flex",
                         flexDirection: "column",
@@ -2052,7 +2157,7 @@ export default function ClientDashboard({ user, initialData }) {
                     >
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                         <strong style={{ fontSize: 13, color: "#0f172a" }}>{conversation.vendorName || "Stylist"}</strong>
-                        {conversation.clientUnreadCount > 0 ? (
+                        {conversation.aggregatedUnread > 0 ? (
                           <span
                             style={{
                               minWidth: 18,
@@ -2068,7 +2173,7 @@ export default function ClientDashboard({ user, initialData }) {
                               padding: "0 5px"
                             }}
                           >
-                            {conversation.clientUnreadCount}
+                            {conversation.aggregatedUnread}
                           </span>
                         ) : null}
                       </div>
@@ -3245,22 +3350,25 @@ export default function ClientDashboard({ user, initialData }) {
                   />
                 </div>
                 <div className="client-messenger-conversations">
-                  {conversations.filter((c) => {
+                  {(() => {
                     const term = conversationSearch.toLowerCase();
-                    if (!term) return true;
-                    return (
-                      (c.vendorName || "").toLowerCase().includes(term) ||
-                      (c.serviceName || "").toLowerCase().includes(term)
-                    );
-                  }).length ? (
-                    conversations.filter((c) => {
-                      const term = conversationSearch.toLowerCase();
+                    const visible = displayedConversations.filter((c) => {
                       if (!term) return true;
                       return (
                         (c.vendorName || "").toLowerCase().includes(term) ||
                         (c.serviceName || "").toLowerCase().includes(term)
                       );
-                    }).map((conversation) => (
+                    });
+
+                    if (!visible.length) {
+                      return (
+                        <div className="client-messenger-empty">
+                          <p>No conversations found.</p>
+                        </div>
+                      );
+                    }
+
+                    return visible.map((conversation) => (
                       <button
                         key={conversation.id}
                         type="button"
@@ -3281,18 +3389,14 @@ export default function ClientDashboard({ user, initialData }) {
                             <span className="client-messenger-chat-preview">
                               {conversation.lastMessagePreview || "No messages yet"}
                             </span>
-                            {conversation.clientUnreadCount ? (
-                              <span className="client-messenger-unread-badge">{conversation.clientUnreadCount}</span>
+                            {conversation.aggregatedUnread ? (
+                              <span className="client-messenger-unread-badge">{conversation.aggregatedUnread}</span>
                             ) : null}
                           </div>
                         </div>
                       </button>
-                    ))
-                  ) : (
-                    <div className="client-messenger-empty">
-                      <p>No conversations found.</p>
-                    </div>
-                  )}
+                    ));
+                  })()}
                 </div>
               </div>
 
@@ -3328,7 +3432,7 @@ export default function ClientDashboard({ user, initialData }) {
                       </div>
                     </div>
 
-                    <div className="client-messenger-messages">
+                    <div ref={clientMessagesRef} className="client-messenger-messages">
                       {messageThread.loading ? (
                         <p style={{ textAlign: "center", color: "#94a3b8", margin: "auto" }}>Loading conversation...</p>
                       ) : null}

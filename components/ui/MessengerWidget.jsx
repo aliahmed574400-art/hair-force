@@ -267,8 +267,9 @@ export default function MessengerWidget({
   }, [isOpen, conversationId, loadMessages, hasExternalState]);
 
   useEffect(() => {
+    if (!isOpen) return;
     scrollToBottom();
-  }, [threadState.messages, optimisticMessages, scrollToBottom]);
+  }, [isOpen, threadState.messages, optimisticMessages, scrollToBottom]);
 
   // Clear optimistic messages when real messages arrive
   useEffect(() => {

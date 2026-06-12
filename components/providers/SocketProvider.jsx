@@ -11,24 +11,23 @@ export function useSocket() {
 
 export default function SocketProvider({ children }) {
   const [connected, setConnected] = useState(false);
+  const [forcePolling, setForcePolling] = useState(false);
   const socketRef = useRef(null);
 
   useEffect(() => {
-    // On http://localhost the WebSocket handshake cannot carry our
-    // SameSite=Strict session cookie (different scheme), so fall back to
-    // HTTP long-polling. On https production sites WebSocket works normally.
-    const isSecure =
-      typeof window !== "undefined" && window.location.protocol === "https:";
-    const transports = isSecure
-      ? ["websocket", "polling"]
-      : ["polling"];
+    // Prefer WebSocket for low latency, but allow fallback to HTTP long-polling.
+    // On http://localhost the WebSocket handshake may not carry our SameSite=Strict
+    // session cookie, so if auth fails we recreate the client with polling only.
+    const transports = forcePolling ? ["polling"] : ["websocket", "polling"];
 
     const socket = io({
       path: "/api/socket",
       transports,
+      withCredentials: true,
       reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000
     });
 
     socketRef.current = socket;
@@ -44,13 +43,18 @@ export default function SocketProvider({ children }) {
     socket.on("connect_error", (err) => {
       console.error("Socket connection error:", err.message);
       setConnected(false);
+
+      if (err.message === "Unauthorized" && !forcePolling) {
+        console.warn("WebSocket auth failed; falling back to HTTP long-polling.");
+        setForcePolling(true);
+      }
     });
 
     return () => {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, []);
+  }, [forcePolling]);
 
   return (
     <SocketContext.Provider value={{ socket: socketRef.current, connected }}>
