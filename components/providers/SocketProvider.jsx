@@ -14,9 +14,18 @@ export default function SocketProvider({ children }) {
   const socketRef = useRef(null);
 
   useEffect(() => {
+    // On http://localhost the WebSocket handshake cannot carry our
+    // SameSite=Strict session cookie (different scheme), so fall back to
+    // HTTP long-polling. On https production sites WebSocket works normally.
+    const isSecure =
+      typeof window !== "undefined" && window.location.protocol === "https:";
+    const transports = isSecure
+      ? ["websocket", "polling"]
+      : ["polling"];
+
     const socket = io({
       path: "/api/socket",
-      transports: ["websocket", "polling"],
+      transports,
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000

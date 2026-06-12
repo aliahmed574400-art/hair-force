@@ -253,14 +253,29 @@ export function useWebRTCCall({ currentUser, onCallLog }) {
     }
   }, []);
 
+  const ensureSimplePeer = useCallback(async () => {
+    if (SimplePeerRef.current) return true;
+    // Wait up to 2.5s for the dynamic simple-peer import to finish.
+    for (let i = 0; i < 25; i += 1) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      if (SimplePeerRef.current) return true;
+    }
+    return false;
+  }, []);
+
   const initiateCall = useCallback(
     async ({ recipientId, recipientName, recipientAvatar, conversationId }) => {
       if (!socket) {
         setError("Not connected to call server.");
         return;
       }
-      if (!SimplePeerRef.current) {
-        setError("Call library is not loaded.");
+      if (!socket.connected) {
+        setError("Call server disconnected. Please wait for the connection to recover.");
+        return;
+      }
+      const peerReady = await ensureSimplePeer();
+      if (!peerReady) {
+        setError("Call library is not loaded. Please refresh the page.");
         return;
       }
 
@@ -294,7 +309,7 @@ export function useWebRTCCall({ currentUser, onCallLog }) {
         metaRef.current = null;
       }
     },
-    [createPeer, endCall, getMicrophoneStream, socket]
+    [createPeer, endCall, ensureSimplePeer, getMicrophoneStream, socket]
   );
 
   const acceptCall = useCallback(async () => {

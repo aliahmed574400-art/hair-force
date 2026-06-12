@@ -674,7 +674,10 @@ export default function ClientDashboard({ user, initialData }) {
     if (callAPI.error?.toLowerCase().includes("microphone access")) {
       setShowMicPermissionModal(true);
     }
-  }, [callAPI.error]);
+    if (callAPI.error && callAPI.callState === "idle") {
+      setFeedback({ type: "error", message: callAPI.error });
+    }
+  }, [callAPI.error, callAPI.callState]);
 
   // Socket.IO: join conversation rooms and listen for new messages
   useEffect(() => {
@@ -876,7 +879,7 @@ export default function ClientDashboard({ user, initialData }) {
       recipientAvatar: "",
       conversationId: activeConversation.id
     });
-  }, [activeConversation, callAPI, vendorCallStatus]);
+  }, [activeConversation, callAPI, vendorCallStatus, connected, socket]);
 
   const nextBooking = dashboard?.overview?.nextBooking;
   const unreadNotifications = dashboard?.overview?.unreadNotifications || 0;
@@ -3310,10 +3313,13 @@ export default function ClientDashboard({ user, initialData }) {
                       <div className="client-messenger-thread-actions">
                         <button
                           type="button"
-                          title="Call"
+                          title={connected ? "Call" : "Reconnecting to call server…"}
+                          disabled={!connected}
                           onClick={handleCallClick}
                           style={{
-                            color: vendorCallStatus[activeConversation.vendorSlug] === "busy" ? "#dc2626" : "inherit"
+                            color: vendorCallStatus[activeConversation.vendorSlug] === "busy" ? "#dc2626" : "inherit",
+                            opacity: connected ? 1 : 0.5,
+                            cursor: connected ? "pointer" : "not-allowed"
                           }}
                         >
                           <Phone size={18} />

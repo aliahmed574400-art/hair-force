@@ -240,7 +240,10 @@ export default function VendorDashboardManager({ user, initialData }) {
     if (callAPI.error?.toLowerCase().includes("microphone access")) {
       setShowMicPermissionModal(true);
     }
-  }, [callAPI.error]);
+    if (callAPI.error && callAPI.callState === "idle") {
+      setStatus({ type: "error", message: callAPI.error });
+    }
+  }, [callAPI.error, callAPI.callState]);
 
   // Socket.IO: join conversation rooms and listen for new messages
   useEffect(() => {
@@ -392,7 +395,7 @@ export default function VendorDashboardManager({ user, initialData }) {
       recipientAvatar: "",
       conversationId: activeConversation.id
     });
-  }, [activeConversation, callAPI]);
+  }, [activeConversation, callAPI, connected, socket]);
 
   const calendarData = useMemo(
     () => buildCalendarMonth(calendarCursor, bookings),
@@ -3888,7 +3891,13 @@ export default function VendorDashboardManager({ user, initialData }) {
                   </div>
                   <div className="vendor-messenger-thread-actions">
                     <VendorStatusToggle vendorSlug={user?.vendorSlug} initialStatus={dashboard?.profile?.callStatus || "available"} />
-                    <button type="button" title="Call" onClick={handleCallClick}>
+                    <button
+                      type="button"
+                      title={connected ? "Call" : "Reconnecting to call server…"}
+                      disabled={!connected}
+                      onClick={handleCallClick}
+                      style={{ opacity: connected ? 1 : 0.5, cursor: connected ? "pointer" : "not-allowed" }}
+                    >
                       <Phone size={18} />
                     </button>
                     <button type="button" title="Info"><Info size={18} /></button>
