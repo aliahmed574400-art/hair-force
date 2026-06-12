@@ -27,7 +27,7 @@ function MessageBubble({ message, userRole }) {
     <div
       style={{
         alignSelf: isMine ? "flex-end" : "flex-start",
-        maxWidth: "80%",
+        maxWidth: "92%",
         padding: "10px 14px",
         borderRadius: isMine ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
         background: isMine ? "#0070f3" : "#f1f5f9",
@@ -108,17 +108,19 @@ function useInternalThreadState(conversationId) {
 
   const loadMessages = useCallback(async () => {
     if (!conversationId) return;
+    setThreadState((current) => ({ ...current, loading: true, error: "" }));
     try {
       const response = await fetch(`/api/dashboard/messages/${conversationId}`);
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Unable to load messages.");
       setThreadState((current) => ({
         ...current,
+        loading: false,
         messages: data.messages || [],
         error: ""
       }));
     } catch (error) {
-      setThreadState((current) => ({ ...current, error: error.message }));
+      setThreadState((current) => ({ ...current, loading: false, error: error.message }));
     }
   }, [conversationId]);
 
@@ -181,9 +183,11 @@ export default function MessengerWidget({
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [optimisticMessages, setOptimisticMessages] = useState([]);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
   const emojiRef = useRef(null);
+  const optimisticIdRef = useRef(0);
 
   const hasExternalState =
     externalMessages !== undefined ||
@@ -203,7 +207,7 @@ export default function MessengerWidget({
     : internal.threadState;
 
   const setDraft = hasExternalState
-    ? (value) => onDraftChange?.(value)
+    ? (value) => onDraftChangeRef.current?.(value)
     : (value) => internal.setThreadState((c) => ({ ...c, draft: value }));
 
   const handleSend = useCallback(
@@ -211,16 +215,43 @@ export default function MessengerWidget({
       const bodyText = String(bodyOverride || threadState.draft || "").trim();
       if (!conversationId || !bodyText) return;
       setUploadError("");
+
       if (hasExternalState) {
-        onSend?.(bodyText);
+        // Optimistically clear input and show message immediately
+        onDraftChangeRef.current?.("");
+        optimisticIdRef.current += 1;
+        const tempId = `opt-${optimisticIdRef.current}`;
+        setOptimisticMessages((prev) => [
+          ...prev,
+          {
+            id: tempId,
+            body: bodyText,
+            senderRole: userRole,
+            createdAt: new Date().toISOString(),
+            temp: true
+          }
+        ]);
+        onSendRef.current?.(bodyText);
       } else {
+        // For internal mode, clear draft immediately too
+        internal.setThreadState((c) => ({ ...c, draft: "" }));
         await internal.handleSendMessage(bodyOverride);
       }
     },
-    [conversationId, threadState.draft, hasExternalState, onSend, internal.handleSendMessage]
+    [conversationId, threadState.draft, hasExternalState, internal, userRole]
   );
 
   const loadMessages = hasExternalState ? null : internal.loadMessages;
+
+  // Use refs for callbacks so they don't re-trigger effects when parent re-renders
+  const onLoadMessagesRef = useRef(onLoadMessages);
+  const onSendRef = useRef(onSend);
+  const onDraftChangeRef = useRef(onDraftChange);
+  useEffect(() => {
+    onLoadMessagesRef.current = onLoadMessages;
+    onSendRef.current = onSend;
+    onDraftChangeRef.current = onDraftChange;
+  });
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -229,15 +260,22 @@ export default function MessengerWidget({
   useEffect(() => {
     if (!isOpen || !conversationId) return;
     if (hasExternalState) {
-      onLoadMessages?.();
+      onLoadMessagesRef.current?.();
     } else {
       loadMessages();
     }
-  }, [isOpen, conversationId, loadMessages, hasExternalState, onLoadMessages]);
+  }, [isOpen, conversationId, loadMessages, hasExternalState]);
 
   useEffect(() => {
     scrollToBottom();
-  }, [threadState.messages, scrollToBottom]);
+  }, [threadState.messages, optimisticMessages, scrollToBottom]);
+
+  // Clear optimistic messages when real messages arrive
+  useEffect(() => {
+    if (optimisticMessages.length > 0 && threadState.messages.length > 0) {
+      setOptimisticMessages([]);
+    }
+  }, [threadState.messages]);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -323,7 +361,7 @@ export default function MessengerWidget({
             display: "flex",
             flexDirection: "column",
             overflow: "hidden",
-            marginBottom: 12
+            marginBottom: 0
           }}
         >
           {/* Header */}
@@ -449,7 +487,7 @@ export default function MessengerWidget({
               </div>
             ) : null}
 
-            {!threadState.loading && threadState.messages.length === 0 ? (
+            {!threadState.loading && threadState.messages.length === 0 && optimisticMessages.length === 0 ? (
               <div
                 style={{
                   textAlign: "center",
@@ -462,9 +500,14 @@ export default function MessengerWidget({
                 Send a message to start the conversation.
               </div>
             ) : (
-              threadState.messages.map((message) => (
-                <MessageBubble key={message.id} message={message} userRole={userRole} />
-              ))
+              <>
+                {threadState.messages.map((message) => (
+                  <MessageBubble key={message.id} message={message} userRole={userRole} />
+                ))}
+                {optimisticMessages.map((message) => (
+                  <MessageBubble key={message.id} message={message} userRole={userRole} />
+                ))}
+              </>
             )}
             <div ref={messagesEndRef} />
           </div>
@@ -499,7 +542,8 @@ export default function MessengerWidget({
               borderTop: "1px solid #e5e5e5",
               background: "#fff",
               flexShrink: 0,
-              position: "relative"
+              position: "relative",
+              margin: 0
             }}
           >
             <input

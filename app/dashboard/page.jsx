@@ -2,6 +2,7 @@ import ClientDashboard from "@/components/dashboard/ClientDashboard";
 import SiteButton from "@/components/ui/SiteButton";
 import VendorDashboardManager from "@/components/dashboard/VendorDashboardManager";
 import SocketProvider from "@/components/providers/SocketProvider";
+import { AppointmentNotificationToasts } from "@/components/AppointmentNotificationToasts";
 import { getDashboardDataForUser } from "@/lib/postgres-repositories";
 import { getSessionFromServer } from "@/lib/session";
 
@@ -50,6 +51,7 @@ export default async function DashboardPage() {
     <main className="section page-intro">
       <div className="container">
         <SocketProvider>
+          <AppointmentNotificationToasts />
           {dashboardData.kind === "vendor" ? (
             <VendorDashboardManager user={sessionUser} initialData={dashboardData} />
           ) : (

@@ -46,6 +46,9 @@ import SiteButton from "@/components/ui/SiteButton";
 import VendorAvailabilityAgenda from "@/components/dashboard/VendorAvailabilityAgenda";
 import MessengerWidget from "@/components/ui/MessengerWidget";
 import AddServiceModal from "@/components/dashboard/AddServiceModal";
+import { useWebRTCCall } from "@/hooks/useWebRTCCall";
+import { VoiceCallUI, MicPermissionModal } from "@/components/VoiceCallUI";
+import { VendorStatusToggle } from "@/components/VendorStatusToggle";
 import { formatCurrency } from "@/lib/utils";
 import { parseMediaUrl, formatMessageTime, formatMessageDate, isSameDay } from "@/lib/chat-helpers";
 import {
@@ -211,6 +214,34 @@ export default function VendorDashboardManager({ user, initialData }) {
 
   const { socket, connected } = useSocket();
 
+  // Voice call state
+  const [showMicPermissionModal, setShowMicPermissionModal] = useState(false);
+
+  const handleCallLog = useCallback(async ({ conversationId, duration, durationLabel, missed }) => {
+    if (!conversationId) return;
+    try {
+      const body = missed
+        ? "📞 Missed call"
+        : `📞 Voice call · ${durationLabel}`;
+      await fetch(`/api/dashboard/messages/${conversationId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body })
+      });
+    } catch (error) {
+      console.error("Failed to save call log message:", error.message);
+    }
+  }, []);
+
+  const callAPI = useWebRTCCall({ currentUser: user, onCallLog: handleCallLog });
+
+  // Show microphone permission modal when call hook reports permission error
+  useEffect(() => {
+    if (callAPI.error?.toLowerCase().includes("microphone access")) {
+      setShowMicPermissionModal(true);
+    }
+  }, [callAPI.error]);
+
   // Socket.IO: join conversation rooms and listen for new messages
   useEffect(() => {
     if (!socket) return;
@@ -220,6 +251,7 @@ export default function VendorDashboardManager({ user, initialData }) {
         setThreadState((current) => ({
           ...current,
           messages: incomingMessages || current.messages,
+          sending: false,
           error: ""
         }));
       }
@@ -227,10 +259,16 @@ export default function VendorDashboardManager({ user, initialData }) {
       refreshConversations().catch(() => {});
     }
 
+    function handleNewNotification() {
+      refreshNotifications().catch(() => {});
+    }
+
     socket.on("message:new", handleNewMessage);
+    socket.on("notification:new", handleNewNotification);
 
     return () => {
       socket.off("message:new", handleNewMessage);
+      socket.off("notification:new", handleNewNotification);
     };
   }, [socket, activeConversationId]);
 
@@ -345,6 +383,17 @@ export default function VendorDashboardManager({ user, initialData }) {
     [closedBookings.length, completedBookings.length, uniqueClientCount]
   );
   const activeConversation = conversations.find((item) => item.id === activeConversationId) || null;
+
+  const handleCallClick = useCallback(() => {
+    if (!activeConversation?.clientId) return;
+    callAPI.initiateCall({
+      recipientId: activeConversation.clientId,
+      recipientName: activeConversation.customerName,
+      recipientAvatar: "",
+      conversationId: activeConversation.id
+    });
+  }, [activeConversation, callAPI]);
+
   const calendarData = useMemo(
     () => buildCalendarMonth(calendarCursor, bookings),
     [bookings, calendarCursor]
@@ -1217,6 +1266,17 @@ export default function VendorDashboardManager({ user, initialData }) {
     return data.conversations || [];
   }
 
+  async function refreshNotifications() {
+    const response = await fetch("/api/dashboard/notifications", { method: "GET" });
+    if (!response.ok) return;
+    const data = await response.json();
+    setDashboard((current) => ({
+      ...current,
+      notifications: data.notifications || [],
+      unreadNotificationCount: data.unreadNotificationCount ?? 0
+    }));
+  }
+
   async function handleSignOut() {
     setLoading((current) => ({ ...current, signout: true }));
 
@@ -1587,7 +1647,12 @@ export default function VendorDashboardManager({ user, initialData }) {
       return;
     }
 
-    setThreadState((current) => ({ ...current, sending: true, error: "" }));
+    setThreadState((current) => ({
+      ...current,
+      sending: true,
+      error: "",
+      draft: ""
+    }));
 
     try {
       const response = await fetch(`/api/dashboard/messages/${activeConversationId}`, {
@@ -1648,6 +1713,23 @@ export default function VendorDashboardManager({ user, initialData }) {
   const canUseEmailLogin = Boolean(
     accountSecurity.canChangeLoginEmail && accountSecurity.canChangePassword
   );
+
+  const handleWidgetSend = useCallback(
+    (body) => sendMessage(body),
+    [sendMessage]
+  );
+  const handleWidgetDraftChange = useCallback(
+    (value) => setThreadState((current) => ({ ...current, draft: value })),
+    []
+  );
+  const handleWidgetLoadMessages = useCallback(
+    () => loadConversation(activeConversationId),
+    [activeConversationId, loadConversation]
+  );
+  const handleWidgetExpand = useCallback(() => {
+    handleSectionSelect("messages");
+    setWidgetOpen(false);
+  }, [handleSectionSelect]);
 
   return (
     <div className="vendor-reference-shell">
@@ -3805,7 +3887,10 @@ export default function VendorDashboardManager({ user, initialData }) {
                     </div>
                   </div>
                   <div className="vendor-messenger-thread-actions">
-                    <button type="button" title="Call"><Phone size={18} /></button>
+                    <VendorStatusToggle vendorSlug={user?.vendorSlug} initialStatus={dashboard?.profile?.callStatus || "available"} />
+                    <button type="button" title="Call" onClick={handleCallClick}>
+                      <Phone size={18} />
+                    </button>
                     <button type="button" title="Info"><Info size={18} /></button>
                   </div>
                 </div>
@@ -4758,14 +4843,30 @@ export default function VendorDashboardManager({ user, initialData }) {
           externalSending={threadState.sending}
           externalLoading={threadState.loading}
           externalError={threadState.error}
-          onSend={(body) => sendMessage(body)}
-          onDraftChange={(value) => setThreadState((current) => ({ ...current, draft: value }))}
-          onLoadMessages={() => loadConversation(activeConversationId)}
-          onExpand={() => {
-            handleSectionSelect("messages");
-            setWidgetOpen(false);
-          }}
+          onSend={handleWidgetSend}
+          onDraftChange={handleWidgetDraftChange}
+          onLoadMessages={handleWidgetLoadMessages}
+          onExpand={handleWidgetExpand}
         />
+      ) : null}
+
+      <VoiceCallUI
+        callState={callAPI.callState}
+        callMeta={callAPI.callMeta}
+        durationLabel={callAPI.durationLabel}
+        isMuted={callAPI.isMuted}
+        isSpeakerOn={callAPI.isSpeakerOn}
+        error={callAPI.error}
+        remoteAudioRef={callAPI.remoteAudioRef}
+        onAccept={callAPI.acceptCall}
+        onReject={callAPI.rejectCall}
+        onEnd={() => callAPI.endCall("ended")}
+        onToggleMute={callAPI.toggleMute}
+        onToggleSpeaker={callAPI.toggleSpeaker}
+      />
+
+      {showMicPermissionModal ? (
+        <MicPermissionModal onClose={() => setShowMicPermissionModal(false)} />
       ) : null}
     </div>
   );

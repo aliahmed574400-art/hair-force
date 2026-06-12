@@ -1,5 +1,6 @@
 import Footer from "@/components/ui/Footer";
 import Navbar from "@/components/ui/Navbar";
+import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import "@/app/globals.css";
 
 export const metadata = {
@@ -22,6 +23,7 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body>
+        <ServiceWorkerRegister />
         <div className="app-shell">
           <div className="site-noise" />
           <Navbar />

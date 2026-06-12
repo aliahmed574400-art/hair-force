@@ -37,6 +37,16 @@ import { formatCurrency } from "@/lib/utils";
 import { parseMediaUrl, formatMessageTime, formatMessageDate, isSameDay } from "@/lib/chat-helpers";
 import { uploadFile, safeParseResponse, errorFromResponse } from "@/lib/client-upload-utils";
 import MessengerWidget from "@/components/ui/MessengerWidget";
+import { PushNotificationToggle } from "@/components/PushNotificationToggle";
+import { useWebRTCCall } from "@/hooks/useWebRTCCall";
+import { VoiceCallUI, BusyModal, MicPermissionModal } from "@/components/VoiceCallUI";
+import {
+  bookingStatusTone,
+  formatLineupDate,
+  getAvatarSwatch,
+  getInitials,
+  getAppointmentDateTime
+} from "@/components/dashboard/vendorDashboard.helpers";
 
 const TAB_OPTIONS = [
   { id: "overview", label: "Dashboard", icon: LayoutDashboard },
@@ -81,8 +91,11 @@ const PAYMENT_SECTION_OPTIONS = [
 ];
 
 const BOOKING_SECTION_OPTIONS = [
-  { id: "upcoming", label: "Upcoming Appointments" },
-  { id: "past", label: "Past Visits" }
+  { id: "all", label: "All" },
+  { id: "upcoming", label: "Upcoming" },
+  { id: "ongoing", label: "Ongoing" },
+  { id: "past", label: "Past appointments" },
+  { id: "cancelled", label: "Cancelled" }
 ];
 
 const AVATAR_EDITOR_FRAME_SIZE = 320;
@@ -458,15 +471,6 @@ function progressTone(id) {
   return "blue";
 }
 
-function getInitials(value) {
-  return String(value || "Hair Force")
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((item) => item.charAt(0).toUpperCase())
-    .join("");
-}
-
 function joinClasses(...values) {
   return values.filter(Boolean).join(" ");
 }
@@ -622,6 +626,56 @@ export default function ClientDashboard({ user, initialData }) {
 
   const { socket, connected } = useSocket();
 
+  // Voice call state
+  const [busyVendor, setBusyVendor] = useState(null);
+  const [showMicPermissionModal, setShowMicPermissionModal] = useState(false);
+  const [vendorCallStatus, setVendorCallStatus] = useState({});
+
+  const handleCallLog = useCallback(async ({ conversationId, duration, durationLabel, missed }) => {
+    if (!conversationId) return;
+    try {
+      const body = missed
+        ? "📞 Missed call"
+        : `📞 Voice call · ${durationLabel}`;
+      await fetch(`/api/dashboard/messages/${conversationId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body })
+      });
+      // The API will broadcast the new message via socket
+    } catch (error) {
+      console.error("Failed to save call log message:", error.message);
+    }
+  }, []);
+
+  const callAPI = useWebRTCCall({ currentUser: user, onCallLog: handleCallLog });
+
+  // Listen for vendor availability status updates
+  useEffect(() => {
+    if (!socket) return;
+
+    function handleVendorStatusUpdate(payload) {
+      if (payload?.vendorId) {
+        setVendorCallStatus((current) => ({
+          ...current,
+          [payload.vendorId]: payload.status || "available"
+        }));
+      }
+    }
+
+    socket.on("vendor:status_updated", handleVendorStatusUpdate);
+    return () => {
+      socket.off("vendor:status_updated", handleVendorStatusUpdate);
+    };
+  }, [socket]);
+
+  // Show microphone permission modal when call hook reports permission error
+  useEffect(() => {
+    if (callAPI.error?.toLowerCase().includes("microphone access")) {
+      setShowMicPermissionModal(true);
+    }
+  }, [callAPI.error]);
+
   // Socket.IO: join conversation rooms and listen for new messages
   useEffect(() => {
     if (!socket) return;
@@ -631,6 +685,7 @@ export default function ClientDashboard({ user, initialData }) {
         setMessageThread((current) => ({
           ...current,
           messages: incomingMessages || current.messages,
+          sending: false,
           error: ""
         }));
       }
@@ -638,10 +693,16 @@ export default function ClientDashboard({ user, initialData }) {
       refreshConversations().catch(() => {});
     }
 
+    function handleNewNotification() {
+      refreshNotifications().catch(() => {});
+    }
+
     socket.on("message:new", handleNewMessage);
+    socket.on("notification:new", handleNewNotification);
 
     return () => {
       socket.off("message:new", handleNewMessage);
+      socket.off("notification:new", handleNewNotification);
     };
   }, [socket, activeConversationId]);
 
@@ -712,7 +773,7 @@ export default function ClientDashboard({ user, initialData }) {
     }
 
     setBookingSection((current) =>
-      BOOKING_SECTION_OPTIONS.some((item) => item.id === current) ? current : "upcoming"
+      BOOKING_SECTION_OPTIONS.some((item) => item.id === current) ? current : "all"
     );
   }, [activeTab]);
 
@@ -774,6 +835,49 @@ export default function ClientDashboard({ user, initialData }) {
   const conversations = dashboard?.conversations || [];
   const activeConversation =
     conversations.find((conversation) => conversation.id === activeConversationId) || null;
+
+  // Fetch vendor call status when conversation changes
+  useEffect(() => {
+    if (!activeConversation?.vendorSlug) return;
+    let cancelled = false;
+    async function fetchStatus() {
+      try {
+        const response = await fetch(`/api/vendor/${encodeURIComponent(activeConversation.vendorSlug)}/status`);
+        const data = await response.json();
+        if (!cancelled && response.ok) {
+          setVendorCallStatus((current) => ({
+            ...current,
+            [activeConversation.vendorSlug]: data.status || "available"
+          }));
+        }
+      } catch (error) {
+        console.error("Failed to fetch vendor status:", error.message);
+      }
+    }
+    fetchStatus();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeConversation?.vendorSlug]);
+
+  const handleCallClick = useCallback(async () => {
+    if (!activeConversation?.vendorSlug) return;
+    const status = vendorCallStatus[activeConversation.vendorSlug] || "available";
+    if (status === "busy") {
+      setBusyVendor({
+        name: activeConversation.vendorName,
+        slug: activeConversation.vendorSlug
+      });
+      return;
+    }
+    callAPI.initiateCall({
+      recipientId: activeConversation.vendorSlug,
+      recipientName: activeConversation.vendorName,
+      recipientAvatar: "",
+      conversationId: activeConversation.id
+    });
+  }, [activeConversation, callAPI, vendorCallStatus]);
+
   const nextBooking = dashboard?.overview?.nextBooking;
   const unreadNotifications = dashboard?.overview?.unreadNotifications || 0;
   const unreadMessages = conversations.reduce(
@@ -828,16 +932,6 @@ export default function ClientDashboard({ user, initialData }) {
         icon: CalendarDays
       },
       {
-        id: "payments",
-        label: "Pending Payments",
-        value: String(dashboard?.overview?.pendingPayments || 0),
-        detail:
-          dashboard?.overview?.pendingPayments
-            ? `${dashboard.overview.pendingPayments} booking item(s) need attention`
-            : "Payments are up to date",
-        icon: Wallet
-      },
-      {
         id: "favorites",
         label: "Saved Stylists",
         value: String(dashboard?.favorites?.length || 0),
@@ -880,6 +974,37 @@ export default function ClientDashboard({ user, initialData }) {
       }
     ];
   }, [dashboard, linkedMethodCount, totalLinkedMethods]);
+
+  const clientBookings = useMemo(() => {
+    const all = dashboard?.bookings || [];
+    const todayKey = new Date().toISOString().slice(0, 10);
+    const closedStatuses = new Set(["cancelled", "declined"]);
+
+    const filtered = all.filter((booking) => {
+      if (bookingSection === "all") {
+        return true;
+      }
+      if (bookingSection === "ongoing") {
+        return booking.appointmentDate === todayKey;
+      }
+      if (bookingSection === "past") {
+        return booking.isPast;
+      }
+      if (bookingSection === "cancelled") {
+        return closedStatuses.has(booking.status);
+      }
+      return !booking.isPast && !closedStatuses.has(booking.status);
+    });
+
+    return [...filtered].sort((left, right) => {
+      const leftTime = getAppointmentDateTime(left.appointmentDate, left.appointmentSlot)?.getTime() || 0;
+      const rightTime = getAppointmentDateTime(right.appointmentDate, right.appointmentSlot)?.getTime() || 0;
+      if (bookingSection === "past" || bookingSection === "cancelled") {
+        return rightTime - leftTime;
+      }
+      return leftTime - rightTime;
+    });
+  }, [dashboard?.bookings, bookingSection]);
 
   function syncTabUrl(nextTab) {
     if (typeof window === "undefined") {
@@ -980,6 +1105,20 @@ export default function ClientDashboard({ user, initialData }) {
     const data = await fetchJson("/api/dashboard/messages", { method: "GET" });
     setDashboard((current) => ({ ...current, conversations: data.conversations || [] }));
     return data.conversations || [];
+  }
+
+  async function refreshNotifications() {
+    const response = await fetch("/api/dashboard/notifications", { method: "GET" });
+    if (!response.ok) return;
+    const data = await response.json();
+    setDashboard((current) => ({
+      ...current,
+      notifications: data.notifications || [],
+      overview: {
+        ...current.overview,
+        unreadNotifications: data.unreadNotificationCount ?? 0
+      }
+    }));
   }
 
   async function handleSignOut() {
@@ -1584,7 +1723,12 @@ export default function ClientDashboard({ user, initialData }) {
       return;
     }
 
-    setMessageThread((current) => ({ ...current, sending: true, error: "" }));
+    setMessageThread((current) => ({
+      ...current,
+      sending: true,
+      error: "",
+      draft: ""
+    }));
 
     try {
       const data = await fetchJson(`/api/dashboard/messages/${activeConversationId}`, {
@@ -1609,6 +1753,23 @@ export default function ClientDashboard({ user, initialData }) {
       setMessageThread((current) => ({ ...current, sending: false, error: error.message }));
     }
   }
+
+  const handleWidgetSend = useCallback(
+    (body) => handleSendMessage(body),
+    [handleSendMessage]
+  );
+  const handleWidgetDraftChange = useCallback(
+    (value) => setMessageThread((current) => ({ ...current, draft: value })),
+    []
+  );
+  const handleWidgetLoadMessages = useCallback(
+    () => loadConversation(activeConversationId),
+    [activeConversationId, loadConversation]
+  );
+  const handleWidgetExpand = useCallback(() => {
+    handleTabChange("messages");
+    setWidgetOpen(false);
+  }, [handleTabChange]);
 
   return (
     <div className="client-admin-shell">
@@ -2016,13 +2177,6 @@ export default function ClientDashboard({ user, initialData }) {
           </div>
         </div>
 
-        <header className="client-admin-header">
-          <div>
-            <h1>{activeCopy.title}</h1>
-            {activeCopy.subtitle ? <p>{activeCopy.subtitle}</p> : null}
-          </div>
-        </header>
-
         {feedback.message ? (
           <div className={`client-admin-feedback ${feedback.type}`}>
             {feedback.message}
@@ -2030,7 +2184,12 @@ export default function ClientDashboard({ user, initialData }) {
         ) : null}
 
         {activeTab === "overview" ? (
-          <div className="client-admin-content-stack">
+          <div className="vendor-dashboard-tab client-overview-tab">
+            <div className="vendor-dashboard-header">
+              <div>
+                <h3 className="vendor-dashboard-header-title">Dashboard</h3>
+              </div>
+            </div>
             <div className="client-admin-metrics">
               {metrics.map((metric) => {
                 const Icon = metric.icon;
@@ -2291,273 +2450,328 @@ export default function ClientDashboard({ user, initialData }) {
         ) : null}
 
         {activeTab === "bookings" ? (
-          <div className="client-admin-content-stack">
-            <div className="client-admin-section-tabs" role="tablist" aria-label="Booking sections">
-              {BOOKING_SECTION_OPTIONS.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  className={`client-admin-section-tab ${bookingSection === item.id ? "active" : ""}`}
-                  onClick={() => setBookingSection(item.id)}
-                  role="tab"
-                  aria-selected={bookingSection === item.id}
-                >
-                  {item.label}
-                  <span className="client-admin-section-tab-count">
-                    {item.id === "upcoming"
-                      ? dashboard?.upcomingBookings?.length || 0
-                      : dashboard?.pastBookings?.length || 0}
-                  </span>
-                </button>
-              ))}
+          <div className="vendor-dashboard-tab vendor-dashboard-bookings">
+            <div className="vendor-dashboard-header">
+              <div>
+                <h3 className="vendor-dashboard-header-title">My Bookings</h3>
+              </div>
             </div>
 
-            {bookingSection === "upcoming" ? (
-              <Card className="client-admin-panel">
-                <div className="client-admin-panel-head">
-                  <div>
-                    <h2>Upcoming Appointments</h2>
-                    <p>Cancel or reschedule until 24 hours before the appointment</p>
-                  </div>
+            <section className="vendor-reference-panel vendor-reference-bookings-panel vendor-dashboard-card">
+              <div className="vendor-reference-panel-head vendor-reference-panel-head-wrap">
+                <div className="vendor-dashboard-tabs">
+                  {BOOKING_SECTION_OPTIONS.map((option) => (
+                    <button
+                      key={option.id}
+                      type="button"
+                      className={`vendor-dashboard-tab-item ${bookingSection === option.id ? "active" : ""}`}
+                      onClick={() => setBookingSection(option.id)}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
                 </div>
+              </div>
 
-                <div className="client-admin-list">
-                  {dashboard?.upcomingBookings?.length ? (
-                    dashboard.upcomingBookings.map((booking) => (
-                      <div key={booking.id} className="client-admin-list-item">
-                        <div className="client-admin-list-top">
-                          <div>
-                            <strong>{booking.serviceName}</strong>
-                            <p>{booking.vendorName}</p>
-                          </div>
-                          <Badge variant="secondary" className={`client-admin-status ${bookingTone(booking)}`}>
-                            {bookingStatusLabel(booking)}
-                          </Badge>
-                        </div>
+              <div className="vendor-reference-table-wrap">
+                <table className="vendor-reference-table">
+                  <thead>
+                    <tr>
+                      <th>Stylist</th>
+                      <th>Order no</th>
+                      <th>Service</th>
+                      <th>Date</th>
+                      <th>Time</th>
+                      <th>Status</th>
+                      <th>Amount</th>
+                      <th style={{ textAlign: "right" }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {clientBookings.length ? (
+                      clientBookings.map((booking) => {
+                        const [backgroundColor, color] = getAvatarSwatch(booking.vendorName);
 
-                        <div className="client-admin-meta">
-                          <span><CalendarDays size={15} /> {formatAppointmentDate(booking.appointmentDate)}</span>
-                          <span><Clock3 size={15} /> {booking.appointmentSlot}</span>
-                          <span><Wallet size={15} /> {formatCurrency(booking.total)}</span>
-                        </div>
-
-                        <div className="client-admin-chip-row">
-                          <Badge variant="secondary" className="client-admin-chip">
-                            Deposit {formatCurrency(booking.depositAmount || 0)}
-                          </Badge>
-                          <Badge variant="secondary" className="client-admin-chip">
-                            Remaining {formatCurrency(booking.remainingAmount || 0)}
-                          </Badge>
-                          <Badge variant="secondary" className="client-admin-chip">{booking.paymentStatus}</Badge>
-                        </div>
-
-                        <div className="client-admin-action-row">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className="client-admin-button client-admin-button-secondary"
-                            onClick={() =>
-                              setExpandedBookingId((current) => (current === booking.id ? "" : booking.id))
-                            }
-                          >
-                            {expandedBookingId === booking.id ? "Hide details" : "View details"}
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className="client-admin-button client-admin-button-secondary"
-                            disabled={!booking.canReschedule || loading.booking === booking.id}
-                            onClick={() => handleOpenReschedule(booking.id)}
-                          >
-                            Reschedule
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className="client-admin-button client-admin-button-secondary"
-                            onClick={() => handleOpenConversationForBooking(booking.id)}
-                          >
-                            Message stylist
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            className="client-admin-button client-admin-button-ghost"
-                            disabled={!booking.canCancel || loading.booking === booking.id}
-                            onClick={() => handleCancelBooking(booking.id)}
-                          >
-                            Cancel
-                          </Button>
-                          <Link
-                            href={`/book/${booking.vendorSlug}`}
-                            className="client-admin-button client-admin-button-primary"
-                          >
-                            Book again
-                          </Link>
-                        </div>
-
-                        {expandedBookingId === booking.id ? (
-                          <div className="client-admin-detail-box">
-                            <p>Notes: {booking.notes || "No notes added."}</p>
-                            {booking.previousAppointmentDate ? (
-                              <p>
-                                Previously scheduled for {formatAppointmentDate(booking.previousAppointmentDate)} at{" "}
-                                {booking.previousAppointmentSlot}.
-                              </p>
-                            ) : null}
-                            {!booking.canReschedule || !booking.canCancel ? (
-                              <p>Self-serve changes close 24 hours before the appointment.</p>
-                            ) : null}
-                          </div>
-                        ) : null}
-                      </div>
-                    ))
-                  ) : (
-                    <div className="client-admin-empty">
-                      <strong>No upcoming bookings</strong>
-                      <p>Reserve your next visit and it will appear here with management actions.</p>
-                    </div>
-                  )}
-                </div>
-
-                {rescheduleState.bookingId ? (
-                  <div className="client-admin-reschedule-block">
-                    <div className="client-admin-panel-head">
-                      <div>
-                        <h2>Reschedule Booking</h2>
-                        <p>Choose a fresh slot from current availability</p>
-                      </div>
-                    </div>
-
-                    <div className="client-admin-reschedule">
-                      {rescheduleState.loading ? (
-                        <p className="client-admin-note">Loading fresh availability...</p>
-                      ) : null}
-
-                      {rescheduleState.error ? (
-                        <div className="client-admin-feedback error small">
-                          {rescheduleState.error}
-                        </div>
-                      ) : null}
-
-                      {rescheduleState.windows.length ? (
-                        <>
-                          <div className="client-admin-window-grid">
-                            {rescheduleState.windows.map((window) => (
-                              <button
-                                key={window.date}
-                                type="button"
-                                className={`client-admin-window ${rescheduleState.selectedDate === window.date ? "active" : ""}`}
-                                onClick={() =>
-                                  setRescheduleState((current) => ({
-                                    ...current,
-                                    selectedDate: window.date,
-                                    selectedSlot: window.slots[0] || ""
-                                  }))
-                                }
-                              >
-                                <strong>{window.label}</strong>
-                                <span>{window.slots.length} slot(s)</span>
-                              </button>
-                            ))}
-                          </div>
-
-                          <div className="client-admin-slot-row">
-                            {(rescheduleState.windows.find((item) => item.date === rescheduleState.selectedDate)?.slots || []).map(
-                              (slot) => (
-                                <button
-                                  key={slot}
-                                  type="button"
-                                  className={`client-admin-slot ${rescheduleState.selectedSlot === slot ? "active" : ""}`}
-                                  onClick={() =>
-                                    setRescheduleState((current) => ({ ...current, selectedSlot: slot }))
-                                  }
+                        return (
+                          <tr key={booking.id}>
+                            <td>
+                              <div className="vendor-reference-customer-cell">
+                                <span
+                                  className="vendor-reference-table-avatar"
+                                  style={{ backgroundColor, color }}
                                 >
-                                  {slot}
+                                  {getInitials(booking.vendorName)}
+                                </span>
+                                <span>{booking.vendorName}</span>
+                              </div>
+                            </td>
+                            <td>#{String(booking.id || "").replace(/[^\d]/g, "").slice(-5) || "00001"}</td>
+                            <td>{booking.serviceName}</td>
+                            <td>{formatLineupDate(booking.appointmentDate)}</td>
+                            <td>{booking.appointmentSlot}</td>
+                            <td>
+                              <span className={`vendor-reference-status-pill ${bookingStatusTone(booking.status)}`}>
+                                {booking.status === "pending_approval"
+                                  ? "Pending"
+                                  : booking.status === "confirmed"
+                                    ? "Confirmed"
+                                    : booking.status === "completed"
+                                      ? "Completed"
+                                      : booking.status}
+                              </span>
+                            </td>
+                            <td>{formatCurrency(booking.total)}</td>
+                            <td>
+                              <div style={{ display: "flex", gap: "6px", justifyContent: "flex-end" }}>
+                                {!booking.isPast && booking.status !== "cancelled" && booking.status !== "declined" ? (
+                                  <>
+                                    {booking.canReschedule ? (
+                                      <button
+                                        type="button"
+                                        disabled={loading.booking === booking.id}
+                                        onClick={() => handleOpenReschedule(booking.id)}
+                                        style={{
+                                          padding: "5px 12px",
+                                          borderRadius: "8px",
+                                          border: "1px solid #16a34a",
+                                          background: "#fff",
+                                          color: "#16a34a",
+                                          fontSize: "0.78rem",
+                                          fontWeight: 600,
+                                          cursor: "pointer",
+                                          opacity: loading.booking === booking.id ? 0.6 : 1,
+                                        }}
+                                      >
+                                        {loading.booking === booking.id ? "…" : "Reschedule"}
+                                      </button>
+                                    ) : null}
+                                    {booking.canCancel ? (
+                                      <button
+                                        type="button"
+                                        disabled={loading.booking === booking.id}
+                                        onClick={() => handleCancelBooking(booking.id)}
+                                        style={{
+                                          padding: "5px 12px",
+                                          borderRadius: "8px",
+                                          border: "1px solid #64748b",
+                                          background: "#fff",
+                                          color: "#64748b",
+                                          fontSize: "0.78rem",
+                                          fontWeight: 600,
+                                          cursor: "pointer",
+                                          opacity: loading.booking === booking.id ? 0.6 : 1,
+                                        }}
+                                      >
+                                        {loading.booking === booking.id ? "…" : "Cancel"}
+                                      </button>
+                                    ) : null}
+                                  </>
+                                ) : null}
+                                {booking.isPast || booking.status === "cancelled" || booking.status === "declined" ? (
+                                  <Link
+                                    href={`/book/${booking.vendorSlug}`}
+                                    style={{
+                                      padding: "5px 12px",
+                                      borderRadius: "8px",
+                                      border: "1px solid #0070f3",
+                                      background: "#fff",
+                                      color: "#0070f3",
+                                      fontSize: "0.78rem",
+                                      fontWeight: 600,
+                                      cursor: "pointer",
+                                      textDecoration: "none",
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                    }}
+                                  >
+                                    Book again
+                                  </Link>
+                                ) : null}
+                                <button
+                                  type="button"
+                                  className="vendor-reference-icon-button"
+                                  title="See details"
+                                  onClick={() =>
+                                    setExpandedBookingId((current) => (current === booking.id ? "" : booking.id))
+                                  }
+                                  style={{
+                                    width: 28,
+                                    height: 28,
+                                    display: "grid",
+                                    placeItems: "center",
+                                    borderRadius: "6px",
+                                    border: "1px solid #e2e8f0",
+                                    background: "#fff",
+                                    color: "#475569",
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  <Info size={14} />
                                 </button>
-                              )
-                            )}
-                          </div>
+                                <button
+                                  type="button"
+                                  className="vendor-reference-icon-button"
+                                  title="Message stylist"
+                                  onClick={() => handleOpenConversationForBooking(booking.id)}
+                                  style={{
+                                    width: 28,
+                                    height: 28,
+                                    display: "grid",
+                                    placeItems: "center",
+                                    borderRadius: "6px",
+                                    border: "1px solid #e2e8f0",
+                                    background: "#fff",
+                                    color: "#475569",
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  <MessageSquareText size={14} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    ) : (
+                      <tr>
+                        <td colSpan="8">
+                          <div className="vendor-reference-empty-state">No bookings in this view yet.</div>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </section>
 
-                          <div className="client-admin-action-row">
-                            <Button
-                              type="button"
-                              className="client-admin-button client-admin-button-primary"
-                              onClick={handleConfirmReschedule}
-                              disabled={loading.booking === rescheduleState.bookingId}
-                            >
-                              {loading.booking === rescheduleState.bookingId ? "Saving..." : "Confirm new time"}
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              className="client-admin-button client-admin-button-ghost"
-                              onClick={() =>
-                                setRescheduleState({
-                                  bookingId: "",
-                                  windows: [],
-                                  selectedDate: "",
-                                  selectedSlot: "",
-                                  loading: false,
-                                  error: ""
-                                })
-                              }
-                            >
-                              Close
-                            </Button>
-                          </div>
-                        </>
-                      ) : null}
-                    </div>
+            {expandedBookingId ? (
+              (() => {
+                const booking = clientBookings.find((b) => b.id === expandedBookingId);
+                if (!booking) return null;
+                return (
+                  <div className="client-admin-detail-box" style={{ marginTop: 16 }}>
+                    <p><strong>Notes:</strong> {booking.notes || "No notes added."}</p>
+                    {booking.previousAppointmentDate ? (
+                      <p>
+                        <strong>Previously scheduled for</strong> {formatAppointmentDate(booking.previousAppointmentDate)} at{" "}
+                        {booking.previousAppointmentSlot}.
+                      </p>
+                    ) : null}
+                    {!booking.canReschedule || !booking.canCancel ? (
+                      <p>Self-serve changes close 24 hours before the appointment.</p>
+                    ) : null}
                   </div>
-                ) : null}
-              </Card>
+                );
+              })()
             ) : null}
 
-            {bookingSection === "past" ? (
-              <Card className="client-admin-panel">
+            {rescheduleState.bookingId ? (
+              <div className="client-admin-reschedule-block" style={{ marginTop: 24 }}>
                 <div className="client-admin-panel-head">
                   <div>
-                    <h2>Past Visits</h2>
-                    <p>Rebook quickly from your previous visits</p>
+                    <h2>Reschedule Booking</h2>
+                    <p>Choose a fresh slot from current availability</p>
                   </div>
                 </div>
 
-                <div className="client-admin-list">
-                  {dashboard?.pastBookings?.length ? (
-                    dashboard.pastBookings.map((booking) => (
-                      <div key={booking.id} className="client-admin-list-item compact">
-                        <div>
-                          <strong>{booking.serviceName}</strong>
-                          <p>
-                            {booking.vendorName} - {formatAppointmentDate(booking.appointmentDate)}
-                          </p>
-                        </div>
-                        <Link href={`/book/${booking.vendorSlug}`} className="client-admin-inline-link">
-                          Book again
-                          <ChevronRight size={16} />
-                        </Link>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="client-admin-empty compact">
-                      <p>Past visits will appear here after your appointments are complete.</p>
+                <div className="client-admin-reschedule">
+                  {rescheduleState.loading ? (
+                    <p className="client-admin-note">Loading fresh availability...</p>
+                  ) : null}
+
+                  {rescheduleState.error ? (
+                    <div className="client-admin-feedback error small">
+                      {rescheduleState.error}
                     </div>
-                  )}
+                  ) : null}
+
+                  {rescheduleState.windows.length ? (
+                    <>
+                      <div className="client-admin-window-grid">
+                        {rescheduleState.windows.map((window) => (
+                          <button
+                            key={window.date}
+                            type="button"
+                            className={`client-admin-window ${rescheduleState.selectedDate === window.date ? "active" : ""}`}
+                            onClick={() =>
+                              setRescheduleState((current) => ({
+                                ...current,
+                                selectedDate: window.date,
+                                selectedSlot: window.slots[0] || ""
+                              }))
+                            }
+                          >
+                            <strong>{window.label}</strong>
+                            <span>{window.slots.length} slot(s)</span>
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="client-admin-slot-row">
+                        {(rescheduleState.windows.find((item) => item.date === rescheduleState.selectedDate)?.slots || []).map(
+                          (slot) => (
+                            <button
+                              key={slot}
+                              type="button"
+                              className={`client-admin-slot ${rescheduleState.selectedSlot === slot ? "active" : ""}`}
+                              onClick={() =>
+                                setRescheduleState((current) => ({ ...current, selectedSlot: slot }))
+                              }
+                            >
+                              {slot}
+                            </button>
+                          )
+                        )}
+                      </div>
+
+                      <div className="client-admin-action-row">
+                        <Button
+                          type="button"
+                          className="client-admin-button client-admin-button-primary"
+                          onClick={handleConfirmReschedule}
+                          disabled={loading.booking === rescheduleState.bookingId}
+                        >
+                          {loading.booking === rescheduleState.bookingId ? "Saving..." : "Confirm new time"}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          className="client-admin-button client-admin-button-ghost"
+                          onClick={() =>
+                            setRescheduleState({
+                              bookingId: "",
+                              windows: [],
+                              selectedDate: "",
+                              selectedSlot: "",
+                              loading: false,
+                              error: ""
+                            })
+                          }
+                        >
+                          Close
+                        </Button>
+                      </div>
+                    </>
+                  ) : null}
                 </div>
-              </Card>
+              </div>
             ) : null}
           </div>
         ) : null}
 
         {activeTab === "payments" ? (
-          <div className="client-admin-content-stack">
-            <div className="client-admin-section-tabs client-admin-payments-tabs" role="tablist" aria-label="Payment sections">
+          <div className="vendor-dashboard-tab client-payments-tab">
+            <div className="vendor-dashboard-header">
+              <div>
+                <h3 className="vendor-dashboard-header-title">Payments</h3>
+              </div>
+            </div>
+            <div className="vendor-dashboard-tabs client-payments-tabs" role="tablist" aria-label="Payment sections">
               {PAYMENT_SECTION_OPTIONS.map((item) => (
                 <button
                   key={item.id}
                   type="button"
-                  className={`client-admin-section-tab ${paymentSection === item.id ? "active" : ""}`}
+                  className={`vendor-dashboard-tab-item ${paymentSection === item.id ? "active" : ""}`}
                   onClick={() => setPaymentSection(item.id)}
                   role="tab"
                   aria-selected={paymentSection === item.id}
@@ -2567,28 +2781,9 @@ export default function ClientDashboard({ user, initialData }) {
               ))}
             </div>
 
-            <Card className="client-admin-panel client-admin-payments-panel">
+            <Card className="vendor-dashboard-card client-payments-panel">
                 {paymentSection === "overview" ? (
                   <div className="client-admin-content-stack">
-                    <div className="client-admin-panel-head">
-                      <div>
-                        <h2>Overview</h2>
-                        <p>Default card, outstanding balances, and your latest payment update</p>
-                      </div>
-                    </div>
-
-                    <div className="client-admin-highlight">
-                      <Badge variant="secondary" className={`client-admin-status ${defaultPaymentMethod ? "success" : "muted"}`}>
-                        {defaultPaymentMethod ? "Default method ready" : "No saved method"}
-                      </Badge>
-                      <strong>{defaultPaymentMethod ? paymentMethodLabel(defaultPaymentMethod) : "Add your first payment method"}</strong>
-                      <p>
-                        {defaultPaymentMethod
-                          ? `Expires ${String(defaultPaymentMethod.expMonth).padStart(2, "0")}/${defaultPaymentMethod.expYear}`
-                          : "Save a card to pay deposits and booking balances from one place."}
-                      </p>
-                    </div>
-
                     {outstandingBookings.length ? (
                       <div className="client-admin-list">
                         {outstandingBookings.map((booking) => (
@@ -2966,7 +3161,12 @@ export default function ClientDashboard({ user, initialData }) {
         ) : null}
 
         {activeTab === "favorites" ? (
-          <div className="client-admin-content-stack">
+          <div className="vendor-dashboard-tab client-favorites-tab">
+            <div className="vendor-dashboard-header">
+              <div>
+                <h3 className="vendor-dashboard-header-title">Saved Stylists</h3>
+              </div>
+            </div>
             <div className="client-admin-card-grid">
               {dashboard?.favorites?.length ? (
                 dashboard.favorites.map((vendor) => (
@@ -3017,7 +3217,12 @@ export default function ClientDashboard({ user, initialData }) {
         ) : null}
 
         {activeTab === "messages" ? (
-          <div className="client-admin-content-stack">
+          <div className="vendor-dashboard-tab client-messages-tab">
+            <div className="vendor-dashboard-header">
+              <div>
+                <h3 className="vendor-dashboard-header-title">Messages</h3>
+              </div>
+            </div>
             <div className="client-messenger-layout">
               {/* Conversation List */}
               <div className="client-messenger-list">
@@ -3103,7 +3308,16 @@ export default function ClientDashboard({ user, initialData }) {
                         </div>
                       </div>
                       <div className="client-messenger-thread-actions">
-                        <button type="button" title="Call"><Phone size={18} /></button>
+                        <button
+                          type="button"
+                          title="Call"
+                          onClick={handleCallClick}
+                          style={{
+                            color: vendorCallStatus[activeConversation.vendorSlug] === "busy" ? "#dc2626" : "inherit"
+                          }}
+                        >
+                          <Phone size={18} />
+                        </button>
                         <button type="button" title="Info"><Info size={18} /></button>
                       </div>
                     </div>
@@ -3330,13 +3544,18 @@ export default function ClientDashboard({ user, initialData }) {
         ) : null}
 
         {activeTab === "profile" ? (
-          <div className="client-admin-content-stack">
-            <div className="client-admin-section-tabs" role="tablist" aria-label="Account sections">
+          <div className="vendor-dashboard-tab client-profile-tab">
+            <div className="vendor-dashboard-header">
+              <div>
+                <h3 className="vendor-dashboard-header-title">Profile &amp; Security</h3>
+              </div>
+            </div>
+            <div className="vendor-dashboard-tabs client-profile-tabs" role="tablist" aria-label="Account sections">
               {ACCOUNT_SECTION_OPTIONS.map((item) => (
                 <button
                   key={item.id}
                   type="button"
-                  className={`client-admin-section-tab ${accountSection === item.id ? "active" : ""}`}
+                  className={`vendor-dashboard-tab-item ${accountSection === item.id ? "active" : ""}`}
                   onClick={() => setAccountSection(item.id)}
                   role="tab"
                   aria-selected={accountSection === item.id}
@@ -3347,7 +3566,7 @@ export default function ClientDashboard({ user, initialData }) {
             </div>
 
             {accountSection === "details" ? (
-              <Card className="client-admin-panel">
+              <Card className="vendor-dashboard-card client-profile-details">
                 <div className="client-admin-panel-head">
                   <div>
                     <h2>Profile Details</h2>
@@ -3476,7 +3695,7 @@ export default function ClientDashboard({ user, initialData }) {
             ) : null}
 
             {accountSection === "security" ? (
-              <Card className="client-admin-panel">
+              <Card className="vendor-dashboard-card client-profile-security">
                 <div className="client-admin-panel-head">
                   <div>
                     <h2>Security & Linked Methods</h2>
@@ -3548,7 +3767,7 @@ export default function ClientDashboard({ user, initialData }) {
             ) : null}
 
             {accountSection === "password" ? (
-              <Card className="client-admin-panel">
+              <Card className="vendor-dashboard-card client-profile-password">
                 <div className="client-admin-panel-head">
                   <div>
                     <h2>Change Password</h2>
@@ -3675,7 +3894,7 @@ export default function ClientDashboard({ user, initialData }) {
             ) : null}
 
             {accountSection === "preferences" ? (
-              <Card className="client-admin-panel">
+              <Card className="vendor-dashboard-card client-profile-preferences">
                 <div className="client-admin-panel-head">
                   <div>
                     <h2>Preferences</h2>
@@ -3684,6 +3903,7 @@ export default function ClientDashboard({ user, initialData }) {
                 </div>
 
                 <form onSubmit={handlePreferenceSubmit} className="client-admin-preferences">
+                  <PushNotificationToggle />
                   {PREFERENCE_OPTIONS.map((item) => (
                     <label key={item.key} className="client-admin-toggle">
                       <input
@@ -3867,13 +4087,10 @@ export default function ClientDashboard({ user, initialData }) {
           externalSending={messageThread.sending}
           externalLoading={messageThread.loading}
           externalError={messageThread.error}
-          onSend={(body) => handleSendMessage(body)}
-          onDraftChange={(value) => setMessageThread((current) => ({ ...current, draft: value }))}
-          onLoadMessages={() => loadConversation(activeConversationId)}
-          onExpand={() => {
-            handleTabChange("messages");
-            setWidgetOpen(false);
-          }}
+          onSend={handleWidgetSend}
+          onDraftChange={handleWidgetDraftChange}
+          onLoadMessages={handleWidgetLoadMessages}
+          onExpand={handleWidgetExpand}
         />
       ) : null}
 
@@ -3884,6 +4101,36 @@ export default function ClientDashboard({ user, initialData }) {
           </button>
           <img src={lightboxImage} alt="Full size" onClick={(e) => e.stopPropagation()} />
         </div>
+      ) : null}
+
+      <VoiceCallUI
+        callState={callAPI.callState}
+        callMeta={callAPI.callMeta}
+        durationLabel={callAPI.durationLabel}
+        isMuted={callAPI.isMuted}
+        isSpeakerOn={callAPI.isSpeakerOn}
+        error={callAPI.error}
+        remoteAudioRef={callAPI.remoteAudioRef}
+        onAccept={callAPI.acceptCall}
+        onReject={callAPI.rejectCall}
+        onEnd={() => callAPI.endCall("ended")}
+        onToggleMute={callAPI.toggleMute}
+        onToggleSpeaker={callAPI.toggleSpeaker}
+      />
+
+      {busyVendor ? (
+        <BusyModal
+          vendorName={busyVendor.name}
+          onSendMessage={() => {
+            setBusyVendor(null);
+            setActiveTab("messages");
+          }}
+          onClose={() => setBusyVendor(null)}
+        />
+      ) : null}
+
+      {showMicPermissionModal ? (
+        <MicPermissionModal onClose={() => setShowMicPermissionModal(false)} />
       ) : null}
     </div>
   );
